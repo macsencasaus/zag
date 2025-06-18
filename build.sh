@@ -1,3 +1,3 @@
 #!/bin/bash
 
-clang -ggdb vector.c -o vector
+clang -Iinclude -ggdb vector.c -o vector

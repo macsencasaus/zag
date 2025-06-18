@@ -98,6 +98,7 @@ void sht_init(String_Hash_Table *ht, size_t value_t_size,
 
     ht->bins = (int64_t *)SHT_REALLOC(NULL, ht->bin_count * sizeof(int64_t));
     SHT_ASSERT(ht->bins != NULL && "HT_REALLOC failed");
+    memset(ht->bins, -1, ht->bin_count * sizeof(int64_t));
 }
 
 void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
@@ -114,8 +115,8 @@ void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
     uint64_t hash = sht_djb2_hash(key, key_t_size);
     uint64_t bin_idx = hash % ht->bin_count;
 
-    int64_t *last_offset = NULL;
-    int64_t next = ht->bins[bin_idx];
+    int64_t *last_offset = ht->bins + bin_idx;
+    int64_t next = *last_offset;
 
     void *item, *value;
     char *cur_key;
@@ -123,7 +124,7 @@ void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
     while (next != -1) {
         item = VOID_OFFSET(ht->arena, next);
         cur_key = (char *)VOID_OFFSET(item, sizeof(int64_t));
-        value = VOID_OFFSET(key, key_t_size);
+        value = VOID_OFFSET(cur_key, key_t_size);
 
         if (SHT_STRNCMP(key, cur_key, key_t_size) == 0)
             return value;

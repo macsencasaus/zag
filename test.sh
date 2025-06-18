@@ -1,3 +1,3 @@
 #!/bin/bash
 
-clang -ggdb test.c -o test && ./test
+clang -Iinclude -ggdb test.c -o test && ./test
