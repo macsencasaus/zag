@@ -38,6 +38,11 @@ typedef enum {
 
     TOKEN_TYPE_IDENT,
 
+    TOKEN_TYPE_LPAREN,
+    TOKEN_TYPE_RPAREN,
+    TOKEN_TYPE_LBRACE,
+    TOKEN_TYPE_RBRACE,
+
     TOKEN_TYPE_PLUS,
     TOKEN_TYPE_MINUS,
     TOKEN_TYPE_ASTERISK,
@@ -59,6 +64,10 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_EOF] = "EOF",
     [TOKEN_TYPE_INT_LITERAL] = "int literal",
     [TOKEN_TYPE_IDENT] = "identifier",
+    [TOKEN_TYPE_LPAREN] = "'('",
+    [TOKEN_TYPE_RPAREN] = "')'",
+    [TOKEN_TYPE_LBRACE] = "'{'",
+    [TOKEN_TYPE_RBRACE] = "'}'",
     [TOKEN_TYPE_PLUS] = "'+'",
     [TOKEN_TYPE_MINUS] = "'-'",
     [TOKEN_TYPE_ASTERISK] = "'*'",
@@ -133,7 +142,7 @@ INLINE bool valid_ident_char(char ch) { return (ch >= 'A' && ch <= 'Z') ||
 INLINE void eat_whitespace(Lexer *l) { for (; is_whitespace(l->ch); read_char(l)); }
 
 Token_Type lookup_keyword(const char *literal, usize n) {
-    if (strncmp("fn", literal, MAX(2, n)) == 0) {
+    if (n == 2 && strncmp("fn", literal, 2) == 0) {
         return TOKEN_TYPE_FN;
     } else {
         return TOKEN_TYPE_IDENT;
@@ -150,6 +159,18 @@ Token lexer_next_token(Lexer *l) {
     };
 
     switch (l->ch) {
+    case '(': {
+        tok.type = TOKEN_TYPE_LPAREN;
+    } break;
+    case ')': {
+        tok.type = TOKEN_TYPE_RPAREN;
+    } break;
+    case '{': {
+        tok.type = TOKEN_TYPE_LBRACE;
+    } break;
+    case '}': {
+        tok.type = TOKEN_TYPE_RBRACE;
+    } break;
     case '+': {
         tok.type = TOKEN_TYPE_PLUS;
     } break;
@@ -275,13 +296,6 @@ typedef struct {
     usize stack_index;
 } Var;
 
-DYNAMIC_ARRAY_TEMPLATE(Array_Type, Type);
-
-typedef struct {
-    Type return_type;
-    Array_Type param_types;
-} Func;
-
 typedef enum {
     OP_TYPE_ASSIGN,
     OP_TYPE_NEGATE,
@@ -320,12 +334,25 @@ DYNAMIC_ARRAY_TEMPLATE(Op_Buf, Op);
 DYNAMIC_ARRAY_TEMPLATE(Scope_Buf, String_Hash_Table);
 
 typedef struct {
+    const char *name;
+    usize n;
+    const Type *type;
+} Func_Param;
+
+DYNAMIC_ARRAY_TEMPLATE(Param_Array, Func_Param);
+
+typedef struct {
+    const Type *return_type;
+    Param_Array params;
+    Op_Buf ops;
+} Func;
+
+typedef struct {
     Lexer *l;
 
     Token cur_token;
     Token peek_token;
 
-    Op_Buf ops;
     usize stack_index;
 
     String_Hash_Table types;
@@ -333,6 +360,7 @@ typedef struct {
     // array of string hash tables
     Scope_Buf vars;
     usize scope;
+    Op_Buf *ops;
 
     String_Hash_Table funcs;
 
@@ -379,7 +407,8 @@ INLINE void unexpected_token(Compiler *p) {
     compiler_error(p, &p->cur_token.loc, "Unexpected token %s", tt_str[p->cur_token.type]);
 }
 
-#define CUR_TOKEN_FMT(p) (int)(p)->cur_token.length, (p)->cur_token.literal
+#define TOKEN_FMT(t) (int)(t).length, (t).literal
+#define CUR_TOKEN_FMT(c) TOKEN_FMT((c)->cur_token)
 
 void compiler_init(Compiler *c, Lexer *l) {
     *c = (Compiler){
@@ -400,11 +429,13 @@ void compiler_init(Compiler *c, Lexer *l) {
 
     da_append(&c->vars, (String_Hash_Table){0});
     sht_init(&c->vars.store[0], sizeof(Var), 0);
+
+    sht_init(&c->funcs, sizeof(Func), 0);
 }
 
-INLINE const Type *lookup_type(const Compiler *p, const Token *token) {
+INLINE const Type *lookup_type(const Compiler *c, const Token *token) {
     assert(token->type == TOKEN_TYPE_IDENT);
-    return sht_try_get(&p->types, token->literal, token->length);
+    return sht_try_get(&c->types, token->literal, token->length);
 }
 
 Var *find_scoped_var(const Compiler *c, usize scope, const char *name, usize n) {
@@ -443,18 +474,18 @@ INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
 typedef bool Compile_Stmt_Fn(Compiler *);
 typedef bool Parse_Expr_Fn(Compiler *, Type *);
 
-typedef usize Emit_Fn(Compiler *p, va_list vargs);
+typedef usize Emit_Fn(Compiler *c, va_list vargs);
 
 static Emit_Fn *const emit_fns[OP_TYPE_COUNT] = {};
 
-usize push_opcode(Compiler *p, Op_Type type, ...) {
+usize push_opcode(Compiler *c, Op_Type type, ...) {
     va_list vargs;
     va_start(vargs, type);
 
     Emit_Fn *emit_fn = emit_fns[type];
     if (emit_fn == NULL)
         UNIMPLEMENTED();
-    usize frame = emit_fn(p, vargs);
+    usize frame = emit_fn(c, vargs);
 
     va_end(vargs);
 
@@ -486,7 +517,7 @@ bool compile_ident(Compiler *c) {
                 next_token(c);
 
                 Type expr_type;
-                // TODO: parse expression
+                // TODO: compile expression
 
                 if (strict_type_cmp(&expr_type, decl_type)) {
                     compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
@@ -503,6 +534,7 @@ bool compile_ident(Compiler *c) {
 
     default:
         // TODO: expression statement
+        compiler_error(c, &c->cur_token.loc, "Unexpected token %s", tt_str[c->cur_token.type]);
         return false;
     }
 }
@@ -520,10 +552,153 @@ bool compile_stmt(Compiler *c) {
     return compile_fn(c);
 }
 
+bool compile_block(Compiler *c, const Param_Array *func_params, Op_Buf *ops) {
+    // push scope
+    da_append(&c->vars, (String_Hash_Table){0});
+    ++c->scope;
+    sht_init(c->vars.store + c->scope, sizeof(Var), 0);
+
+    if (func_params) {
+        for (usize i = 0; i < func_params->size; ++i) {
+            const Func_Param *param = func_params->store + i;
+
+            usize stack_index = alloc_scoped_var(c, param->type);
+            assert(declare_var(c, param->name, param->n, param->type, stack_index) != NULL);
+        }
+    }
+
+    while (!cur_tok_is(c, TOKEN_TYPE_RBRACE)) {
+        if (!compile_stmt(c)) {
+            return false;
+        }
+
+        // The compiler ends on the last token of the statement.
+        // Must be advanced forward by one to start at the next statement.
+        next_token(c);
+    }
+
+    return true;
+}
+
 bool compile_program(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_EOF)) {
-        if (!compile_stmt(c))
+        switch (c->cur_token.type) {
+        case TOKEN_TYPE_IDENT: {
+            if (!compile_ident(c)) {
+                return false;
+            }
+        } break;
+
+        case TOKEN_TYPE_FN: {
+            if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
+                return false;
+            }
+
+            Func func = {0};
+
+            Token return_type_token = c->cur_token;
+            func.return_type = lookup_type(c, &c->cur_token);
+            if (func.return_type == NULL) {
+                compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", CUR_TOKEN_FMT(c));
+                return false;
+            }
+
+            if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
+                return false;
+            }
+
+            Token name = c->cur_token;
+
+            if (!expect_peek(c, TOKEN_TYPE_LPAREN)) {
+                return false;
+            }
+
+            if (peek_tok_is(c, TOKEN_TYPE_RPAREN)) {
+                next_token(c);
+            } else {
+                do {
+                    if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
+                        return false;
+                    }
+                    const Type *param_type = lookup_type(c, &c->cur_token);
+
+                    if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
+                        return false;
+                    }
+                    Token param_token = c->cur_token;
+
+                    for (usize i = 0; i < func.params.size; ++i) {
+                        const Func_Param *param = func.params.store + i;
+                        if (param->n == param_token.length &&
+                            strncmp(param->name, param_token.literal, param->n) == 0) {
+                            compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(param_token));
+                            return false;
+                        }
+                    }
+
+                    da_append(&func.params, ((Func_Param){param_token.literal, param_token.length, param_type}));
+                } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
+
+                if (!expect_peek(c, TOKEN_TYPE_RPAREN)) {
+                    return false;
+                }
+            }
+
+            bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);
+            bool already_declared = sht_try_get(&c->funcs, name.literal, name.length) != NULL;
+            bool already_defined = false;
+
+            Func *new_func = sht_get(&c->funcs, name.literal, name.length);
+
+            if (already_declared)
+                already_defined = new_func->ops.store == NULL;
+
+            if (already_defined && !is_declaration) {
+                compiler_error(c, &name.loc, "Redefinition of function %.*s", TOKEN_FMT(name));
+                return false;
+            }
+
+            if (already_declared) {
+                if (!strict_type_cmp(func.return_type, new_func->return_type)) {
+                    compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
+                    return false;
+                }
+
+                if (func.params.size != new_func->params.size) {
+                    compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
+                    return false;
+                }
+
+                usize n = func.params.size;
+                for (usize i = 0; i < n; ++i) {
+                    if (!strict_type_cmp(func.params.store[i].type, new_func->params.store[i].type)) {
+                        compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
+                        return false;
+                    }
+                }
+            } else {
+                *new_func = func;
+            }
+
+            if (is_declaration) {
+                next_token(c);
+                return true;
+            }
+
+            if (!expect_peek(c, TOKEN_TYPE_LBRACE)) {
+                return false;
+            }
+
+            if (!compile_block(c, &new_func->params, &new_func->ops)) {
+                return false;
+            }
+        } break;
+
+        default: {
+            unexpected_token(c);
             return false;
+        }
+        }
 
         // The compiler ends on the last token of the statement.
         // Must be advanced forward by one to start at the next statement.
