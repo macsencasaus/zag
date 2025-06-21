@@ -1,0 +1,21 @@
+identifier: i32 at 3:1 in lex/in.v3
+identifier: x at 3:5 in lex/in.v3
+';': ; at 3:6 in lex/in.v3
+fn: fn at 5:1 in lex/in.v3
+identifier: i32 at 5:4 in lex/in.v3
+identifier: main at 5:8 in lex/in.v3
+'(': ( at 5:12 in lex/in.v3
+identifier: i32 at 5:13 in lex/in.v3
+identifier: argc at 5:17 in lex/in.v3
+',': , at 5:21 in lex/in.v3
+identifier: i8 at 5:23 in lex/in.v3
+'*': * at 5:26 in lex/in.v3
+'*': * at 5:27 in lex/in.v3
+identifier: argv at 5:28 in lex/in.v3
+')': ) at 5:32 in lex/in.v3
+'{': { at 5:34 in lex/in.v3
+identifier: eturn at 6:6 in lex/in.v3
+int literal: 0 at 6:12 in lex/in.v3
+';': ; at 6:13 in lex/in.v3
+'}': } at 7:1 in lex/in.v3
+EOF:  at 8:1 in lex/in.v3

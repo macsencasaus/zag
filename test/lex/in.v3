@@ -1,0 +1,7 @@
+// RUN: %vector -lex %s
+
+i32 x;
+
+fn i32 main(i32 argc, i8 **argv) {
+    return 0;
+}

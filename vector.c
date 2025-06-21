@@ -822,12 +822,6 @@ bool compile_program(Compiler *c) {
     return true;
 }
 
-void print_ir(const Compiler *c) {
-
-}
-
-static char *program_name;
-
 static char *program_name;
 
 void usage(FILE *stream) {
@@ -958,5 +952,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-#endif
