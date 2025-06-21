@@ -18,6 +18,7 @@
 #define INLINE static inline
 
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
+#define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
 #define SB_IMPLEMENTATION
 #include "sb.h"
@@ -55,6 +56,7 @@ typedef enum {
 
     // keywords
     TOKEN_TYPE_FN,
+    TOKEN_TYPE_RETURN,
 
     TOKEN_TYPE_COUNT,
 } Token_Type;
@@ -76,6 +78,7 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_SEMICOLON] = "';'",
     [TOKEN_TYPE_ASSIGN] = "'='",
     [TOKEN_TYPE_FN] = "fn",
+    [TOKEN_TYPE_RETURN] = "return",
 };
 
 typedef struct {
@@ -144,13 +147,30 @@ INLINE void eat_whitespace(Lexer *l) { for (; is_whitespace(l->ch); read_char(l)
 Token_Type lookup_keyword(const char *literal, usize n) {
     if (n == 2 && strncmp("fn", literal, 2) == 0) {
         return TOKEN_TYPE_FN;
+    } else if (n == 6 && strncmp("return", literal, 6) == 0) {
+        return TOKEN_TYPE_RETURN;
     } else {
         return TOKEN_TYPE_IDENT;
     }
 }
 
+INLINE void read_comment(Lexer *l) {
+    for (; l->ch != '\n' && l->ch != 0 && l->ch != EOF; read_char(l));
+    eat_whitespace(l);
+}
+
+INLINE char peek_char(Lexer *l) {
+    if (l->read_pos >= l->input_length) return 0;
+    return l->input[l->read_pos];
+}
+
 Token lexer_next_token(Lexer *l) {
     eat_whitespace(l);
+
+    while (l->ch == '/' && peek_char(l) == '/') {
+        read_comment(l);
+        eat_whitespace(l);
+    }
 
     Token tok = {
         .literal = l->input + l->pos,
@@ -275,31 +295,33 @@ static const Type builtin_types[] = {
     {"f64", TYPE_F64, 8, 8, FLAG_FLOAT},
 };
 
-typedef enum {
-    ARG_TYPE_LITERAL,
-    ARG_TYPE_VAR,
-} Arg_Type;
-
+// TODO: add storage type
 typedef struct {
-    Arg_Type type;
-
-    union {
-        u64 value;
-
-        // stack index
-        usize index;
-    };
-} Arg;
-
-typedef struct {
-    const Type *type;
     usize stack_index;
 } Var;
 
 typedef enum {
-    OP_TYPE_ASSIGN,
-    OP_TYPE_NEGATE,
-    OP_TYPE_BINARY,
+    VALUE_TYPE_INT_LITERAL,
+    VALUE_TYPE_VAR,
+} Value_Type;
+
+typedef struct {
+    Value_Type value_type;
+    const Type *type;
+
+    union {
+        // int literal
+        i64 int_value;
+
+        // var
+        Var var;
+    };
+} Value;
+
+typedef enum {
+    OP_TYPE_STORE,
+    OP_TYPE_NEG,
+    OP_TYPE_BINOP,
 
     OP_TYPE_COUNT,
 } Op_Type;
@@ -307,28 +329,28 @@ typedef enum {
 typedef struct {
     Op_Type type;
 
+    // used in almost all Ops to store its result
+    usize index;
+
     union {
-        // decl
-        usize size;
-
-        // set
-        struct {
-            usize index;
-
-            // negate
-            Arg arg;
-        };
+        // negate
+        Value val;
 
         // binary
         struct {
             Token op;
-            Arg lhs;
-            Arg rhs;
+            Value lhs;
+            Value rhs;
         };
     };
 } Op;
 
-#define OP_DECL(__size) ((Op){.type = OP_TYPE_DECL, .size = __size})
+#define OP_STORE(__index, __val) \
+    ((Op){.type = OP_TYPE_STORE, .index = (__index), .val = (__val)})
+#define OP_NEG(__val) \
+    ((Op){.type = OP_TYPE_NEG, .val = (__val)})
+#define OP_BINOP(__op, __lhs, __rhs) \
+    ((Op){.type = OP_TYPE_BINOP, .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
 
 DYNAMIC_ARRAY_TEMPLATE(Op_Buf, Op);
 DYNAMIC_ARRAY_TEMPLATE(Scope_Buf, String_Hash_Table);
@@ -457,11 +479,11 @@ Var *find_var_far(const Compiler *c, const char *name, usize n) {
     return NULL;
 }
 
-INLINE const Var *declare_var(Compiler *c, const char *name, usize n, const Type *type, usize stack_index) {
+INLINE const Var *declare_var(Compiler *c, const char *name, usize n, usize stack_index) {
     if (find_var_near(c, name, n) != NULL)
         return NULL;
     Var *var = sht_get(c->vars.store + c->vars.size - 1, name, n);
-    *var = (Var){type, stack_index};
+    *var = (Var){stack_index};
     return var;
 }
 
@@ -471,28 +493,101 @@ INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
     return frame;
 }
 
-typedef bool Compile_Stmt_Fn(Compiler *);
-typedef bool Parse_Expr_Fn(Compiler *, Type *);
-
-typedef usize Emit_Fn(Compiler *c, va_list vargs);
-
-static Emit_Fn *const emit_fns[OP_TYPE_COUNT] = {};
-
-usize push_opcode(Compiler *c, Op_Type type, ...) {
-    va_list vargs;
-    va_start(vargs, type);
-
-    Emit_Fn *emit_fn = emit_fns[type];
-    if (emit_fn == NULL)
-        UNIMPLEMENTED();
-    usize frame = emit_fn(c, vargs);
-
-    va_end(vargs);
-
-    return frame;
+INLINE bool coerce_constant_type(Value *arg, const Type *t) {
+    assert(arg->type == NULL);
+    arg->type = t;
+    return true;
 }
 
-bool compile_ident(Compiler *c) {
+INLINE void push_scope(Compiler *c) {
+    da_append(&c->vars, (String_Hash_Table){0});
+    ++c->scope;
+    sht_init(c->vars.store + c->scope, sizeof(Var), 0);
+}
+
+INLINE void pop_scope(Compiler *c) {
+    --c->scope;
+    da_pop(&c->vars);
+}
+
+typedef bool Compile_Stmt_Fn(Compiler *);
+
+void push_opcode(Compiler *c, Op_Type op_type, ...) {
+    va_list vargs;
+    va_start(vargs, op_type);
+
+    switch (op_type) {
+    case OP_TYPE_STORE: {
+        usize stack_index = va_arg(vargs, usize);
+        Value arg = va_arg(vargs, Value);
+        da_append(c->ops, OP_STORE(stack_index, arg));
+    } break;
+    case OP_TYPE_NEG: {
+        Value arg = va_arg(vargs, Value);
+        da_append(c->ops, OP_NEG(arg));
+    } break;
+    case OP_TYPE_BINOP: {
+        Token op = va_arg(vargs, Token);
+        Value lhs = va_arg(vargs, Value);
+        Value rhs = va_arg(vargs, Value);
+        da_append(c->ops, OP_BINOP(op, lhs, rhs));
+    } break;
+    default: UNIMPLEMENTED();
+    }
+
+    va_end(vargs);
+}
+
+bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
+    switch (c->cur_token.type) {
+    case TOKEN_TYPE_INT_LITERAL: {
+        *val = (Value){
+            .value_type = VALUE_TYPE_INT_LITERAL,
+            .int_value = atoll(c->cur_token.literal),
+        };
+        if (is_lvalue)
+            *is_lvalue = false;
+    } break;
+    case TOKEN_TYPE_IDENT: {
+        const Var *var;
+        if (!(var = find_var_far(c, c->cur_token.literal, c->cur_token.length)))
+            return false;
+        *val = (Value){
+            .value_type = VALUE_TYPE_VAR,
+            .var = *var,
+        };
+        if (is_lvalue)
+            *is_lvalue = true;
+    } break;
+    case TOKEN_TYPE_MINUS: {
+        next_token(c);
+
+        Value arg;
+        compile_primary_expr(c, &arg, NULL);
+        usize result = alloc_scoped_var(c, arg.type);
+
+        *val = (Value){
+            .value_type = VALUE_TYPE_VAR,
+            .type = arg.type,
+            .var = (Var){
+                .stack_index = result,
+            }};
+
+        if (is_lvalue)
+            *is_lvalue = false;
+    } break;
+    default: {
+        UNIMPLEMENTED();
+    }
+    }
+    return true;
+}
+
+bool compile_expr(Compiler *c, Value *val, bool *is_lvalue) {
+    return compile_primary_expr(c, val, is_lvalue);
+}
+
+bool compile_ident_stmt(Compiler *c) {
     switch (c->peek_token.type) {
     case TOKEN_TYPE_IDENT: {
         const Type *decl_type = lookup_type(c, &c->cur_token);
@@ -507,7 +602,7 @@ bool compile_ident(Compiler *c) {
             next_token(c);
 
             const Token *token = &c->cur_token;
-            if (declare_var(c, token->literal, token->length, decl_type, stack_index) == NULL) {
+            if (declare_var(c, token->literal, token->length, stack_index) == NULL) {
                 compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
                 return false;
             }
@@ -516,13 +611,24 @@ bool compile_ident(Compiler *c) {
                 next_token(c);
                 next_token(c);
 
-                Type expr_type;
-                // TODO: compile expression
+                Value arg;
+                if (!compile_expr(c, &arg, NULL))
+                    return false;
 
-                if (strict_type_cmp(&expr_type, decl_type)) {
-                    compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
-                                   expr_type.name, decl_type->name);
+                if (!arg.type && !coerce_constant_type(&arg, decl_type)) {
+                    compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
+                                   decl_type->name);
+                    return false;
                 }
+
+                const Type *expr_type = arg.type;
+                if (strict_type_cmp(expr_type, decl_type)) {
+                    compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
+                                   expr_type->name, decl_type->name);
+                    return false;
+                }
+
+                push_opcode(c, OP_TYPE_STORE, stack_index, arg);
             }
         } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
@@ -540,7 +646,7 @@ bool compile_ident(Compiler *c) {
 }
 
 static Compile_Stmt_Fn *compile_stmt_fns[TOKEN_TYPE_COUNT] = {
-    [TOKEN_TYPE_IDENT] = compile_ident,
+    [TOKEN_TYPE_IDENT] = compile_ident_stmt,
 };
 
 bool compile_stmt(Compiler *c) {
@@ -552,21 +658,7 @@ bool compile_stmt(Compiler *c) {
     return compile_fn(c);
 }
 
-bool compile_block(Compiler *c, const Param_Array *func_params, Op_Buf *ops) {
-    // push scope
-    da_append(&c->vars, (String_Hash_Table){0});
-    ++c->scope;
-    sht_init(c->vars.store + c->scope, sizeof(Var), 0);
-
-    if (func_params) {
-        for (usize i = 0; i < func_params->size; ++i) {
-            const Func_Param *param = func_params->store + i;
-
-            usize stack_index = alloc_scoped_var(c, param->type);
-            assert(declare_var(c, param->name, param->n, param->type, stack_index) != NULL);
-        }
-    }
-
+bool compile_block(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_RBRACE)) {
         if (!compile_stmt(c)) {
             return false;
@@ -577,6 +669,8 @@ bool compile_block(Compiler *c, const Param_Array *func_params, Op_Buf *ops) {
         next_token(c);
     }
 
+    next_token(c);
+
     return true;
 }
 
@@ -584,7 +678,7 @@ bool compile_program(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_EOF)) {
         switch (c->cur_token.type) {
         case TOKEN_TYPE_IDENT: {
-            if (!compile_ident(c)) {
+            if (!compile_ident_stmt(c)) {
                 return false;
             }
         } break;
@@ -648,10 +742,10 @@ bool compile_program(Compiler *c) {
             bool already_declared = sht_try_get(&c->funcs, name.literal, name.length) != NULL;
             bool already_defined = false;
 
-            Func *new_func = sht_get(&c->funcs, name.literal, name.length);
+            Func *existing_func = sht_get(&c->funcs, name.literal, name.length);
 
             if (already_declared)
-                already_defined = new_func->ops.store == NULL;
+                already_defined = existing_func->ops.store == NULL;
 
             if (already_defined && !is_declaration) {
                 compiler_error(c, &name.loc, "Redefinition of function %.*s", TOKEN_FMT(name));
@@ -659,25 +753,25 @@ bool compile_program(Compiler *c) {
             }
 
             if (already_declared) {
-                if (!strict_type_cmp(func.return_type, new_func->return_type)) {
+                if (!strict_type_cmp(func.return_type, existing_func->return_type)) {
                     compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
                     return false;
                 }
 
-                if (func.params.size != new_func->params.size) {
+                if (func.params.size != existing_func->params.size) {
                     compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
                     return false;
                 }
 
                 usize n = func.params.size;
                 for (usize i = 0; i < n; ++i) {
-                    if (!strict_type_cmp(func.params.store[i].type, new_func->params.store[i].type)) {
+                    if (!strict_type_cmp(func.params.store[i].type, existing_func->params.store[i].type)) {
                         compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
                         return false;
                     }
                 }
             } else {
-                *new_func = func;
+                *existing_func = func;
             }
 
             if (is_declaration) {
@@ -689,9 +783,27 @@ bool compile_program(Compiler *c) {
                 return false;
             }
 
-            if (!compile_block(c, &new_func->params, &new_func->ops)) {
+            push_scope(c);
+
+            Param_Array *func_params = &existing_func->params;
+
+            for (usize i = 0; i < func_params->size; ++i) {
+                const Func_Param *param = func_params->store + i;
+
+                usize stack_index = alloc_scoped_var(c, param->type);
+                assert(declare_var(c, param->name, param->n, stack_index) != NULL);
+            }
+
+            Op_Buf *cur_scope_ops = c->ops;
+            c->ops = &existing_func->ops;
+
+            if (!compile_block(c)) {
                 return false;
             }
+
+            c->ops = cur_scope_ops;
+
+            pop_scope(c);
         } break;
 
         default: {
@@ -707,7 +819,11 @@ bool compile_program(Compiler *c) {
     return true;
 }
 
-#ifndef TESTING
+void print_ir(const Compiler *c) {
+
+}
+
+static char *program_name;
 
 int main(void) {
     char test[] = "i32 x;";
