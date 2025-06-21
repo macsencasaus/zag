@@ -26,6 +26,9 @@
 #define SHT_IMPLEMENTATION
 #include "sht.h"
 
+#define FLAG_IMPLEMENTATION
+#include "flag.h"
+
 typedef struct {
     u32 line;
     u32 col;
@@ -825,11 +828,122 @@ void print_ir(const Compiler *c) {
 
 static char *program_name;
 
-int main(void) {
-    char test[] = "i32 x;";
+static char *program_name;
+
+void usage(FILE *stream) {
+    fprintf(stream, "Usage: %s [OPTIONS] [FILE]\n", program_name);
+    fprintf(stream, "OPTIONS:\n");
+    flag_print_options(stream);
+}
+
+char *read_file(const char *file_name, usize *n) {
+    FILE *file = fopen(file_name, "r");
+    if (file == NULL) {
+        return NULL;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    rewind(file);
+
+    char *buffer = (char *)malloc(file_size + 1);
+
+    usize bytes_read = fread(buffer, 1, file_size, file);
+    if ((long)bytes_read != file_size) {
+        fclose(file);
+        return NULL;
+    }
+
+    buffer[file_size] = 0;
+    *n = file_size;
+
+    fclose(file);
+    return buffer;
+}
+
+char *read_stdin(usize *n) {
+    int c;
+    usize cap = 1024;
+    usize len = 0;
+    char *buffer = (char *)malloc(cap);
+    if (buffer == NULL) {
+        return NULL;
+    }
+
+    while ((c = fgetc(stdin)) != EOF) {
+        buffer[len++] = c;
+
+        if (len == cap) {
+            cap *= 2;
+
+            char *temp = buffer;
+            buffer = realloc(buffer, cap);
+            if (buffer == NULL) {
+                free(temp);
+                return NULL;
+            }
+        }
+    }
+
+    buffer[len] = 0;
+    *n = len;
+
+    return buffer;
+}
+
+#define STDIN_FILE_NAME "stdin"
+
+int main(int argc, char *argv[]) {
+    program_name = argv[0];
+
+    bool *help = flag_bool("help", false, "Print this help then exit.");
+    bool *lex = flag_bool("lex", false, "Print lexer output then exit.");
+    bool *emit_ir = flag_bool("emit-ir", false, "Emit IR then exit.");
+
+    if (!flag_parse(argc, argv)) {
+        usage(stderr);
+        flag_print_error(stderr);
+        exit(1);
+    }
+
+    if (*help) {
+        usage(stdout);
+        exit(0);
+    }
+
+    argc = flag_rest_argc();
+    argv = flag_rest_argv();
+
+    char *input;
+    char *input_file_path;
+    usize input_len;
+    if (argc == 0 || (strlen(argv[0]) == 1 && argv[0][0] == '-')) {
+        input_file_path = STDIN_FILE_NAME;
+        input = read_stdin(&input_len);
+    } else {
+        input_file_path = argv[0];
+        input = read_file(input_file_path, &input_len);
+    }
+
+    if (!input) {
+        usage(stderr);
+        fprintf(stderr, "ERROR: failed to read from %s\n", input_file_path);
+        exit(1);
+    }
 
     Lexer l = {0};
-    lexer_init(&l, "test", test, sizeof(test));
+    lexer_init(&l, input_file_path, input, input_len);
+
+    if (*lex) {
+        Token t;
+
+        do {
+            t = lexer_next_token(&l);
+            printf("%s: %.*s at %u:%u in %s\n", tt_str[t.type], TOKEN_FMT(t),
+                   t.loc.line, t.loc.col, t.loc.input_file_path);
+        } while (t.type != TOKEN_TYPE_EOF);
+        exit(0);
+    }
 
     Compiler c = {0};
     compiler_init(&c, &l);
@@ -839,6 +953,8 @@ int main(void) {
         fprintf(stderr, "%s:%u:%u: error: %s\n", loc->input_file_path, loc->line, loc->col, c.err_msg);
         return 1;
     }
+
+    free(input);
 
     return 0;
 }
