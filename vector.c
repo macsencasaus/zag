@@ -20,6 +20,9 @@
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
+#define CHECK(__expr) \
+    if (!(__expr)) return false
+
 #define SB_IMPLEMENTATION
 #include "sb.h"
 
@@ -553,8 +556,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     } break;
     case TOKEN_TYPE_IDENT: {
         const Var *var;
-        if (!(var = find_var_far(c, c->cur_token.literal, c->cur_token.length)))
-            return false;
+        CHECK(var = find_var_far(c, c->cur_token.literal, c->cur_token.length));
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
             .var = *var,
@@ -615,8 +617,7 @@ bool compile_ident_stmt(Compiler *c) {
                 next_token(c);
 
                 Value arg;
-                if (!compile_expr(c, &arg, NULL))
-                    return false;
+                CHECK(compile_expr(c, &arg, NULL));
 
                 if (!arg.type && !coerce_constant_type(&arg, decl_type)) {
                     compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
@@ -635,8 +636,7 @@ bool compile_ident_stmt(Compiler *c) {
             }
         } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
-        if (!expect_peek(c, TOKEN_TYPE_SEMICOLON))
-            return false;
+        CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
 
         return true;
     } break;
@@ -663,10 +663,7 @@ bool compile_stmt(Compiler *c) {
 
 bool compile_block(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_RBRACE)) {
-        if (!compile_stmt(c)) {
-            return false;
-        }
-
+        CHECK(compile_stmt(c));
         // The compiler ends on the last token of the statement.
         // Must be advanced forward by one to start at the next statement.
         next_token(c);
@@ -681,15 +678,11 @@ bool compile_program(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_EOF)) {
         switch (c->cur_token.type) {
         case TOKEN_TYPE_IDENT: {
-            if (!compile_ident_stmt(c)) {
-                return false;
-            }
+            CHECK(compile_ident_stmt(c));
         } break;
 
         case TOKEN_TYPE_FN: {
-            if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
-                return false;
-            }
+            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
             Func func = {0};
 
@@ -700,28 +693,20 @@ bool compile_program(Compiler *c) {
                 return false;
             }
 
-            if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
-                return false;
-            }
+            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
             Token name = c->cur_token;
 
-            if (!expect_peek(c, TOKEN_TYPE_LPAREN)) {
-                return false;
-            }
+            CHECK(expect_peek(c, TOKEN_TYPE_LPAREN));
 
             if (peek_tok_is(c, TOKEN_TYPE_RPAREN)) {
                 next_token(c);
             } else {
                 do {
-                    if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
-                        return false;
-                    }
+                    CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
                     const Type *param_type = lookup_type(c, &c->cur_token);
 
-                    if (!expect_peek(c, TOKEN_TYPE_IDENT)) {
-                        return false;
-                    }
+                    CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
                     Token param_token = c->cur_token;
 
                     for (usize i = 0; i < func.params.size; ++i) {
@@ -736,9 +721,7 @@ bool compile_program(Compiler *c) {
                     da_append(&func.params, ((Func_Param){param_token.literal, param_token.length, param_type}));
                 } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
-                if (!expect_peek(c, TOKEN_TYPE_RPAREN)) {
-                    return false;
-                }
+                CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
             }
 
             bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);
@@ -782,9 +765,7 @@ bool compile_program(Compiler *c) {
                 return true;
             }
 
-            if (!expect_peek(c, TOKEN_TYPE_LBRACE)) {
-                return false;
-            }
+            CHECK(expect_peek(c, TOKEN_TYPE_LBRACE));
 
             push_scope(c);
 
@@ -800,9 +781,7 @@ bool compile_program(Compiler *c) {
             Op_Buf *cur_scope_ops = c->ops;
             c->ops = &existing_func->ops;
 
-            if (!compile_block(c)) {
-                return false;
-            }
+            CHECK(compile_block(c));
 
             c->ops = cur_scope_ops;
 
