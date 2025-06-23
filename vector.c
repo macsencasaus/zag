@@ -368,21 +368,16 @@ typedef struct {
 #define OP_BINOP(__op, __lhs, __rhs) \
     ((Op){.type = OP_TYPE_BINOP, .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
 
-DYNAMIC_ARRAY_TEMPLATE(Op_Buf, Op);
-DYNAMIC_ARRAY_TEMPLATE(Scope_Buf, String_Hash_Table);
-
 typedef struct {
     sv name;
     const Type *type;
 } Func_Param;
 
-DYNAMIC_ARRAY_TEMPLATE(Param_Array, Func_Param);
-
 typedef struct {
     sv name;
     const Type *return_type;
-    Param_Array params;
-    Op_Buf ops;
+    Dynamic_Array(Func_Param) params;
+    Dynamic_Array(Op) ops;
 } Func;
 
 typedef struct {
@@ -396,9 +391,9 @@ typedef struct {
     String_Hash_Table types;
 
     // array of string hash tables
-    Scope_Buf vars;
+    Dynamic_Array(String_Hash_Table) vars;
     usize scope;
-    Op_Buf *ops;
+    Dynamic_Array(Op) *ops;
 
     Dynamic_Array(Func) funcs;
 
@@ -788,7 +783,7 @@ bool compile_program(Compiler *c) {
 
             push_scope(c);
 
-            Param_Array *func_params = &existing_func->params;
+            Dynamic_Array(Func_Param) *func_params = &existing_func->params;
 
             for (usize i = 0; i < func_params->size; ++i) {
                 const Func_Param *param = func_params->store + i;
@@ -797,7 +792,7 @@ bool compile_program(Compiler *c) {
                 assert(declare_var(c, &param->name, stack_index) != NULL);
             }
 
-            Op_Buf *cur_scope_ops = c->ops;
+            Dynamic_Array(Op) *cur_scope_ops = c->ops;
             c->ops = &existing_func->ops;
 
             CHECK(compile_block(c));
