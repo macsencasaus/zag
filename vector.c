@@ -26,6 +26,11 @@
 #define SB_IMPLEMENTATION
 #include "sb.h"
 
+typedef String_View sv;
+
+#define SV_SPREAD(__sv) (__sv)->store, (__sv)->len
+#define SV_FMT(__sv) (int)((__sv)->len), (__sv)->store
+
 #define SHT_IMPLEMENTATION
 #include "sht.h"
 
@@ -90,14 +95,17 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
 typedef struct {
     Token_Type type;
 
-    const char *literal;
-    usize length;
+    // literal
+    sv lit;
 
     Location loc;
 } Token;
 
+#define TOKEN_FMT(t) SV_FMT(&(t)->lit)
+#define CUR_TOKEN_FMT(c) TOKEN_FMT(&(c)->cur_token)
+
 void inspect_token(const Token *token) {
-    printf("TOKEN Type: %13s, %.*s\n", tt_str[token->type], (int)token->length, token->literal);
+    printf("TOKEN Type: %13s, %.*s\n", tt_str[token->type], TOKEN_FMT(token));
 }
 
 typedef struct {
@@ -179,8 +187,10 @@ Token lexer_next_token(Lexer *l) {
     }
 
     Token tok = {
-        .literal = l->input + l->pos,
-        .length = 1,
+        .lit = {
+            .store = l->input + l->pos,
+            .len = 1,
+        },
         .loc = l->loc,
     };
 
@@ -225,13 +235,13 @@ Token lexer_next_token(Lexer *l) {
         if (is_digit(l->ch)) {
             read_char(l);
             for (; is_digit(l->ch); read_char(l));
-            tok.length = (l->input + l->pos) - tok.literal;
+            tok.lit.len = (l->input + l->pos) - tok.lit.store;
             tok.type = TOKEN_TYPE_INT_LITERAL;
         } else if (valid_ident_char(l->ch)) {
             read_char(l);
             for (; valid_ident_char(l->ch) || is_digit(l->ch); read_char(l));
-            tok.length = (l->input + l->pos) - tok.literal;
-            tok.type = lookup_keyword(tok.literal, tok.length);
+            tok.lit.len = (l->input + l->pos) - tok.lit.store;
+            tok.type = lookup_keyword(tok.lit.store, tok.lit.len);
         } else {
             tok.type = TOKEN_TYPE_ILLEGAL;
         }
@@ -362,8 +372,7 @@ DYNAMIC_ARRAY_TEMPLATE(Op_Buf, Op);
 DYNAMIC_ARRAY_TEMPLATE(Scope_Buf, String_Hash_Table);
 
 typedef struct {
-    const char *name;
-    usize n;
+    sv name;
     const Type *type;
 } Func_Param;
 
@@ -435,9 +444,6 @@ INLINE void unexpected_token(Compiler *p) {
     compiler_error(p, &p->cur_token.loc, "Unexpected token %s", tt_str[p->cur_token.type]);
 }
 
-#define TOKEN_FMT(t) (int)(t).length, (t).literal
-#define CUR_TOKEN_FMT(c) TOKEN_FMT((c)->cur_token)
-
 void compiler_init(Compiler *c, Lexer *l) {
     *c = (Compiler){
         .l = l,
@@ -463,32 +469,32 @@ void compiler_init(Compiler *c, Lexer *l) {
 
 INLINE const Type *lookup_type(const Compiler *c, const Token *token) {
     assert(token->type == TOKEN_TYPE_IDENT);
-    return sht_try_get(&c->types, token->literal, token->length);
+    return sht_try_get(&c->types, SV_SPREAD(&token->lit));
 }
 
-Var *find_scoped_var(const Compiler *c, usize scope, const char *name, usize n) {
+Var *find_scoped_var(const Compiler *c, usize scope, const sv *name) {
     const String_Hash_Table *scope_vars = c->vars.store + scope;
-    return (Var *)sht_try_get(scope_vars, name, n);
+    return (Var *)sht_try_get(scope_vars, name->store, name->len);
 }
 
-INLINE Var *find_var_near(const Compiler *c, const char *name, usize n) {
-    return find_scoped_var(c, c->vars.size - 1, name, n);
+INLINE Var *find_var_near(const Compiler *c, const sv *name) {
+    return find_scoped_var(c, c->vars.size - 1, name);
 }
 
-Var *find_var_far(const Compiler *c, const char *name, usize n) {
+Var *find_var_far(const Compiler *c, const sv *name) {
     Var *v;
     for (usize i = c->vars.size - 1; i >= 0; --i) {
-        if ((v = find_scoped_var(c, i, name, n)) != NULL) {
+        if ((v = find_scoped_var(c, i, name)) != NULL) {
             return v;
         }
     }
     return NULL;
 }
 
-INLINE const Var *declare_var(Compiler *c, const char *name, usize n, usize stack_index) {
-    if (find_var_near(c, name, n) != NULL)
+INLINE const Var *declare_var(Compiler *c, const sv *name, usize stack_index) {
+    if (find_var_near(c, name) != NULL)
         return NULL;
-    Var *var = sht_get(c->vars.store + c->vars.size - 1, name, n);
+    Var *var = sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name));
     *var = (Var){stack_index};
     return var;
 }
@@ -549,14 +555,14 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     case TOKEN_TYPE_INT_LITERAL: {
         *val = (Value){
             .value_type = VALUE_TYPE_INT_LITERAL,
-            .int_value = atoll(c->cur_token.literal),
+            .int_value = atoll(c->cur_token.lit.store),
         };
         if (is_lvalue)
             *is_lvalue = false;
     } break;
     case TOKEN_TYPE_IDENT: {
         const Var *var;
-        CHECK(var = find_var_far(c, c->cur_token.literal, c->cur_token.length));
+        CHECK(var = find_var_far(c, &c->cur_token.lit));
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
             .var = *var,
@@ -607,7 +613,7 @@ bool compile_ident_stmt(Compiler *c) {
             next_token(c);
 
             const Token *token = &c->cur_token;
-            if (declare_var(c, token->literal, token->length, stack_index) == NULL) {
+            if (declare_var(c, &token->lit, stack_index) == NULL) {
                 compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
                 return false;
             }
@@ -711,48 +717,47 @@ bool compile_program(Compiler *c) {
 
                     for (usize i = 0; i < func.params.size; ++i) {
                         const Func_Param *param = func.params.store + i;
-                        if (param->n == param_token.length &&
-                            strncmp(param->name, param_token.literal, param->n) == 0) {
-                            compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(param_token));
+                        if (sveq(&param->name, &param_token.lit)) {
+                            compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(&param_token));
                             return false;
                         }
                     }
 
-                    da_append(&func.params, ((Func_Param){param_token.literal, param_token.length, param_type}));
+                    da_append(&func.params, ((Func_Param){param_token.lit, param_type}));
                 } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
                 CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
             }
 
             bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);
-            bool already_declared = sht_try_get(&c->funcs, name.literal, name.length) != NULL;
+            bool already_declared = sht_try_get(&c->funcs, SV_SPREAD(&name.lit)) != NULL;
             bool already_defined = false;
 
-            Func *existing_func = sht_get(&c->funcs, name.literal, name.length);
+            Func *existing_func = sht_get(&c->funcs, SV_SPREAD(&name.lit));
 
             if (already_declared)
                 already_defined = existing_func->ops.store == NULL;
 
             if (already_defined && !is_declaration) {
-                compiler_error(c, &name.loc, "Redefinition of function %.*s", TOKEN_FMT(name));
+                compiler_error(c, &name.loc, "Redefinition of function %.*s", TOKEN_FMT(&name));
                 return false;
             }
 
             if (already_declared) {
                 if (!strict_type_cmp(func.return_type, existing_func->return_type)) {
-                    compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
+                    compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                     return false;
                 }
 
                 if (func.params.size != existing_func->params.size) {
-                    compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
+                    compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                     return false;
                 }
 
                 usize n = func.params.size;
                 for (usize i = 0; i < n; ++i) {
                     if (!strict_type_cmp(func.params.store[i].type, existing_func->params.store[i].type)) {
-                        compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(name));
+                        compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                         return false;
                     }
                 }
@@ -775,7 +780,7 @@ bool compile_program(Compiler *c) {
                 const Func_Param *param = func_params->store + i;
 
                 usize stack_index = alloc_scoped_var(c, param->type);
-                assert(declare_var(c, param->name, param->n, stack_index) != NULL);
+                assert(declare_var(c, &param->name, stack_index) != NULL);
             }
 
             Op_Buf *cur_scope_ops = c->ops;
@@ -912,7 +917,7 @@ int main(int argc, char *argv[]) {
 
         do {
             t = lexer_next_token(&l);
-            printf("%s: %.*s at %u:%u in %s\n", tt_str[t.type], TOKEN_FMT(t),
+            printf("%s: %.*s at %u:%u in %s\n", tt_str[t.type], TOKEN_FMT(&t),
                    t.loc.line, t.loc.col, t.loc.input_file_path);
         } while (t.type != TOKEN_TYPE_EOF);
         exit(0);

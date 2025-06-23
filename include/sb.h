@@ -49,6 +49,11 @@ int sb_appendf(String_Builder *, const char *fmt, ...);
 
 #define sb_free(s) SB_FREE((s)->store)
 
+typedef struct {
+    const char *store;
+    size_t len;
+} String_View;
+
 #endif  // SB_H
 
 #ifdef SB_IMPLEMENTATION
@@ -105,6 +110,13 @@ int sb_vappendf(String_Builder *sb, const char *fmt, va_list vargs) {
 
     sb->size += n;
     return n;
+}
+
+bool sveq(const String_View *sv1, const String_View *sv2) {
+    if (sv1->len != sv2->len) {
+        return false;
+    }
+    return strncmp(sv1->store, sv2->store, sv1->len) == 0;
 }
 
 #endif
