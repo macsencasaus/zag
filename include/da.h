@@ -26,6 +26,13 @@
         __ty *store;                         \
     } __name
 
+#define Dynamic_Array(__ty) \
+    struct { \
+        size_t size; \
+        size_t capacity; \
+        __ty *store; \
+    }
+
 #define da_init(da, init_size)                                            \
     do {                                                                  \
         (da)->size = (init_size);                                         \

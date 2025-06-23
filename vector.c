@@ -379,6 +379,7 @@ typedef struct {
 DYNAMIC_ARRAY_TEMPLATE(Param_Array, Func_Param);
 
 typedef struct {
+    sv name;
     const Type *return_type;
     Param_Array params;
     Op_Buf ops;
@@ -399,7 +400,7 @@ typedef struct {
     usize scope;
     Op_Buf *ops;
 
-    String_Hash_Table funcs;
+    Dynamic_Array(Func) funcs;
 
     const char *err_msg;
     Location err_loc;
@@ -463,8 +464,6 @@ void compiler_init(Compiler *c, Lexer *l) {
 
     da_append(&c->vars, (String_Hash_Table){0});
     sht_init(&c->vars.store[0], sizeof(Var), 0);
-
-    sht_init(&c->funcs, sizeof(Func), 0);
 }
 
 INLINE const Type *lookup_type(const Compiler *c, const Token *token) {
@@ -487,6 +486,15 @@ Var *find_var_far(const Compiler *c, const sv *name) {
         if ((v = find_scoped_var(c, i, name)) != NULL) {
             return v;
         }
+    }
+    return NULL;
+}
+
+Func *find_func(const Compiler *c, const sv *func_name) {
+    for (usize i = 0; i < c->funcs.size; ++i) {
+        Func *func = c->funcs.store + i;
+        if (sveq(&func->name, func_name))
+            return func;
     }
     return NULL;
 }
@@ -702,6 +710,7 @@ bool compile_program(Compiler *c) {
             CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
             Token name = c->cur_token;
+            func.name = name.lit;
 
             CHECK(expect_peek(c, TOKEN_TYPE_LPAREN));
 
@@ -730,13 +739,18 @@ bool compile_program(Compiler *c) {
             }
 
             bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);
-            bool already_declared = sht_try_get(&c->funcs, SV_SPREAD(&name.lit)) != NULL;
+
+            Func *existing_func = find_func(c, &name.lit);
+
+            bool already_declared = existing_func != NULL;
             bool already_defined = false;
 
-            Func *existing_func = sht_get(&c->funcs, SV_SPREAD(&name.lit));
-
-            if (already_declared)
+            if (already_declared) {
                 already_defined = existing_func->ops.store == NULL;
+            } else {
+                da_append(&c->funcs, ((Func){.name = name.lit}));
+                existing_func = c->funcs.store + c->funcs.size - 1;
+            }
 
             if (already_defined && !is_declaration) {
                 compiler_error(c, &name.loc, "Redefinition of function %.*s", TOKEN_FMT(&name));
