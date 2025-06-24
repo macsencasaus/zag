@@ -28,6 +28,11 @@ void print_ir_op(const Op *op, FILE *out) {
         print_ir_val(&op->val, out);
         fprintf(out, "\n");
     } break;
+    case OP_TYPE_NEG: {
+        fprintf(out, "    %%s[%zu] = neg ", op->index);
+        print_ir_val(&op->val, out);
+        fprintf(out, "\n");
+    } break;
     default: UNIMPLEMENTED();
     }
 }

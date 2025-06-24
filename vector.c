@@ -271,6 +271,8 @@ typedef enum {
     TYPE_F64,
 } Builtin_Type_Id;
 
+#define DEFAULT_INT_LITERAL_TYPE_ID TYPE_I64
+
 typedef enum {
     FLAG_INT_SIGNED,
     FLAG_INT_UNSIGNED,
@@ -286,6 +288,8 @@ typedef struct {
     u8 alignment;
     Type_Flag flag : 2;
 } Type;
+
+static const Type *default_int_literal_type;
 
 INLINE bool strict_type_cmp(const Type *t1, const Type *t2) {
     return t1->id == t2->id;
@@ -315,6 +319,7 @@ static const Type builtin_types[] = {
 
 // TODO: add storage type
 typedef struct {
+    const Type *type;
     usize stack_index;
 } Var;
 
@@ -459,6 +464,8 @@ void compiler_init(Compiler *c, Lexer *l) {
     usize builtin_type_size = sizeof(builtin_types) / sizeof(Type);
     for (usize i = 0; i < builtin_type_size; ++i) {
         const Type *builtin = builtin_types + i;
+        if (builtin->id == DEFAULT_INT_LITERAL_TYPE_ID)
+            default_int_literal_type = builtin;
         Type *t = sht_get(&c->types, builtin->name, strlen(builtin->name));
         assert(t != NULL);
         memcpy(t, builtin, sizeof(Type));
@@ -501,11 +508,11 @@ Func *find_func(const Compiler *c, const sv *func_name) {
     return NULL;
 }
 
-INLINE const Var *declare_var(Compiler *c, const sv *name, usize stack_index) {
+INLINE const Var *declare_var(Compiler *c, const sv *name, usize stack_index, const Type *type) {
     if (find_var_near(c, name) != NULL)
         return NULL;
     Var *var = sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name));
-    *var = (Var){stack_index};
+    *var = (Var){.type = type, .stack_index = stack_index};
     return var;
 }
 
@@ -521,8 +528,11 @@ INLINE void pop_scoped_var(Compiler *c, const Type *type) {
     c->stack_index -= type->size;
 }
 
+INLINE bool is_constant(const Value *arg) {
+    return arg->value_type == VALUE_TYPE_INT_LITERAL;
+}
+
 INLINE bool coerce_constant_type(Value *arg, const Type *t) {
-    assert(arg->type == NULL);
     arg->type = t;
     return true;
 }
@@ -545,6 +555,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     case TOKEN_TYPE_INT_LITERAL: {
         *val = (Value){
             .value_type = VALUE_TYPE_INT_LITERAL,
+            .type = default_int_literal_type,
             .int_value = atoll(c->cur_token.lit.store),
         };
         if (is_lvalue)
@@ -555,6 +566,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         CHECK(var = find_var_far(c, &c->cur_token.lit));
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
+            .type = var->type,
             .var = *var,
         };
         if (is_lvalue)
@@ -606,7 +618,7 @@ bool compile_ident_stmt(Compiler *c) {
             next_token(c);
 
             const Token *token = &c->cur_token;
-            if (declare_var(c, &token->lit, stack_index) == NULL) {
+            if (declare_var(c, &token->lit, stack_index, decl_type) == NULL) {
                 compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
                 return false;
             }
@@ -618,7 +630,7 @@ bool compile_ident_stmt(Compiler *c) {
                 Value arg;
                 CHECK(compile_expr(c, &arg, NULL));
 
-                if (!arg.type && !coerce_constant_type(&arg, decl_type)) {
+                if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
                     compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
                                    decl_type->name);
                     return false;
@@ -653,7 +665,7 @@ bool compile_return_stmt(Compiler *c) {
     CHECK(compile_expr(c, &val, NULL));
     const Type *ret_type = c->func->return_type;
 
-    if (!val.type && !coerce_constant_type(&val, ret_type)) {
+    if (is_constant(&val) && !coerce_constant_type(&val, ret_type)) {
         compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
                        ret_type->name);
         return false;
@@ -805,7 +817,7 @@ bool compile_program(Compiler *c) {
                 const Func_Param *param = func_params->store + i;
 
                 usize stack_index = alloc_scoped_var(c, param->type);
-                assert(declare_var(c, &param->name, stack_index) != NULL);
+                assert(declare_var(c, &param->name, stack_index, param->type) != NULL);
             }
 
             CHECK(compile_block(c));
