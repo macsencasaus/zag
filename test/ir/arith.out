@@ -1,0 +1,24 @@
+; V3 Readable Intermediate Representation
+; Functions contain two fields:
+; - The number of parameters
+; - Maximum stack size (in bytes)
+
+square(1,8):
+    %s[4] = mul i32 %s[0], i32 %s[0]
+    ret i32 %s[4]
+
+sum(3,20):
+    %s[12] = add i32 %s[0], i32 %s[4]
+    %s[16] = add i32 %s[12], i32 %s[8]
+    ret i32 %s[16]
+
+prec(0,32):
+    %s[8] = mul i64 2, i64 3
+    %s[8] = add i64 1, i64 %s[8]
+    %s[0] = i64 %s[8]
+    %s[16] = div i64 1, i64 2
+    %s[24] = sub i64 %s[16], i64 3
+    %s[8] = i64 %s[24]
+    %s[16] = mod i64 %s[0], i64 %s[8]
+    ret i64 %s[16]
+

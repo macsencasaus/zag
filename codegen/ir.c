@@ -16,6 +16,14 @@ void print_ir_val(const Value *val, FILE *out) {
     }
 }
 
+static char *binop_inst_lookup[TOKEN_TYPE_COUNT] = {
+    [TOKEN_TYPE_PLUS] = "add",
+    [TOKEN_TYPE_MINUS] = "sub",
+    [TOKEN_TYPE_ASTERISK] = "mul",
+    [TOKEN_TYPE_SLASH] = "div",
+    [TOKEN_TYPE_PERCENT] = "mod",
+};
+
 void print_ir_op(const Op *op, FILE *out) {
     switch (op->type) {
     case OP_TYPE_STORE: {
@@ -31,6 +39,13 @@ void print_ir_op(const Op *op, FILE *out) {
     case OP_TYPE_NEG: {
         fprintf(out, "    %%s[%zu] = neg ", op->index);
         print_ir_val(&op->val, out);
+        fprintf(out, "\n");
+    } break;
+    case OP_TYPE_BINOP: {
+        fprintf(out, "    %%s[%zu] = %s ", op->index, binop_inst_lookup[op->op]);
+        print_ir_val(&op->lhs, out);
+        fprintf(out, ", ");
+        print_ir_val(&op->rhs, out);
         fprintf(out, "\n");
     } break;
     default: UNIMPLEMENTED();

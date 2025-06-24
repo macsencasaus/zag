@@ -61,6 +61,7 @@ typedef enum {
     TOKEN_TYPE_MINUS,
     TOKEN_TYPE_ASTERISK,
     TOKEN_TYPE_SLASH,
+    TOKEN_TYPE_PERCENT,
 
     TOKEN_TYPE_COMMA,
     TOKEN_TYPE_SEMICOLON,
@@ -87,6 +88,7 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_MINUS] = "'-'",
     [TOKEN_TYPE_ASTERISK] = "'*'",
     [TOKEN_TYPE_SLASH] = "'/'",
+    [TOKEN_TYPE_PERCENT] = "'%'",
     [TOKEN_TYPE_COMMA] = "','",
     [TOKEN_TYPE_SEMICOLON] = "';'",
     [TOKEN_TYPE_ASSIGN] = "'='",
@@ -220,6 +222,9 @@ Token lexer_next_token(Lexer *l) {
     } break;
     case '/': {
         tok.type = TOKEN_TYPE_SLASH;
+    } break;
+    case '%': {
+        tok.type = TOKEN_TYPE_PERCENT;
     } break;
     case '=': {
         tok.type = TOKEN_TYPE_ASSIGN;
@@ -362,7 +367,7 @@ typedef struct {
 
         // binary
         struct {
-            Token op;
+            Token_Type op;
             Value lhs;
             Value rhs;
         };
@@ -377,6 +382,21 @@ typedef struct {
     ((Op){.type = OP_TYPE_BINOP, __index = (__index), .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
 #define OP_RET(__val) \
     ((Op){.type = OP_TYPE_RET, .val = (__val)})
+
+typedef enum {
+    PREC_LOWEST,
+    PREC_ADD,
+    PREC_MULT,
+    PREC_PREFIX,
+} Prec;
+
+static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
+    [TOKEN_TYPE_PLUS] = PREC_ADD,
+    [TOKEN_TYPE_MINUS] = PREC_ADD,
+    [TOKEN_TYPE_ASTERISK] = PREC_MULT,
+    [TOKEN_TYPE_SLASH] = PREC_MULT,
+    [TOKEN_TYPE_PERCENT] = PREC_MULT,
+};
 
 typedef struct {
     sv name;
@@ -480,6 +500,10 @@ INLINE const Type *lookup_type(const Compiler *c, const Token *token) {
     return sht_try_get(&c->types, SV_SPREAD(&token->lit));
 }
 
+INLINE Prec peek_prec(const Compiler *c) {
+    return prec_lookup[c->peek_token.type];
+}
+
 Var *find_scoped_var(const Compiler *c, usize scope, const sv *name) {
     const String_Hash_Table *scope_vars = c->vars.store + scope;
     return (Var *)sht_try_get(scope_vars, name->store, name->len);
@@ -550,7 +574,7 @@ INLINE void pop_scope(Compiler *c) {
 
 typedef bool Compile_Stmt_Fn(Compiler *);
 
-bool compile_expr(Compiler *c, Value *val, bool *is_lvalue);
+bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue);
 
 bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     bool lval;
@@ -577,7 +601,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         next_token(c);
 
         Value arg;
-        compile_primary_expr(c, &arg, NULL);
+        compile_expr(c, PREC_PREFIX, &arg, NULL);
         usize result = alloc_scoped_var(c, arg.type);
         da_append(&c->func->ops, OP_NEG(result, arg));
 
@@ -585,12 +609,11 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
             .value_type = VALUE_TYPE_VAR,
             .type = arg.type,
             .var = (Var){
+                .type = arg.type,
                 .stack_index = result,
             }};
 
         lval = false;
-
-        pop_scoped_var(c, arg.type);
     } break;
     default: {
         UNIMPLEMENTED();
@@ -607,7 +630,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         next_token(c);
 
         Value arg;
-        CHECK(compile_expr(c, &arg, NULL));
+        CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
 
         da_append(&c->func->ops, OP_STORE(val->var.stack_index, arg));
     } break;
@@ -621,8 +644,38 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     return true;
 }
 
-bool compile_expr(Compiler *c, Value *val, bool *is_lvalue) {
-    return compile_primary_expr(c, val, is_lvalue);
+bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
+    usize saved_stack_index = c->stack_index;
+
+    CHECK(compile_primary_expr(c, val, is_lvalue));
+
+    while (peek_prec(c) > prec) {
+        next_token(c);
+        Token_Type op = c->cur_token.type;
+        next_token(c);
+
+        Value rhs;
+        compile_expr(c, prec_lookup[op], &rhs, NULL);
+
+        usize temp = alloc_scoped_var(c, val->type);
+        da_append(&c->func->ops, OP_BINOP(temp, op, *val, rhs));
+
+        *val = (Value){
+            .value_type = VALUE_TYPE_VAR,
+            .type = val->type,
+            .var = (Var){
+                .type = val->type,
+                .stack_index = temp,
+            },
+        };
+
+        if (is_lvalue)
+            *is_lvalue = false;
+    }
+
+    c->stack_index = saved_stack_index;
+
+    return true;
 }
 
 bool compile_ident_stmt(Compiler *c) {
@@ -650,7 +703,7 @@ bool compile_ident_stmt(Compiler *c) {
                 next_token(c);
 
                 Value arg;
-                CHECK(compile_expr(c, &arg, NULL));
+                CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
 
                 if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
                     compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
@@ -674,7 +727,7 @@ bool compile_ident_stmt(Compiler *c) {
 
     default: {
         Value _;
-        CHECK(compile_expr(c, &_, NULL));
+        CHECK(compile_expr(c, PREC_LOWEST, &_, NULL));
         CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     }
     }
@@ -684,7 +737,7 @@ bool compile_ident_stmt(Compiler *c) {
 bool compile_return_stmt(Compiler *c) {
     next_token(c);
     Value val;
-    CHECK(compile_expr(c, &val, NULL));
+    CHECK(compile_expr(c, PREC_LOWEST, &val, NULL));
     const Type *ret_type = c->func->return_type;
 
     if (is_constant(&val) && !coerce_constant_type(&val, ret_type)) {
