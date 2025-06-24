@@ -1,3 +1,3 @@
 #!/bin/bash
 
-clang -Iinclude -Wno-incompatible-pointer-types -ggdb vector.c -o vector
+clang -Iinclude -Icodegen -Wno-incompatible-pointer-types -ggdb vector.c -o vector

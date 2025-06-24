@@ -14,7 +14,7 @@ identifier: i8 at 5:23 in lex/in.v3
 identifier: argv at 5:28 in lex/in.v3
 ')': ) at 5:32 in lex/in.v3
 '{': { at 5:34 in lex/in.v3
-identifier: eturn at 6:6 in lex/in.v3
+return: return at 6:5 in lex/in.v3
 int literal: 0 at 6:12 in lex/in.v3
 ';': ; at 6:13 in lex/in.v3
 '}': } at 7:1 in lex/in.v3

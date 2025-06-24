@@ -1,2 +1,3 @@
 -Iinclude
+-Icodegen
 -Wno-incompatible-pointer-types

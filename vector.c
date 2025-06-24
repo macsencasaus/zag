@@ -1,3 +1,5 @@
+#define VECTOR_C
+
 #include <stdio.h>
 
 #include "da.h"
@@ -150,7 +152,7 @@ INLINE void lexer_init(Lexer *l, const char *input_file_path, const char *input,
     read_char(l);
 }
 
-INLINE bool is_whitespace(char ch) { return ch == ' ' || ch == '\n' || ch == '\t' || ch == 'r'; }
+INLINE bool is_whitespace(char ch) { return ch == ' ' || ch == '\n' || ch == '\t' || ch == '\r'; }
 INLINE bool is_digit(char ch) { return ch >= '0' && ch <= '9'; }
 INLINE bool valid_ident_char(char ch) { return (ch >= 'A' && ch <= 'Z') ||
                                                (ch >= 'a' && ch <= 'z') ||
@@ -338,6 +340,7 @@ typedef enum {
     OP_TYPE_STORE,
     OP_TYPE_NEG,
     OP_TYPE_BINOP,
+    OP_TYPE_RET,
 
     OP_TYPE_COUNT,
 } Op_Type;
@@ -363,10 +366,12 @@ typedef struct {
 
 #define OP_STORE(__index, __val) \
     ((Op){.type = OP_TYPE_STORE, .index = (__index), .val = (__val)})
-#define OP_NEG(__val) \
-    ((Op){.type = OP_TYPE_NEG, .val = (__val)})
-#define OP_BINOP(__op, __lhs, __rhs) \
-    ((Op){.type = OP_TYPE_BINOP, .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
+#define OP_NEG(__index, __val) \
+    ((Op){.type = OP_TYPE_NEG, .index = (__index), .val = (__val)})
+#define OP_BINOP(__index, __op, __lhs, __rhs) \
+    ((Op){.type = OP_TYPE_BINOP, __index = (__index), .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
+#define OP_RET(__val) \
+    ((Op){.type = OP_TYPE_RET, .val = (__val)})
 
 typedef struct {
     sv name;
@@ -378,6 +383,7 @@ typedef struct {
     const Type *return_type;
     Dynamic_Array(Func_Param) params;
     Dynamic_Array(Op) ops;
+    usize stack_size;
 } Func;
 
 typedef struct {
@@ -390,10 +396,11 @@ typedef struct {
 
     String_Hash_Table types;
 
-    // array of string hash tables
     Dynamic_Array(String_Hash_Table) vars;
     usize scope;
-    Dynamic_Array(Op) *ops;
+
+    // current func compiler is working on
+    Func *func;
 
     Dynamic_Array(Func) funcs;
 
@@ -505,7 +512,13 @@ INLINE const Var *declare_var(Compiler *c, const sv *name, usize stack_index) {
 INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
     usize frame = c->stack_index;
     c->stack_index += type->size;
+    c->func->stack_size = MAX(c->stack_index, c->func->stack_size);
     return frame;
+}
+
+INLINE void pop_scoped_var(Compiler *c, const Type *type) {
+    assert(c->stack_index >= type->size);
+    c->stack_index -= type->size;
 }
 
 INLINE bool coerce_constant_type(Value *arg, const Type *t) {
@@ -526,32 +539,6 @@ INLINE void pop_scope(Compiler *c) {
 }
 
 typedef bool Compile_Stmt_Fn(Compiler *);
-
-void push_opcode(Compiler *c, Op_Type op_type, ...) {
-    va_list vargs;
-    va_start(vargs, op_type);
-
-    switch (op_type) {
-    case OP_TYPE_STORE: {
-        usize stack_index = va_arg(vargs, usize);
-        Value arg = va_arg(vargs, Value);
-        da_append(c->ops, OP_STORE(stack_index, arg));
-    } break;
-    case OP_TYPE_NEG: {
-        Value arg = va_arg(vargs, Value);
-        da_append(c->ops, OP_NEG(arg));
-    } break;
-    case OP_TYPE_BINOP: {
-        Token op = va_arg(vargs, Token);
-        Value lhs = va_arg(vargs, Value);
-        Value rhs = va_arg(vargs, Value);
-        da_append(c->ops, OP_BINOP(op, lhs, rhs));
-    } break;
-    default: UNIMPLEMENTED();
-    }
-
-    va_end(vargs);
-}
 
 bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     switch (c->cur_token.type) {
@@ -579,6 +566,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         Value arg;
         compile_primary_expr(c, &arg, NULL);
         usize result = alloc_scoped_var(c, arg.type);
+        da_append(&c->func->ops, OP_NEG(result, arg));
 
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
@@ -589,6 +577,8 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
 
         if (is_lvalue)
             *is_lvalue = false;
+
+        pop_scoped_var(c, arg.type);
     } break;
     default: {
         UNIMPLEMENTED();
@@ -635,13 +625,13 @@ bool compile_ident_stmt(Compiler *c) {
                 }
 
                 const Type *expr_type = arg.type;
-                if (strict_type_cmp(expr_type, decl_type)) {
+                if (!strict_type_cmp(expr_type, decl_type)) {
                     compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
                                    expr_type->name, decl_type->name);
                     return false;
                 }
 
-                push_opcode(c, OP_TYPE_STORE, stack_index, arg);
+                da_append(&c->func->ops, OP_STORE(stack_index, arg));
             }
         } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
@@ -657,28 +647,53 @@ bool compile_ident_stmt(Compiler *c) {
     }
 }
 
+bool compile_return_stmt(Compiler *c) {
+    next_token(c);
+    Value val;
+    CHECK(compile_expr(c, &val, NULL));
+    const Type *ret_type = c->func->return_type;
+
+    if (!val.type && !coerce_constant_type(&val, ret_type)) {
+        compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
+                       ret_type->name);
+        return false;
+    }
+
+    const Type *expr_type = val.type;
+    if (!strict_type_cmp(expr_type, ret_type)) {
+        compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
+                       expr_type->name, ret_type->name);
+        return false;
+    }
+
+    CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
+
+    da_append(&c->func->ops, OP_RET(val));
+
+    return true;
+}
+
 static Compile_Stmt_Fn *compile_stmt_fns[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_IDENT] = compile_ident_stmt,
+    [TOKEN_TYPE_RETURN] = compile_return_stmt,
 };
 
 bool compile_stmt(Compiler *c) {
     Compile_Stmt_Fn *compile_fn = compile_stmt_fns[c->cur_token.type];
     if (compile_fn == NULL) {
-        unexpected_token(c);
-        return false;
+        UNIMPLEMENTED();
     }
     return compile_fn(c);
 }
 
 bool compile_block(Compiler *c) {
+    next_token(c);
     while (!cur_tok_is(c, TOKEN_TYPE_RBRACE)) {
         CHECK(compile_stmt(c));
         // The compiler ends on the last token of the statement.
         // Must be advanced forward by one to start at the next statement.
         next_token(c);
     }
-
-    next_token(c);
 
     return true;
 }
@@ -782,6 +797,7 @@ bool compile_program(Compiler *c) {
             CHECK(expect_peek(c, TOKEN_TYPE_LBRACE));
 
             push_scope(c);
+            c->func = existing_func;
 
             Dynamic_Array(Func_Param) *func_params = &existing_func->params;
 
@@ -792,13 +808,9 @@ bool compile_program(Compiler *c) {
                 assert(declare_var(c, &param->name, stack_index) != NULL);
             }
 
-            Dynamic_Array(Op) *cur_scope_ops = c->ops;
-            c->ops = &existing_func->ops;
-
             CHECK(compile_block(c));
 
-            c->ops = cur_scope_ops;
-
+            c->stack_index = 0;
             pop_scope(c);
         } break;
 
@@ -814,6 +826,10 @@ bool compile_program(Compiler *c) {
     }
     return true;
 }
+
+#ifndef IR_C
+#include "ir.c"
+#endif
 
 static char *program_name;
 
@@ -915,7 +931,7 @@ int main(int argc, char *argv[]) {
     if (!input) {
         usage(stderr);
         fprintf(stderr, "ERROR: failed to read from %s\n", input_file_path);
-        exit(1);
+        return 0;
     }
 
     Lexer l = {0};
@@ -929,7 +945,7 @@ int main(int argc, char *argv[]) {
             printf("%s: %.*s at %u:%u in %s\n", tt_str[t.type], TOKEN_FMT(&t),
                    t.loc.line, t.loc.col, t.loc.input_file_path);
         } while (t.type != TOKEN_TYPE_EOF);
-        exit(0);
+        return 0;
     }
 
     Compiler c = {0};
@@ -939,6 +955,11 @@ int main(int argc, char *argv[]) {
         const Location *loc = &c.err_loc;
         fprintf(stderr, "%s:%u:%u: error: %s\n", loc->input_file_path, loc->line, loc->col, c.err_msg);
         return 1;
+    }
+
+    if (*emit_ir) {
+        print_ir_program(&c, stdout);
+        return 0;
     }
 
     free(input);

@@ -1,0 +1,13 @@
+// RUN: %vector -emit-ir %s
+
+fn i32 main() {
+    i32 x = 2;
+    i32 y = 1, z = 3;
+    i64 aa = 3;
+    i64 bb = 0;
+    return 0;
+}
+
+fn i32 id(i32 x) {
+    return x;
+}
