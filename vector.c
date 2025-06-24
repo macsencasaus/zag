@@ -461,7 +461,7 @@ INLINE void next_token(Compiler *p) {
 
 INLINE bool cur_tok_is(const Compiler *p, Token_Type tt) { return p->cur_token.type == tt; }
 INLINE bool peek_tok_is(const Compiler *p, Token_Type tt) { return p->peek_token.type == tt; }
-INLINE bool next_if_peek_tok_is(Compiler *p, Token_Type tt) {
+INLINE bool try_peek_tok(Compiler *p, Token_Type tt) {
     if (peek_tok_is(p, tt)) {
         next_token(p);
         return true;
@@ -569,6 +569,7 @@ INLINE bool is_constant(const Value *arg) {
 }
 
 INLINE bool coerce_constant_type(Value *arg, const Type *t) {
+    if (!t) return true;
     arg->type = t;
     return true;
 }
@@ -695,21 +696,18 @@ bool compile_var_stmt(Compiler *c) {
         CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
         Token name = c->cur_token;
 
-        CHECK(expect_peek(c, TOKEN_TYPE_COLON));
-        CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
+        const Type *decl_type = NULL;
+        if (try_peek_tok(c, TOKEN_TYPE_COLON)) {
+            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
-        const Type *decl_type = lookup_type(c, &c->cur_token);
-        if (decl_type == NULL) {
-            compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", CUR_TOKEN_FMT(c));
-            return false;
+            decl_type = lookup_type(c, &c->cur_token);
+            if (decl_type == NULL) {
+                compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", CUR_TOKEN_FMT(c));
+                return false;
+            }
         }
 
-        usize stack_index = alloc_scoped_var(c, decl_type);
-
-        if (declare_var(c, &name.lit, stack_index, decl_type) == NULL) {
-            compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
-            return false;
-        }
+        usize stack_index;
 
         if (peek_tok_is(c, TOKEN_TYPE_ASSIGN)) {
             next_token(c);
@@ -724,16 +722,29 @@ bool compile_var_stmt(Compiler *c) {
                 return false;
             }
 
-            const Type *expr_type = arg.type;
-            if (!strict_type_cmp(expr_type, decl_type)) {
+            if (decl_type && !strict_type_cmp(arg.type, decl_type)) {
                 compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
-                               expr_type->name, decl_type->name);
+                               arg.type->name, decl_type->name);
                 return false;
+            } else {
+                decl_type = arg.type;
             }
 
+            stack_index = alloc_scoped_var(c, decl_type);
             da_append(&c->func->ops, OP_STORE(stack_index, arg));
+        } else {
+            if (!decl_type) {
+                compiler_error(c, &c->cur_token.loc, "Variable declaration must have type");
+                return false;
+            }
+            stack_index = alloc_scoped_var(c, decl_type);
         }
-    } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
+
+        if (declare_var(c, &name.lit, stack_index, decl_type) == NULL) {
+            compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
+            return false;
+        }
+    } while (try_peek_tok(c, TOKEN_TYPE_COMMA));
 
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     return true;
@@ -839,7 +850,7 @@ bool compile_program(Compiler *c) {
                     }
 
                     da_append(&func.params, ((Func_Param){param_token.lit, param_type}));
-                } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
+                } while (try_peek_tok(c, TOKEN_TYPE_COMMA));
 
                 CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
             }

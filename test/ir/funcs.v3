@@ -1,13 +1,14 @@
 // RUN: %vector -emit-ir %s
 
-fn i32 main() {
-    i32 x = 2;
-    i32 y = 1, z = 3;
-    i64 aa = 3;
-    i64 bb = 0;
+fn main(): i32 {
+    var x: i32 = 2;
+    var y: i32 = 1, z: i32 = 3;
+    var aa = 3;
+    var bb = 0;
+    var zz = 1, yy = 10;
     return 0;
 }
 
-fn i32 id(i32 x) {
-    return x;
+fn id(x: i64): i64 {
+    return x; 
 }
