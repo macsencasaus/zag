@@ -550,7 +550,10 @@ INLINE void pop_scope(Compiler *c) {
 
 typedef bool Compile_Stmt_Fn(Compiler *);
 
+bool compile_expr(Compiler *c, Value *val, bool *is_lvalue);
+
 bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
+    bool lval;
     switch (c->cur_token.type) {
     case TOKEN_TYPE_INT_LITERAL: {
         *val = (Value){
@@ -558,8 +561,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
             .type = default_int_literal_type,
             .int_value = atoll(c->cur_token.lit.store),
         };
-        if (is_lvalue)
-            *is_lvalue = false;
+        lval = false;
     } break;
     case TOKEN_TYPE_IDENT: {
         const Var *var;
@@ -569,8 +571,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
             .type = var->type,
             .var = *var,
         };
-        if (is_lvalue)
-            *is_lvalue = true;
+        lval = true;
     } break;
     case TOKEN_TYPE_MINUS: {
         next_token(c);
@@ -587,8 +588,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
                 .stack_index = result,
             }};
 
-        if (is_lvalue)
-            *is_lvalue = false;
+        lval = false;
 
         pop_scoped_var(c, arg.type);
     } break;
@@ -596,6 +596,28 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         UNIMPLEMENTED();
     }
     }
+
+    switch (c->peek_token.type) {
+    case TOKEN_TYPE_ASSIGN: {
+        if (!lval) {
+            compiler_error(c, &c->cur_token.loc, "Cannot assign rvalue\n");
+            return false;
+        }
+        next_token(c);
+        next_token(c);
+
+        Value arg;
+        CHECK(compile_expr(c, &arg, NULL));
+
+        da_append(&c->func->ops, OP_STORE(val->var.stack_index, arg));
+    } break;
+    default: {
+    }
+    }
+
+    if (is_lvalue)
+        *is_lvalue = lval;
+
     return true;
 }
 
@@ -648,15 +670,15 @@ bool compile_ident_stmt(Compiler *c) {
         } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
         CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
-
-        return true;
     } break;
 
-    default:
-        // TODO: expression statement
-        compiler_error(c, &c->cur_token.loc, "Unexpected token %s", tt_str[c->cur_token.type]);
-        return false;
+    default: {
+        Value _;
+        CHECK(compile_expr(c, &_, NULL));
+        CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     }
+    }
+    return true;
 }
 
 bool compile_return_stmt(Compiler *c) {
