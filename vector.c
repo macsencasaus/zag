@@ -64,6 +64,7 @@ typedef enum {
     TOKEN_TYPE_PERCENT,
 
     TOKEN_TYPE_COMMA,
+    TOKEN_TYPE_COLON,
     TOKEN_TYPE_SEMICOLON,
 
     TOKEN_TYPE_ASSIGN,
@@ -71,6 +72,7 @@ typedef enum {
     // keywords
     TOKEN_TYPE_FN,
     TOKEN_TYPE_RETURN,
+    TOKEN_TYPE_VAR,
 
     TOKEN_TYPE_COUNT,
 } Token_Type;
@@ -90,10 +92,12 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_SLASH] = "'/'",
     [TOKEN_TYPE_PERCENT] = "'%'",
     [TOKEN_TYPE_COMMA] = "','",
+    [TOKEN_TYPE_COLON] = "':'",
     [TOKEN_TYPE_SEMICOLON] = "';'",
     [TOKEN_TYPE_ASSIGN] = "'='",
     [TOKEN_TYPE_FN] = "fn",
     [TOKEN_TYPE_RETURN] = "return",
+    [TOKEN_TYPE_VAR] = "var",
 };
 
 typedef struct {
@@ -167,6 +171,8 @@ Token_Type lookup_keyword(const char *literal, usize n) {
         return TOKEN_TYPE_FN;
     } else if (n == 6 && strncmp("return", literal, 6) == 0) {
         return TOKEN_TYPE_RETURN;
+    } else if (n == 3 && strncmp("var", literal, 3) == 0) {
+        return TOKEN_TYPE_VAR;
     } else {
         return TOKEN_TYPE_IDENT;
     }
@@ -231,6 +237,9 @@ Token lexer_next_token(Lexer *l) {
     } break;
     case ',': {
         tok.type = TOKEN_TYPE_COMMA;
+    } break;
+    case ':': {
+        tok.type = TOKEN_TYPE_COLON;
     } break;
     case ';': {
         tok.type = TOKEN_TYPE_SEMICOLON;
@@ -471,6 +480,9 @@ INLINE bool expect_peek(Compiler *p, Token_Type tt) {
 INLINE void unexpected_token(Compiler *p) {
     compiler_error(p, &p->cur_token.loc, "Unexpected token %s", tt_str[p->cur_token.type]);
 }
+INLINE void unknown_type(Compiler *c) {
+    compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", SV_SPREAD(&c->cur_token.lit));
+}
 
 void compiler_init(Compiler *c, Lexer *l) {
     *c = (Compiler){
@@ -678,59 +690,52 @@ bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
     return true;
 }
 
-bool compile_ident_stmt(Compiler *c) {
-    switch (c->peek_token.type) {
-    case TOKEN_TYPE_IDENT: {
+bool compile_var_stmt(Compiler *c) {
+    do {
+        CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
+        Token name = c->cur_token;
+
+        CHECK(expect_peek(c, TOKEN_TYPE_COLON));
+        CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
+
         const Type *decl_type = lookup_type(c, &c->cur_token);
         if (decl_type == NULL) {
             compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", CUR_TOKEN_FMT(c));
             return false;
         }
 
-        do {
-            usize stack_index = alloc_scoped_var(c, decl_type);
+        usize stack_index = alloc_scoped_var(c, decl_type);
 
+        if (declare_var(c, &name.lit, stack_index, decl_type) == NULL) {
+            compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
+            return false;
+        }
+
+        if (peek_tok_is(c, TOKEN_TYPE_ASSIGN)) {
+            next_token(c);
             next_token(c);
 
-            const Token *token = &c->cur_token;
-            if (declare_var(c, &token->lit, stack_index, decl_type) == NULL) {
-                compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
+            Value arg;
+            CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
+
+            if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
+                compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
+                               decl_type->name);
                 return false;
             }
 
-            if (peek_tok_is(c, TOKEN_TYPE_ASSIGN)) {
-                next_token(c);
-                next_token(c);
-
-                Value arg;
-                CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
-
-                if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
-                    compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
-                                   decl_type->name);
-                    return false;
-                }
-
-                const Type *expr_type = arg.type;
-                if (!strict_type_cmp(expr_type, decl_type)) {
-                    compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
-                                   expr_type->name, decl_type->name);
-                    return false;
-                }
-
-                da_append(&c->func->ops, OP_STORE(stack_index, arg));
+            const Type *expr_type = arg.type;
+            if (!strict_type_cmp(expr_type, decl_type)) {
+                compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
+                               expr_type->name, decl_type->name);
+                return false;
             }
-        } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
-        CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
-    } break;
+            da_append(&c->func->ops, OP_STORE(stack_index, arg));
+        }
+    } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
-    default: {
-        Value _;
-        CHECK(compile_expr(c, PREC_LOWEST, &_, NULL));
-        CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
-    }
-    }
+    CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     return true;
 }
 
@@ -760,15 +765,22 @@ bool compile_return_stmt(Compiler *c) {
     return true;
 }
 
+bool compile_expr_stmt(Compiler *c) {
+    Value _;
+    CHECK(compile_expr(c, PREC_LOWEST, &_, NULL));
+    CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
+    return true;
+}
+
 static Compile_Stmt_Fn *compile_stmt_fns[TOKEN_TYPE_COUNT] = {
-    [TOKEN_TYPE_IDENT] = compile_ident_stmt,
+    [TOKEN_TYPE_VAR] = compile_var_stmt,
     [TOKEN_TYPE_RETURN] = compile_return_stmt,
 };
 
 bool compile_stmt(Compiler *c) {
     Compile_Stmt_Fn *compile_fn = compile_stmt_fns[c->cur_token.type];
     if (compile_fn == NULL) {
-        UNIMPLEMENTED();
+        return compile_expr_stmt(c);
     }
     return compile_fn(c);
 }
@@ -789,20 +801,11 @@ bool compile_program(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_EOF)) {
         switch (c->cur_token.type) {
         case TOKEN_TYPE_IDENT: {
-            CHECK(compile_ident_stmt(c));
+            CHECK(compile_var_stmt(c));
         } break;
 
         case TOKEN_TYPE_FN: {
-            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
-
             Func func = {0};
-
-            Token return_type_token = c->cur_token;
-            func.return_type = lookup_type(c, &c->cur_token);
-            if (func.return_type == NULL) {
-                compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", CUR_TOKEN_FMT(c));
-                return false;
-            }
 
             CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
@@ -816,10 +819,16 @@ bool compile_program(Compiler *c) {
             } else {
                 do {
                     CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
-                    const Type *param_type = lookup_type(c, &c->cur_token);
+                    Token param_token = c->cur_token;
+
+                    CHECK(expect_peek(c, TOKEN_TYPE_COLON));
 
                     CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
-                    Token param_token = c->cur_token;
+                    const Type *param_type = lookup_type(c, &c->cur_token);
+                    if (!param_type) {
+                        unknown_type(c);
+                        return false;
+                    }
 
                     for (usize i = 0; i < func.params.size; ++i) {
                         const Func_Param *param = func.params.store + i;
@@ -833,6 +842,14 @@ bool compile_program(Compiler *c) {
                 } while (next_if_peek_tok_is(c, TOKEN_TYPE_COMMA));
 
                 CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
+            }
+
+            CHECK(expect_peek(c, TOKEN_TYPE_COLON));
+            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
+            func.return_type = lookup_type(c, &c->cur_token);
+            if (!func.return_type) {
+                unknown_type(c);
+                return false;
             }
 
             bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);

@@ -1,9 +1,9 @@
 // RUN: %vector -emit-ir %s
 
-fn i32 main() {
-    i32 x = 2;
-    i32 y = x;
-    i32 z = -y;
+fn main(): i32 {
+    var x: i32 = 2;
+    var y: i32 = x;
+    var z: i32 = -y;
     z = -z;
     return z;
 }
