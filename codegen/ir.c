@@ -53,7 +53,17 @@ void print_ir_op(const Op *op, FILE *out) {
 }
 
 void print_ir_func(const Func *func, FILE *out) {
-    fprintf(out, "%.*s(%zu,%zu):\n", SV_FMT(&func->name), func->params.size, func->stack_size);
+    fprintf(out, "%.*s[%zu](", SV_FMT(&func->name), func->stack_size);
+    if (func->params.size > 0) {
+        for (usize i = 0; i < func->params.size - 1; ++i) {
+            const Func_Param *param = func->params.store + i;
+            fprintf(out, "%zu,", param->type->size);
+        }
+        const Func_Param *last_param = func->params.store + func->params.size - 1;
+        fprintf(out, "%zu", last_param->type->size);
+    }
+    fprintf(out, "):\n");
+
     for (usize i = 0; i < func->ops.size; ++i) {
         const Op *op = func->ops.store + i;
         print_ir_op(op, out);
@@ -71,9 +81,8 @@ void print_ir_funcs(const Compiler *c, FILE *out) {
 void print_description(FILE *out) {
     fprintf(out,
             "; V3 Readable Intermediate Representation\n"
-            "; Functions contain two fields:\n"
-            "; - The number of parameters\n"
-            "; - Maximum stack size (in bytes)\n"
+            "; Function header formatted as:\n"
+            "; func[<max-stack-size>](<size-of-param>,...)\n"
             "\n");
 }
 

@@ -1,18 +1,1 @@
-; V3 Readable Intermediate Representation
-; Functions contain two fields:
-; - The number of parameters
-; - Maximum stack size (in bytes)
-
-main(0,44):
-    %s[0] = i32 2
-    %s[4] = i32 1
-    %s[8] = i32 3
-    %s[12] = i64 3
-    %s[20] = i64 0
-    %s[28] = i64 1
-    %s[36] = i64 10
-    ret i32 0
-
-id(1,8):
-    ret i64 %s[0]
-
+Segmentation fault (core dumped)

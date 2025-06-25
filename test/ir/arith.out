@@ -1,18 +1,17 @@
 ; V3 Readable Intermediate Representation
-; Functions contain two fields:
-; - The number of parameters
-; - Maximum stack size (in bytes)
+; Function header formatted as:
+; func[<max-stack-size>](<size-of-param>,...)
 
-square(1,8):
+square[8](4):
     %s[4] = mul i32 %s[0], i32 %s[0]
     ret i32 %s[4]
 
-sum(3,20):
+sum[20](4,4,4):
     %s[12] = add i32 %s[0], i32 %s[4]
     %s[16] = add i32 %s[12], i32 %s[8]
     ret i32 %s[16]
 
-prec(0,24):
+prec[24]():
     %s[0] = mul i64 2, i64 3
     %s[8] = add i64 1, i64 %s[0]
     %s[0] = i64 %s[8]
@@ -22,12 +21,12 @@ prec(0,24):
     %s[16] = mod i64 %s[0], i64 %s[8]
     ret i64 %s[16]
 
-mismatch(0,8):
+mismatch[8]():
     %s[0] = i32 3
     %s[4] = add i32 %s[0], i32 2
     ret i32 %s[4]
 
-prec2(0,24):
+prec2[24]():
     %s[0] = mul i64 2, i64 2
     %s[8] = mul i64 3, i64 3
     %s[16] = add i64 %s[0], i64 %s[8]
