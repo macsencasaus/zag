@@ -13,3 +13,12 @@ fn prec(): i64 {
     var y: i64 = 1 / 2 - 3;
     return x % y;
 }
+
+fn mismatch(): i32 {
+    var y: i32 = 3;
+    return y + 2;
+}
+
+fn prec2(): i64 {
+    return 2 * 2 + 3 * 3;
+}

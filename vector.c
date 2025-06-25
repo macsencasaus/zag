@@ -436,6 +436,9 @@ typedef struct {
     // current func compiler is working on
     Func *func;
 
+    // type hint for current expr compiler is working on
+    const Type *hint;
+
     Dynamic_Array(Func) funcs;
 
     const char *err_msg;
@@ -568,6 +571,10 @@ INLINE bool is_constant(const Value *arg) {
     return arg->value_type == VALUE_TYPE_INT_LITERAL;
 }
 
+INLINE bool is_integer_type(const Type *t) {
+    return t->flag == FLAG_INT_SIGNED || t->flag == FLAG_INT_UNSIGNED;
+}
+
 INLINE bool coerce_constant_type(Value *arg, const Type *t) {
     if (!t) return true;
     arg->type = t;
@@ -593,9 +600,12 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     bool lval;
     switch (c->cur_token.type) {
     case TOKEN_TYPE_INT_LITERAL: {
+        const Type *type = c->hint && is_integer_type(c->hint)
+                               ? c->hint
+                               : default_int_literal_type;
         *val = (Value){
             .value_type = VALUE_TYPE_INT_LITERAL,
-            .type = default_int_literal_type,
+            .type = type,
             .int_value = atoll(c->cur_token.lit.store),
         };
         lval = false;
@@ -658,20 +668,30 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
 }
 
 bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
-    usize saved_stack_index = c->stack_index;
-
     CHECK(compile_primary_expr(c, val, is_lvalue));
 
     while (peek_prec(c) > prec) {
         next_token(c);
-        Token_Type op = c->cur_token.type;
+        Token op = c->cur_token;
         next_token(c);
 
+        const Type *old_hint = c->hint;
+        c->hint = val->type;
+
         Value rhs;
-        compile_expr(c, prec_lookup[op], &rhs, NULL);
+        compile_expr(c, prec_lookup[op.type], &rhs, NULL);
+
+        c->hint = old_hint;
+
+        // NOTE: temporary
+        if (!strict_type_cmp(rhs.type, val->type)) {
+            printf("%zu %zu\n", rhs.type->id, val->type->id);
+            compiler_error(c, &op.loc, "Type Error: invalid binary operation");
+            return false;
+        }
 
         usize temp = alloc_scoped_var(c, val->type);
-        da_append(&c->func->ops, OP_BINOP(temp, op, *val, rhs));
+        da_append(&c->func->ops, OP_BINOP(temp, op.type, *val, rhs));
 
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
@@ -686,9 +706,14 @@ bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
             *is_lvalue = false;
     }
 
-    c->stack_index = saved_stack_index;
-
     return true;
+}
+
+bool compile_expr_save_stack(Compiler *c, Prec prec, Value *val, bool *is_value) {
+    usize saved_stack = c->stack_index;
+    bool res = compile_expr(c, prec, val, is_value);
+    c->stack_index = saved_stack;
+    return res;
 }
 
 bool compile_var_stmt(Compiler *c) {
@@ -713,8 +738,10 @@ bool compile_var_stmt(Compiler *c) {
             next_token(c);
             next_token(c);
 
+            c->hint = decl_type;
             Value arg;
-            CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
+            CHECK(compile_expr_save_stack(c, PREC_LOWEST, &arg, NULL));
+            c->hint = NULL;
 
             if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
                 compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
@@ -753,8 +780,11 @@ bool compile_var_stmt(Compiler *c) {
 bool compile_return_stmt(Compiler *c) {
     next_token(c);
     Value val;
-    CHECK(compile_expr(c, PREC_LOWEST, &val, NULL));
     const Type *ret_type = c->func->return_type;
+
+    c->hint = ret_type;
+    CHECK(compile_expr_save_stack(c, PREC_LOWEST, &val, NULL));
+    c->hint = NULL;
 
     if (is_constant(&val) && !coerce_constant_type(&val, ret_type)) {
         compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
@@ -764,7 +794,8 @@ bool compile_return_stmt(Compiler *c) {
 
     const Type *expr_type = val.type;
     if (!strict_type_cmp(expr_type, ret_type)) {
-        compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
+        compiler_error(c, &c->cur_token.loc,
+                       "Type Error: returning expression of type %s, expected %s",
                        expr_type->name, ret_type->name);
         return false;
     }
@@ -778,7 +809,7 @@ bool compile_return_stmt(Compiler *c) {
 
 bool compile_expr_stmt(Compiler *c) {
     Value _;
-    CHECK(compile_expr(c, PREC_LOWEST, &_, NULL));
+    CHECK(compile_expr_save_stack(c, PREC_LOWEST, &_, NULL));
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     return true;
 }
