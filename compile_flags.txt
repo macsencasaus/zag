@@ -1,3 +1,4 @@
 -Iinclude
 -Icodegen
+-Ias
 -Wno-incompatible-pointer-types

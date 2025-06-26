@@ -27,10 +27,10 @@
     } __name
 
 #define Dynamic_Array(__ty) \
-    struct { \
-        size_t size; \
-        size_t capacity; \
-        __ty *store; \
+    struct {                \
+        size_t size;        \
+        size_t capacity;    \
+        __ty *store;        \
     }
 
 #define da_init(da, init_size)                                            \
@@ -43,13 +43,13 @@
 
 #define da_ensure_capacity(da, new_capacity)                                          \
     do {                                                                              \
-        if ((da)->capacity >= new_capacity)                                           \
+        if ((da)->capacity >= (new_capacity))                                         \
             break;                                                                    \
         if ((da)->capacity == 0)                                                      \
             (da)->capacity = 1;                                                       \
         else                                                                          \
             (da)->capacity <<= 1;                                                     \
-        while ((da)->capacity < new_capacity)                                         \
+        while ((da)->capacity < (new_capacity))                                       \
             (da)->capacity <<= 1;                                                     \
         (da)->store = DA_REALLOC((da)->store, (da)->capacity * sizeof(*(da)->store)); \
         DA_ASSERT((da)->store != NULL);                                               \
@@ -72,11 +72,11 @@
         (da)->store[(da)->size++] = (value);      \
     } while (0)
 
-#define da_append_buf(da, arr, n)                 \
-    do {                                          \
-        da_ensure_capacity((da), (da)->size + n); \
-        memcpy((da)->store + (da)->size, arr, n); \
-        (da)->size += n;                          \
+#define da_append_buf(da, arr, n)                     \
+    do {                                              \
+        da_ensure_capacity((da), (da)->size + (n));   \
+        memcpy((da)->store + (da)->size, (arr), (n)); \
+        (da)->size += (n);                            \
     } while (0)
 
 #define da_pop(da)           \

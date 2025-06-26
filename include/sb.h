@@ -35,17 +35,26 @@ typedef struct {
 void sb_append_buf(String_Builder *, const char *buf, size_t n);
 void sb_reserve(String_Builder *, size_t additional_size);
 
+static inline void sb_append(String_Builder *sb, char c) {
+    sb_append_buf(sb, (char[]){c}, 1);
+}
+
+#define sb_append_sv(sb, sv) \
+    sb_append_buf((sb), (sv)->store, (sv)->len)
+
 int sb_appendf(String_Builder *, const char *fmt, ...);
 
 #define sb_append_cstr(s, buf)    \
     do {                          \
         size_t n = strlen(buf);   \
-        sb_append_buf(s, buf, n); \
+        sb_append_buf((s), (buf), n); \
     } while (0)
 
 #define sb_append_null(sb) sb_append_buf((sb), "", 1)
 
 #define sb_pop_last(sb) --(sb)->size
+
+#define sb_pop(sb, n) (sb)->size -= (n)
 
 #define sb_free(s) SB_FREE((s)->store)
 

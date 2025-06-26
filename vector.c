@@ -120,6 +120,8 @@ typedef struct {
     const char *input;
     usize input_length;
 
+    const char *input_file;
+
     usize pos;
     usize read_pos;
     char ch;
@@ -149,6 +151,7 @@ INLINE void lexer_init(Lexer *l, const char *input_file_path, const char *input,
     *l = (Lexer){
         .input = input,
         .input_length = length,
+        .input_file = input_file_path,
         .read_pos = 0,
         .loc = (Location){
             .line = 1,
@@ -371,7 +374,7 @@ typedef struct {
     usize index;
 
     union {
-        // negate
+        // store, negate, return
         Value val;
 
         // binary
@@ -685,7 +688,6 @@ bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
 
         // NOTE: temporary
         if (!strict_type_cmp(rhs.type, val->type)) {
-            printf("%zu %zu\n", rhs.type->id, val->type->id);
             compiler_error(c, &op.loc, "Type Error: invalid binary operation");
             return false;
         }
@@ -977,6 +979,22 @@ bool compile_program(Compiler *c) {
 #include "ir.c"
 #endif
 
+#ifndef X86_64_LINUX_C
+#include "x86_64_linux.c"
+#endif
+
+const char *generate_out_file(const char *v3_file) {
+    String_Builder sb = {0};
+    sb_append_cstr(&sb, v3_file);
+    if (sb.size > 3 &&
+        strncmp(sb.store + sb.size - 3, ".v3", 3) == 0) {
+        sb_pop(&sb, 3);
+    }
+    sb_append_cstr(&sb, ".o");
+    sb_append_null(&sb);
+    return sb.store;
+}
+
 static char *program_name;
 
 void usage(FILE *stream) {
@@ -1108,6 +1126,16 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+
+    const char *out_file = generate_out_file(c.l->input_file);
+    FILE *out = fopen(out_file, "w");
+    assert(out);
+
+    generate_program(&c, out);
+    printf("Wrote relocatable object file to %s\n", out_file);
+
+    fclose(out);
+    free(out_file);
     free(input);
 
     return 0;
