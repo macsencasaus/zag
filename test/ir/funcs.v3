@@ -12,3 +12,7 @@ fn main(): i32 {
 fn id(x: i64): i64 {
     return x; 
 }
+
+fn three(): i64 {
+    return 3;
+}

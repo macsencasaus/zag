@@ -1,1 +1,13 @@
-Segmentation fault (core dumped)
+; V3 Readable Intermediate Representation
+; Function header formatted as:
+; func[<max-stack-size>](<size-of-param>,...)
+
+main[16]():
+    %s[0] = i32 2
+    %s[4] = i32 %s[0]
+    %s[8] = neg i32 %s[4]
+    %s[8] = i32 %s[8]
+    %s[12] = neg i32 %s[8]
+    %s[8] = i32 %s[12]
+    ret i32 %s[8]
+
