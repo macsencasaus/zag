@@ -533,7 +533,7 @@ INLINE Var *find_var_near(const Compiler *c, const sv *name) {
 
 Var *find_var_far(const Compiler *c, const sv *name) {
     Var *v;
-    for (usize i = c->vars.size - 1; i >= 0; --i) {
+    for (i64 i = (i64)c->vars.size - 1; i >= 0; --i) {
         if ((v = find_scoped_var(c, i, name)) != NULL) {
             return v;
         }
