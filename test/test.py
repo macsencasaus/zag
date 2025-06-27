@@ -98,7 +98,7 @@ for test in test_files:
         continue
 
     diff = subprocess.run(
-        f"diff -y --suppress-common-lines --strip-trailing-cr {out} -",
+        f"diff -u --suppress-common-lines {out} -",
         shell=True,
         input=actual,
         capture_output=True,
