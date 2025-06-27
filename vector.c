@@ -1068,6 +1068,7 @@ int main(int argc, char *argv[]) {
     bool *help = flag_bool("help", false, "Print this help then exit.");
     bool *lex = flag_bool("lex", false, "Print lexer output then exit.");
     bool *emit_ir = flag_bool("emit-ir", false, "Emit IR then exit.");
+    bool *to_stdout = flag_bool("stdout", false, "Write on standard output.");
 
     if (!flag_parse(argc, argv)) {
         usage(stderr);
@@ -1128,15 +1129,24 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    const char *out_file = generate_out_file(c.l->input_file);
-    FILE *out = fopen(out_file, "w");
-    assert(out);
+    const char *out_file;
+    FILE *out;
+    if (*to_stdout) {
+        out = stdout;
+    } else {
+        out_file = generate_out_file(c.l->input_file);
+        out = fopen(out_file, "w");
+        assert(out);
+    }
 
     generate_program(&c, out);
-    printf("Wrote relocatable object file to %s\n", out_file);
+
+    if (!*to_stdout) {
+        printf("Wrote relocatable object file to %s\n", out_file);
+        free(out_file);
+    }
 
     fclose(out);
-    free(out_file);
     free(input);
 
     return 0;
