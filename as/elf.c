@@ -15,7 +15,7 @@
 #define STRTAB_SECTION_IDX 4
 #define SHSTRTAB_SECTION_IDX 5
 
-usize st_append(Dynamic_Array(uint8_t) *st, const char *section_name) {
+usize st_append(String_Builder *st, const char *section_name) {
     usize off = st->size;
     usize n = strlen(section_name) + 1;
     da_append_buf(st, section_name, n);
@@ -25,18 +25,18 @@ usize st_append(Dynamic_Array(uint8_t) *st, const char *section_name) {
 typedef struct {
     Elf64_Ehdr header;
 
-    Dynamic_Array(uint8_t) text;
+    String_Builder text;
 
     Dynamic_Array(Elf64_Sym) symbols;
 
-    Dynamic_Array(uint8_t) strtab;
-    Dynamic_Array(uint8_t) shstrtab;
+    String_Builder strtab;
+    String_Builder shstrtab;
 
     Dynamic_Array(Elf64_Shdr) section_headers;
-} ELF_Codegen_Ctx;
+} ELF_Builder;
 
-void ELF_Codegen_init(ELF_Codegen_Ctx *ctx, const char *filename) {
-    *ctx = (ELF_Codegen_Ctx){0};
+void ELF_Builder_init(ELF_Builder *ctx, const char *filename) {
+    *ctx = (ELF_Builder){0};
 
     usize null_name_off_strtab = st_append(&ctx->strtab, "");
     assert(null_name_off_strtab == 0);
@@ -64,7 +64,7 @@ void ELF_Codegen_init(ELF_Codegen_Ctx *ctx, const char *filename) {
     da_append(&ctx->symbols, text_section_symbol);
 }
 
-void ELF_Codegen_delete(ELF_Codegen_Ctx *ctx) {
+void ELF_Builder_delete(ELF_Builder *ctx) {
     da_delete(&ctx->text);
     da_delete(&ctx->symbols);
     da_delete(&ctx->strtab);
@@ -72,7 +72,7 @@ void ELF_Codegen_delete(ELF_Codegen_Ctx *ctx) {
     da_delete(&ctx->section_headers);
 }
 
-void ELF_Codegen_compile(ELF_Codegen_Ctx *ctx) {
+void ELF_Builder_compile(ELF_Builder *ctx) {
     usize offset = sizeof(Elf64_Ehdr);
 
     // sections
@@ -199,8 +199,8 @@ void ELF_Codegen_compile(ELF_Codegen_Ctx *ctx) {
     };
 }
 
-void ELF_write_o_file(const ELF_Codegen_Ctx *ctx, FILE *out) {
-    Dynamic_Array(uint8_t) o = {0};
+void ELF_write_o_file(const ELF_Builder *ctx, FILE *out) {
+    String_Builder o = {0};
 
     da_append_buf(&o, &ctx->header, sizeof(Elf64_Ehdr));
     da_append_buf(&o, ctx->text.store, ctx->text.size);
@@ -214,7 +214,7 @@ void ELF_write_o_file(const ELF_Codegen_Ctx *ctx, FILE *out) {
     da_delete(&o);
 }
 
-void ELF_new_func(ELF_Codegen_Ctx *ctx, const char *name,
+void ELF_new_func(ELF_Builder *ctx, const char *name,
                   const char *code, usize n) {
     usize name_tab_off = st_append(&ctx->strtab, name);
 
