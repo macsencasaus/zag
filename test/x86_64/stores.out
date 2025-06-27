@@ -1,0 +1,23 @@
+
+/tmp/tmp.bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:	55                   	push   %rbp
+   1:	48 89 e5             	mov    %rsp,%rbp
+   4:	48 83 ec 10          	sub    $0x10,%rsp
+   8:	b8 02 00 00 00       	mov    $0x2,%eax
+   d:	89 45 fc             	mov    %eax,-0x4(%rbp)
+  10:	8b 45 fc             	mov    -0x4(%rbp),%eax
+  13:	c9                   	leave
+  14:	c3                   	ret
+
+0000000000000015 <big_stack>:
+  15:	55                   	push   %rbp
+  16:	48 89 e5             	mov    %rsp,%rbp
+  19:	48 83 ec 70          	sub    $0x70,%rsp
+  1d:	b8 00 00 00 00       	mov    $0x0,%eax
+  22:	c9                   	leave
+  23:	c3                   	ret
