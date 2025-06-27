@@ -559,8 +559,10 @@ INLINE const Var *declare_var(Compiler *c, const sv *name, usize stack_index, co
 }
 
 INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
+    usize size = type->size;
+    c->stack_index += (size - (c->stack_index % size)) % size;
     usize frame = c->stack_index;
-    c->stack_index += type->size;
+    c->stack_index += size;
     c->func->stack_size = MAX(c->stack_index, c->func->stack_size);
     return frame;
 }
@@ -1125,7 +1127,6 @@ int main(int argc, char *argv[]) {
         print_ir_program(&c, stdout);
         return 0;
     }
-
 
     const char *out_file = generate_out_file(c.l->input_file);
     FILE *out = fopen(out_file, "w");

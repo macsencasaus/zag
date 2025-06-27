@@ -16,3 +16,17 @@ fn id(x: i64): i64 {
 fn three(): i64 {
     return 3;
 }
+
+fn stack_alignment(): i32 {
+    var a: i8 = 0;
+    var b: i8 = 1;
+    var c: i16 = 2;
+    var d: i16 = 3;
+    var aa: i8 = 0;
+    var e: i32 = 4;
+    var f: i32 = 5;
+    var bb: i8 = 0;
+    var g: i64 = 6;
+    var h: i64 = 7;
+    return 0;
+}
