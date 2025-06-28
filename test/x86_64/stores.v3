@@ -1,4 +1,4 @@
-// RUN: %vector -stdout %s > /tmp/tmp.bin && objdump -d /tmp/tmp.bin
+// RUN: %vector -stdout %s > /tmp/tmp.bin && objdump -d -M intel /tmp/tmp.bin
 
 fn main(): i32 {
     var x: i32 = 2;
