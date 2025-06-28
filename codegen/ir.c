@@ -22,6 +22,17 @@ static char *binop_inst_lookup[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_ASTERISK] = "mul",
     [TOKEN_TYPE_SLASH] = "div",
     [TOKEN_TYPE_PERCENT] = "mod",
+    [TOKEN_TYPE_LT] = "icmp lt",
+    [TOKEN_TYPE_LTEQ] = "icmp lteq",
+    [TOKEN_TYPE_GT] = "icmp gt",
+    [TOKEN_TYPE_GTEQ] = "icmp gteq",
+    [TOKEN_TYPE_EQ] = "icmp eq",
+    [TOKEN_TYPE_NEQ] = "icmp neq",
+    [TOKEN_TYPE_BAND] = "and",
+    [TOKEN_TYPE_BOR] = "or",
+    [TOKEN_TYPE_XOR] = "xor",
+    [TOKEN_TYPE_SHL] = "shl",
+    [TOKEN_TYPE_SHR] = "shr",
 };
 
 void print_ir_op(const Op *op, FILE *out) {
@@ -38,6 +49,16 @@ void print_ir_op(const Op *op, FILE *out) {
     } break;
     case OP_TYPE_NEG: {
         fprintf(out, "    %%s[%zu] = neg ", op->result);
+        print_ir_val(&op->val, out);
+        fprintf(out, "\n");
+    } break;
+    case OP_TYPE_BNOT: {
+        fprintf(out, "    %%s[%zu] = bnot ", op->result);
+        print_ir_val(&op->val, out);
+        fprintf(out, "\n");
+    } break;
+    case OP_TYPE_LNOT: {
+        fprintf(out, "    %%s[%zu] = lnot ", op->result);
         print_ir_val(&op->val, out);
         fprintf(out, "\n");
     } break;

@@ -63,6 +63,26 @@ typedef enum {
     TOKEN_TYPE_SLASH,
     TOKEN_TYPE_PERCENT,
 
+    TOKEN_TYPE_LNOT,
+    TOKEN_TYPE_BNOT,
+
+    TOKEN_TYPE_LT,
+    TOKEN_TYPE_LTEQ,
+    TOKEN_TYPE_GT,
+    TOKEN_TYPE_GTEQ,
+    TOKEN_TYPE_EQ,
+    TOKEN_TYPE_NEQ,
+
+    TOKEN_TYPE_BAND,
+    TOKEN_TYPE_BOR,
+    TOKEN_TYPE_XOR,
+
+    TOKEN_TYPE_SHL,
+    TOKEN_TYPE_SHR,
+
+    TOKEN_TYPE_PLUSPLUS,
+    TOKEN_TYPE_MINUSMINUS,
+
     TOKEN_TYPE_COMMA,
     TOKEN_TYPE_COLON,
     TOKEN_TYPE_SEMICOLON,
@@ -91,6 +111,21 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_ASTERISK] = "'*'",
     [TOKEN_TYPE_SLASH] = "'/'",
     [TOKEN_TYPE_PERCENT] = "'%'",
+    [TOKEN_TYPE_LNOT] = "'!'",
+    [TOKEN_TYPE_BNOT] = "'~'",
+    [TOKEN_TYPE_LT] = "'<'",
+    [TOKEN_TYPE_LTEQ] = "'<='",
+    [TOKEN_TYPE_GT] = "'>'",
+    [TOKEN_TYPE_GTEQ] = "'>='",
+    [TOKEN_TYPE_EQ] = "'=='",
+    [TOKEN_TYPE_NEQ] = "'!='",
+    [TOKEN_TYPE_BAND] = "'&'",
+    [TOKEN_TYPE_BOR] = "'|'",
+    [TOKEN_TYPE_XOR] = "'^'",
+    [TOKEN_TYPE_SHL] = "'<<'",
+    [TOKEN_TYPE_SHR] = "'>>'",
+    [TOKEN_TYPE_PLUSPLUS] = "'++'",
+    [TOKEN_TYPE_MINUSMINUS] = "'--'",
     [TOKEN_TYPE_COMMA] = "','",
     [TOKEN_TYPE_COLON] = "':'",
     [TOKEN_TYPE_SEMICOLON] = "';'",
@@ -221,10 +256,22 @@ Token lexer_next_token(Lexer *l) {
         tok.type = TOKEN_TYPE_RBRACE;
     } break;
     case '+': {
-        tok.type = TOKEN_TYPE_PLUS;
+        if (peek_char(l) == '+') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_PLUSPLUS;
+        } else {
+            tok.type = TOKEN_TYPE_PLUS;
+        }
     } break;
     case '-': {
-        tok.type = TOKEN_TYPE_MINUS;
+        if (peek_char(l) == '-') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_MINUSMINUS;
+        } else {
+            tok.type = TOKEN_TYPE_MINUS;
+        }
     } break;
     case '*': {
         tok.type = TOKEN_TYPE_ASTERISK;
@@ -235,8 +282,61 @@ Token lexer_next_token(Lexer *l) {
     case '%': {
         tok.type = TOKEN_TYPE_PERCENT;
     } break;
+    case '~': {
+        tok.type = TOKEN_TYPE_BNOT;
+    } break;
+    case '<': {
+        if (peek_char(l) == '=') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_LTEQ;
+        } else if (peek_char(l) == '<') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_SHL;
+        } else {
+            tok.type = TOKEN_TYPE_LT;
+        }
+    } break;
+    case '>': {
+        if (peek_char(l) == '=') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_GTEQ;
+        } else if (peek_char(l) == '>') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_SHR;
+        } else {
+            tok.type = TOKEN_TYPE_GT;
+        }
+    } break;
     case '=': {
-        tok.type = TOKEN_TYPE_ASSIGN;
+        if (peek_char(l) == '=') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_EQ;
+        } else {
+            tok.type = TOKEN_TYPE_ASSIGN;
+        }
+    } break;
+    case '!': {
+        if (peek_char(l) == '=') {
+            read_char(l);
+            tok.lit.len = 2;
+            tok.type = TOKEN_TYPE_NEQ;
+        } else {
+            tok.type = TOKEN_TYPE_LNOT;
+        }
+    } break;
+    case '&': {
+        tok.type = TOKEN_TYPE_BAND;
+    } break;
+    case '|': {
+        tok.type = TOKEN_TYPE_BOR;
+    } break;
+    case '^': {
+        tok.type = TOKEN_TYPE_XOR;
     } break;
     case ',': {
         tok.type = TOKEN_TYPE_COMMA;
@@ -363,6 +463,8 @@ typedef enum {
     OP_TYPE_NEG,
     OP_TYPE_BINOP,
     OP_TYPE_RET,
+    OP_TYPE_BNOT,
+    OP_TYPE_LNOT,
 
     OP_TYPE_COUNT,
 } Op_Type;
@@ -374,7 +476,7 @@ typedef struct {
     usize result;
 
     union {
-        // store, negate, return
+        // store, prefix expr, return
         Value val;
 
         // binary
@@ -388,8 +490,8 @@ typedef struct {
 
 #define OP_STORE(__index, __val) \
     ((Op){.type = OP_TYPE_STORE, .result = (__index), .val = (__val)})
-#define OP_NEG(__index, __val) \
-    ((Op){.type = OP_TYPE_NEG, .result = (__index), .val = (__val)})
+#define OP_PRE(__op_type, __index, __val) \
+    ((Op){.type = (__op_type), .result = (__index), .val = (__val)})
 #define OP_BINOP(__index, __op, __lhs, __rhs) \
     ((Op){.type = OP_TYPE_BINOP, .result = (__index), .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
 #define OP_RET(__val) \
@@ -397,12 +499,29 @@ typedef struct {
 
 typedef enum {
     PREC_LOWEST,
+    PREC_BOR,
+    PREC_XOR,
+    PREC_BAND,
+    PREC_EQ,
+    PREC_CMP,
+    PREC_SHIFT,
     PREC_ADD,
     PREC_MULT,
     PREC_PREFIX,
 } Prec;
 
 static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
+    [TOKEN_TYPE_BOR] = PREC_BOR,
+    [TOKEN_TYPE_XOR] = PREC_XOR,
+    [TOKEN_TYPE_BAND] = PREC_BAND,
+    [TOKEN_TYPE_EQ] = PREC_EQ,
+    [TOKEN_TYPE_NEQ] = PREC_EQ,
+    [TOKEN_TYPE_LT] = PREC_CMP,
+    [TOKEN_TYPE_LTEQ] = PREC_CMP,
+    [TOKEN_TYPE_GT] = PREC_CMP,
+    [TOKEN_TYPE_GTEQ] = PREC_CMP,
+    [TOKEN_TYPE_SHL] = PREC_SHIFT,
+    [TOKEN_TYPE_SHR] = PREC_SHIFT,
     [TOKEN_TYPE_PLUS] = PREC_ADD,
     [TOKEN_TYPE_MINUS] = PREC_ADD,
     [TOKEN_TYPE_ASTERISK] = PREC_MULT,
@@ -600,11 +719,15 @@ INLINE void pop_scope(Compiler *c) {
 
 typedef bool Compile_Stmt_Fn(Compiler *);
 
-bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue);
+bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue)
+    __attribute__((warn_unused_result));
 
 bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     bool lval;
-    switch (c->cur_token.type) {
+
+    Op_Type op_type;
+    Token_Type tt;
+    switch (tt = c->cur_token.type) {
     case TOKEN_TYPE_INT_LITERAL: {
         const Type *type = c->hint && is_integer_type(c->hint)
                                ? c->hint
@@ -616,6 +739,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         };
         lval = false;
     } break;
+
     case TOKEN_TYPE_IDENT: {
         const Var *var;
         CHECK(var = find_var_far(c, &c->cur_token.lit));
@@ -626,13 +750,75 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         };
         lval = true;
     } break;
-    case TOKEN_TYPE_MINUS: {
+
+    case TOKEN_TYPE_LPAREN: {
+        next_token(c);
+        CHECK(compile_expr(c, PREC_LOWEST, val, &lval));
+        CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
+    } break;
+
+    case TOKEN_TYPE_PLUSPLUS: {
+        Location loc = c->cur_token.loc;
         next_token(c);
 
         Value arg;
-        compile_expr(c, PREC_PREFIX, &arg, NULL);
+        bool arg_is_lval;
+        CHECK(compile_expr(c, PREC_PREFIX, &arg, &arg_is_lval));
+        if (!arg_is_lval) {
+            compiler_error(c, &loc, "Cannot increment an rvalue");
+            return false;
+        }
+
+        Value one = {
+            .value_type = VALUE_TYPE_INT_LITERAL,
+            .type = arg.type,
+            .int_value = 1,
+        };
+
+        da_append(&c->func->ops, OP_BINOP(arg.var.stack_index, TOKEN_TYPE_PLUS, arg, one));
+        *val = arg;
+
+        lval = false;
+    } break;
+
+    case TOKEN_TYPE_MINUSMINUS: {
+        Location loc = c->cur_token.loc;
+        next_token(c);
+
+        Value arg;
+        bool arg_is_lval;
+        CHECK(compile_expr(c, PREC_PREFIX, &arg, &arg_is_lval));
+        if (!arg_is_lval) {
+            compiler_error(c, &loc, "Cannot decrement an rvalue");
+            return false;
+        }
+
+        Value one = {
+            .value_type = VALUE_TYPE_INT_LITERAL,
+            .type = arg.type,
+            .int_value = 1,
+        };
+
+        da_append(&c->func->ops, OP_BINOP(arg.var.stack_index, TOKEN_TYPE_MINUS, arg, one));
+        *val = arg;
+
+        lval = false;
+    } break;
+
+    // prefix tokens
+    case TOKEN_TYPE_LNOT:
+        if (tt == TOKEN_TYPE_LNOT) op_type = OP_TYPE_LNOT;
+    case TOKEN_TYPE_BNOT:
+        if (tt == TOKEN_TYPE_BNOT) op_type = OP_TYPE_BNOT;
+    case TOKEN_TYPE_MINUS: {
+        if (tt == TOKEN_TYPE_MINUS) op_type = OP_TYPE_NEG;
+
+        next_token(c);
+
+        Value arg;
+        CHECK(compile_expr(c, PREC_PREFIX, &arg, NULL));
         usize result = alloc_scoped_var(c, arg.type);
-        da_append(&c->func->ops, OP_NEG(result, arg));
+        da_append(&c->func->ops, OP_PRE(op_type, result, arg));
 
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
@@ -645,7 +831,8 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         lval = false;
     } break;
     default: {
-        UNIMPLEMENTED();
+        unexpected_token(c);
+        return false;
     }
     }
 
@@ -663,6 +850,67 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
 
         da_append(&c->func->ops, OP_STORE(val->var.stack_index, arg));
     } break;
+
+    case TOKEN_TYPE_PLUSPLUS: {
+        next_token(c);
+        if (!lval) {
+            compiler_error(c, &c->cur_token.loc, "Cannot increment rvalue");
+            return false;
+        }
+
+        Value one = {
+            .value_type = VALUE_TYPE_INT_LITERAL,
+            .type = val->type,
+            .int_value = 1,
+        };
+
+        usize pre = alloc_scoped_var(c, val->type);
+        da_append(&c->func->ops, OP_STORE(pre, *val));
+
+        da_append(&c->func->ops, OP_BINOP(val->var.stack_index, TOKEN_TYPE_PLUS, *val, one));
+
+        *val = (Value){
+            .value_type = VALUE_TYPE_VAR,
+            .type = val->type,
+            .var = {
+                .type = val->type,
+                .stack_index = pre,
+            },
+        };
+
+        lval = false;
+    } break;
+
+    case TOKEN_TYPE_MINUSMINUS: {
+        next_token(c);
+        if (!lval) {
+            compiler_error(c, &c->cur_token.loc, "Cannot decrement rvalue");
+            return false;
+        }
+
+        Value one = {
+            .value_type = VALUE_TYPE_INT_LITERAL,
+            .type = val->type,
+            .int_value = 1,
+        };
+
+        usize pre = alloc_scoped_var(c, val->type);
+        da_append(&c->func->ops, OP_STORE(pre, *val));
+
+        da_append(&c->func->ops, OP_BINOP(val->var.stack_index, TOKEN_TYPE_MINUS, *val, one));
+
+        *val = (Value){
+            .value_type = VALUE_TYPE_VAR,
+            .type = val->type,
+            .var = {
+                .type = val->type,
+                .stack_index = pre,
+            },
+        };
+
+        lval = false;
+    } break;
+
     default: {
     }
     }
@@ -685,7 +933,7 @@ bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
         c->hint = val->type;
 
         Value rhs;
-        compile_expr(c, prec_lookup[op.type], &rhs, NULL);
+        CHECK(compile_expr(c, prec_lookup[op.type], &rhs, NULL));
 
         c->hint = old_hint;
 

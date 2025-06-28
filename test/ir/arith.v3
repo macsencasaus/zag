@@ -22,3 +22,35 @@ fn mismatch(): i32 {
 fn prec2(): i64 {
     return 2 * 2 + 3 * 3;
 }
+
+fn prec3(): i64 {
+    return 2 * (2 + 3) * 3;
+}
+
+fn prefix(): i32 {
+    var x: i32 = 2, y: i32;
+    x = -x;
+    x = !x;
+    x = ~x;
+    ++x;
+    y = x++;
+    --x;
+    y = x--;
+    return x;
+}
+
+fn more_binops(): i32 {
+    var x: i32, y: i32;
+    y = x < 1;
+    y = x <= 2;
+    y = x == 3;
+    y = x != y;
+    y = x > y;
+    y = x >= y;
+    y = x & y;
+    y = x | y;
+    y = x ^ x;
+    y = x << 1;
+    y = x >> 1;
+    return 0;
+}
