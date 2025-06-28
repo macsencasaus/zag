@@ -371,7 +371,7 @@ typedef struct {
     Op_Type type;
 
     // used in almost all Ops to store its result
-    usize index;
+    usize result;
 
     union {
         // store, negate, return
@@ -387,11 +387,11 @@ typedef struct {
 } Op;
 
 #define OP_STORE(__index, __val) \
-    ((Op){.type = OP_TYPE_STORE, .index = (__index), .val = (__val)})
+    ((Op){.type = OP_TYPE_STORE, .result = (__index), .val = (__val)})
 #define OP_NEG(__index, __val) \
-    ((Op){.type = OP_TYPE_NEG, .index = (__index), .val = (__val)})
+    ((Op){.type = OP_TYPE_NEG, .result = (__index), .val = (__val)})
 #define OP_BINOP(__index, __op, __lhs, __rhs) \
-    ((Op){.type = OP_TYPE_BINOP, __index = (__index), .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
+    ((Op){.type = OP_TYPE_BINOP, .result = (__index), .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
 #define OP_RET(__val) \
     ((Op){.type = OP_TYPE_RET, .val = (__val)})
 
@@ -413,6 +413,7 @@ static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
 typedef struct {
     sv name;
     const Type *type;
+    usize index;
 } Func_Param;
 
 typedef struct {
@@ -952,9 +953,9 @@ bool compile_program(Compiler *c) {
             Dynamic_Array(Func_Param) *func_params = &existing_func->params;
 
             for (usize i = 0; i < func_params->size; ++i) {
-                const Func_Param *param = func_params->store + i;
-
+                Func_Param *param = func_params->store + i;
                 usize stack_index = alloc_scoped_var(c, param->type);
+                param->index = stack_index;
                 assert(declare_var(c, &param->name, stack_index, param->type) != NULL);
             }
 

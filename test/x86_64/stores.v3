@@ -22,3 +22,11 @@ fn big_stack(): i32 {
         n: i64;
     return 0;
 }
+
+fn params(a: i32, b: i32): i32 {
+    return a;
+}
+
+fn add(a: i32, b: i32): i32 {
+    return a + b;
+}

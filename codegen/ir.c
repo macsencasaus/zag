@@ -27,7 +27,7 @@ static char *binop_inst_lookup[TOKEN_TYPE_COUNT] = {
 void print_ir_op(const Op *op, FILE *out) {
     switch (op->type) {
     case OP_TYPE_STORE: {
-        fprintf(out, "    %%s[%zu] = ", op->index);
+        fprintf(out, "    %%s[%zu] = ", op->result);
         print_ir_val(&op->val, out);
         fprintf(out, "\n");
     } break;
@@ -37,12 +37,12 @@ void print_ir_op(const Op *op, FILE *out) {
         fprintf(out, "\n");
     } break;
     case OP_TYPE_NEG: {
-        fprintf(out, "    %%s[%zu] = neg ", op->index);
+        fprintf(out, "    %%s[%zu] = neg ", op->result);
         print_ir_val(&op->val, out);
         fprintf(out, "\n");
     } break;
     case OP_TYPE_BINOP: {
-        fprintf(out, "    %%s[%zu] = %s ", op->index, binop_inst_lookup[op->op]);
+        fprintf(out, "    %%s[%zu] = %s ", op->result, binop_inst_lookup[op->op]);
         print_ir_val(&op->lhs, out);
         fprintf(out, ", ");
         print_ir_val(&op->rhs, out);

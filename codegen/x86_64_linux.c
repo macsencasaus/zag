@@ -34,6 +34,8 @@ typedef enum {
     R15,
 } X86_64_Register;
 
+static X86_64_Register x86_64_linux_registers[] = {RDI, RSI, RDX, RCX, R8, R9};
+
 // REX Prefix byte
 typedef struct {
     u8 b : 1;
@@ -67,8 +69,15 @@ typedef struct {
 #define MOV_IMM8 0xC6
 #define MOV_IMM32 0xC7
 
+#define ADD 0x01
+
+#define SUB 0x29
 #define SUB_IMM32 0x81
 #define SUB_IMM8 0x83
+
+#define IMUL (char[]){0x0F, 0xAF}
+
+#define IDIV 0xF7
 
 #define XOR 0x31
 
@@ -77,6 +86,8 @@ typedef struct {
 
 #define PUSH_REG(reg) (0x50 + (reg & 7))
 #define PUSH_MEM 0xFF
+
+#define NEG 0xF7
 
 #define LEAVE 0xC9
 #define RET 0xC3
@@ -182,10 +193,59 @@ void generate_op(const Op *op) {
     switch (op->type) {
     case OP_TYPE_STORE: {
         load_value_to_reg(&op->val, RAX);
-        store_reg_to_stack(RAX, op->index, op->val.type->size);
+        store_reg_to_stack(RAX, op->result, op->val.type->size);
     } break;
-    case OP_TYPE_NEG: UNIMPLEMENTED();
-    case OP_TYPE_BINOP: UNIMPLEMENTED();
+    case OP_TYPE_NEG: {
+        load_value_to_reg(&op->val, RAX);
+        if (op->val.type->size == 8)
+            push_op(REX_PRE(1, 0, 0, 0));
+        push_op(NEG);
+        push_op(MODR_M(MOD_REG, 3, RAX));
+        store_reg_to_stack(RAX, op->result, op->val.type->size);
+    } break;
+    case OP_TYPE_BINOP: {
+        usize size = op->lhs.type->size;
+        bool is_signed = op->lhs.type->flag == FLAG_INT_SIGNED;
+
+        load_value_to_reg(&op->lhs, RAX);
+        load_value_to_reg(&op->rhs, RCX);
+        if (size == 8)
+            push_op(REX_PRE(1, 0, 0, 0));
+        switch (op->op) {
+        case TOKEN_TYPE_PLUS: {
+            push_op(ADD);
+            push_op(MODR_M(MOD_REG, RCX, RAX));
+        } break;
+        case TOKEN_TYPE_MINUS: {
+            push_op(SUB);
+            push_op(MODR_M(MOD_REG, RCX, RAX));
+        } break;
+        case TOKEN_TYPE_ASTERISK: {
+            if (is_signed) {
+                push_multi_op(IMUL, sizeof(IMUL));
+                push_op(MODR_M(MOD_REG, RAX, RCX));
+            } else
+                UNIMPLEMENTED();
+        } break;
+        case TOKEN_TYPE_SLASH: {
+            if (is_signed) {
+                push_op(IDIV);
+                push_op(MODR_M(MOD_REG, 7, RCX));
+            } else
+                UNIMPLEMENTED();
+        } break;
+        case TOKEN_TYPE_PERCENT: {
+            if (is_signed) {
+                push_op(IDIV);
+                push_op(MODR_M(MOD_REG, 7, RCX));
+                move_reg_to_reg(RDX, RAX);
+            } else
+                UNIMPLEMENTED();
+        } break;
+        default: UNREACHABLE();
+        }
+        store_reg_to_stack(RAX, op->result, size);
+    } break;
     case OP_TYPE_RET: {
         load_value_to_reg(&op->val, RAX);
         push_op(LEAVE);
@@ -196,11 +256,17 @@ void generate_op(const Op *op) {
 }
 
 void generate_func(const Func *func) {
+    if (func->params.size > 6) UNIMPLEMENTED();
     push_op(PUSH_REG(RBP));
     move_reg_to_reg(RSP, RBP);
 
     if (func->stack_size > 0) {
         alloc_rsp(func);
+    }
+
+    for (usize i = 0; i < func->params.size; ++i) {
+        const Func_Param *param = func->params.store + i;
+        store_reg_to_stack(x86_64_linux_registers[i], param->index, param->type->size);
     }
 
     for (usize i = 0; i < func->ops.size; ++i) {
