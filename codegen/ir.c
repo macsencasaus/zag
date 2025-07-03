@@ -63,7 +63,9 @@ void print_ir_op(const Op *op, FILE *out) {
         fprintf(out, "\n");
     } break;
     case OP_TYPE_BINOP: {
-        fprintf(out, "    %%s[%zu] = %s ", op->result, binop_inst_lookup[op->op]);
+        const char *op_lit = binop_inst_lookup[op->op];
+        if (!op_lit) UNIMPLEMENTED();
+        fprintf(out, "    %%s[%zu] = %s ", op->result, op_lit);
         print_ir_val(&op->lhs, out);
         fprintf(out, ", ");
         print_ir_val(&op->rhs, out);

@@ -12,8 +12,23 @@ typedef struct {
 
 static X86_64_Ctx x86_64_global_ctx;
 
-#define push_op(op) sb_append(&x86_64_global_ctx.ops, (op))
-#define push_multi_op(op, n) sb_append_buf(&x86_64_global_ctx.ops, (op), (n))
+INLINE char *push_op(u8 op) {
+    char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
+    sb_append(&x86_64_global_ctx.ops, op);
+    return r;
+}
+
+INLINE char *push_multi_op(char *ops, usize n) {
+    char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
+    sb_append_buf(&x86_64_global_ctx.ops, ops, n);
+    return r;
+}
+
+INLINE char *push_u32(u32 v) {
+    char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
+    sb_append_buf(&x86_64_global_ctx.ops, &v, sizeof(v));
+    return r;
+}
 
 typedef enum {
     RAX,
@@ -79,7 +94,11 @@ typedef struct {
 
 #define IDIV 0xF7
 
+#define AND 0x21
+
 #define XOR 0x31
+
+#define OR 0x09
 
 #define POP_REG(reg) (0x58 + (reg & 7))
 #define POP_MEM 0x8F
@@ -88,6 +107,20 @@ typedef struct {
 #define PUSH_MEM 0xFF
 
 #define NEG 0xF7
+
+#define CMP_IMM8 0x83
+#define CMP 0x39
+
+#define TEST 0x85
+
+#define JMP_REL8 0xEB
+#define JMP_REL32 0xE9
+
+#define JE_REL8 0x74
+#define JE_REL32 (char[]){0x0F, 0x84}
+
+#define JNE_REL8 0x75
+#define JNE_REL32 (char[]){0x0F, 0x85}
 
 #define LEAVE 0xC9
 #define RET 0xC3
@@ -203,24 +236,35 @@ void generate_op(const Op *op) {
         push_op(MODR_M(MOD_REG, 3, RAX));
         store_reg_to_stack(RAX, op->result, op->val.type->size);
     } break;
+    case OP_TYPE_LNOT: {
+        load_value_to_reg(&op->val, RAX);
+        if (op->val.type->size == 8)
+            push_op(REX_PRE(1, 0, 0, 0));
+        push_op(CMP_IMM8);
+    } break;
     case OP_TYPE_BINOP: {
         usize size = op->lhs.type->size;
+        bool is64 = size == 8;
         bool is_signed = op->lhs.type->flag == FLAG_INT_SIGNED;
 
         load_value_to_reg(&op->lhs, RAX);
         load_value_to_reg(&op->rhs, RCX);
-        if (size == 8)
-            push_op(REX_PRE(1, 0, 0, 0));
         switch (op->op) {
         case TOKEN_TYPE_PLUS: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
             push_op(ADD);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
         case TOKEN_TYPE_MINUS: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
             push_op(SUB);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
         case TOKEN_TYPE_ASTERISK: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
             if (is_signed) {
                 push_multi_op(IMUL, sizeof(IMUL));
                 push_op(MODR_M(MOD_REG, RAX, RCX));
@@ -228,6 +272,8 @@ void generate_op(const Op *op) {
                 UNIMPLEMENTED();
         } break;
         case TOKEN_TYPE_SLASH: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
             if (is_signed) {
                 push_op(IDIV);
                 push_op(MODR_M(MOD_REG, 7, RCX));
@@ -235,12 +281,32 @@ void generate_op(const Op *op) {
                 UNIMPLEMENTED();
         } break;
         case TOKEN_TYPE_PERCENT: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
             if (is_signed) {
                 push_op(IDIV);
                 push_op(MODR_M(MOD_REG, 7, RCX));
                 move_reg_to_reg(RDX, RAX);
             } else
                 UNIMPLEMENTED();
+        } break;
+        case TOKEN_TYPE_XOR: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
+            push_op(XOR);
+            push_op(MODR_M(MOD_REG, RCX, RAX));
+        } break;
+        case TOKEN_TYPE_BAND: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
+            push_op(AND);
+            push_op(MODR_M(MOD_REG, RCX, RAX));
+        } break;
+        case TOKEN_TYPE_BOR: {
+            if (is64)
+                push_op(REX_PRE(1, 0, 0, 0));
+            push_op(OR);
+            push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
         default: UNREACHABLE();
         }
