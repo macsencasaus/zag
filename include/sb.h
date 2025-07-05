@@ -2,6 +2,7 @@
 #define SB_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +33,7 @@ typedef struct {
 
 #define sb_init(__sb) *(__sb) = (String_Builder){0}
 
-void sb_append_buf(String_Builder *, const char *buf, size_t n);
+char *sb_append_buf(String_Builder *, const char *buf, size_t n);
 void sb_reserve(String_Builder *, size_t additional_size);
 
 static inline void sb_append(String_Builder *sb, char c) {
@@ -44,9 +45,9 @@ static inline void sb_append(String_Builder *sb, char c) {
 
 int sb_appendf(String_Builder *, const char *fmt, ...);
 
-#define sb_append_cstr(s, buf)    \
-    do {                          \
-        size_t n = strlen(buf);   \
+#define sb_append_cstr(s, buf)        \
+    do {                              \
+        size_t n = strlen(buf);       \
         sb_append_buf((s), (buf), n); \
     } while (0)
 
@@ -63,14 +64,19 @@ typedef struct {
     size_t len;
 } String_View;
 
+bool sveq(String_View sv1, String_View sv2);
+String_View sv_from_cstr(char *str);
+
 #endif  // SB_H
 
 #ifdef SB_IMPLEMENTATION
 
-void sb_append_buf(String_Builder *sb, const char *buf, size_t n) {
+char *sb_append_buf(String_Builder *sb, const char *buf, size_t n) {
     sb_reserve(sb, n);
-    memcpy(sb->store + sb->size, buf, n);
+    char *res = sb->store + sb->size;
+    memcpy(res, buf, n);
     sb->size += n;
+    return res;
 }
 
 void sb_reserve(String_Builder *sb, size_t additional_size) {
@@ -121,11 +127,18 @@ int sb_vappendf(String_Builder *sb, const char *fmt, va_list vargs) {
     return n;
 }
 
-bool sveq(const String_View *sv1, const String_View *sv2) {
-    if (sv1->len != sv2->len) {
+bool sveq(String_View sv1, String_View sv2) {
+    if (sv1.len != sv2.len) {
         return false;
     }
-    return strncmp(sv1->store, sv2->store, sv1->len) == 0;
+    return strncmp(sv1.store, sv2.store, sv1.len) == 0;
+}
+
+String_View sv_from_cstr(char *str) {
+    return (String_View) {
+        .store = str,
+        .len = strlen(str),
+    };
 }
 
 #endif

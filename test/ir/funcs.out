@@ -31,3 +31,7 @@ stack_alignment[40]():
     %s[32] = i64 7
     ret i32 0
 
+func_ptrs[8]():
+    %s[0] = ptr func_ptrs
+    ret i32 0
+

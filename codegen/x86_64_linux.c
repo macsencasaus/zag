@@ -18,7 +18,7 @@ INLINE char *push_op(u8 op) {
     return r;
 }
 
-INLINE char *push_multi_op(char *ops, usize n) {
+INLINE char *push_multi_op(const void *ops, usize n) {
     char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
     sb_append_buf(&x86_64_global_ctx.ops, ops, n);
     return r;
@@ -26,7 +26,7 @@ INLINE char *push_multi_op(char *ops, usize n) {
 
 INLINE char *push_u32(u32 v) {
     char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
-    sb_append_buf(&x86_64_global_ctx.ops, &v, sizeof(v));
+    sb_append_buf(&x86_64_global_ctx.ops, (char *)&v, sizeof(v));
     return r;
 }
 
@@ -142,13 +142,13 @@ void load_value_to_reg(const Value *v, X86_64_Register reg) {
         }
     } break;
     case VALUE_TYPE_VAR: {
-        bool is64 = v->var.type->size == 8;
+        bool is64 = v->type->size == 8;
         u8 w, r;
         if ((w = is64) | (r = (reg > 0x7))) {  // require REX prefix
             push_op(REX_PRE(w, r, 0, 0));
         }
 
-        usize disp = v->var.stack_index + v->var.type->size;
+        usize disp = v->stack_index + v->type->size;
 
         if (disp < 255) {
             u8 imm = -disp;
@@ -196,7 +196,7 @@ void move_reg_to_reg(X86_64_Register from, X86_64_Register to) {
     push_op(MODR_M(MOD_REG, from & 0x7, to & 0x7));
 }
 
-void alloc_rsp(const Func *func) {
+void alloc_rsp(const Value *func) {
     usize stack_size = func->stack_size;
     stack_size += (16 - (stack_size % 16)) % 16;  // 16 byte alignment
 
@@ -245,7 +245,7 @@ void generate_op(const Op *op) {
     case OP_TYPE_BINOP: {
         usize size = op->lhs.type->size;
         bool is64 = size == 8;
-        bool is_signed = op->lhs.type->flag == FLAG_INT_SIGNED;
+        bool is_signed = op->lhs.type->kind == TYPE_KIND_INT_SIGNED;
 
         load_value_to_reg(&op->lhs, RAX);
         load_value_to_reg(&op->rhs, RCX);
@@ -321,7 +321,7 @@ void generate_op(const Op *op) {
     }
 }
 
-void generate_func(const Func *func) {
+void generate_func(const Value *func) {
     if (func->params.size > 6) UNIMPLEMENTED();
     push_op(PUSH_REG(RBP));
     move_reg_to_reg(RSP, RBP);
@@ -331,8 +331,9 @@ void generate_func(const Func *func) {
     }
 
     for (usize i = 0; i < func->params.size; ++i) {
-        const Func_Param *param = func->params.store + i;
-        store_reg_to_stack(x86_64_linux_registers[i], param->index, param->type->size);
+        const Func_Param *param = get_param(func, i);
+        const Type *param_type = get_param_type(func, i);
+        store_reg_to_stack(x86_64_linux_registers[i], param->index, param_type->size);
     }
 
     for (usize i = 0; i < func->ops.size; ++i) {
@@ -350,7 +351,7 @@ void generate_program(const Compiler *c, FILE *out) {
 
     usize op_offset = 0;
     for (usize i = 0; i < c->funcs.size; ++i) {
-        const Func *func = c->funcs.store + i;
+        const Value *func = c->funcs.store[i];
         generate_func(func);
 
         String_Builder func_name = {0};

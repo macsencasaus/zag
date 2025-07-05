@@ -30,3 +30,8 @@ fn stack_alignment(): i32 {
     var h: i64 = 7;
     return 0;
 }
+
+fn func_ptrs(): i32 {
+    var this_fn: fn(): i32 = func_ptrs;
+    return 0;
+}

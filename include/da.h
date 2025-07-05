@@ -19,6 +19,10 @@
 #define DA_ASSERT assert
 #endif
 
+#ifndef DA_INIT_CAPACITY
+#define DA_INIT_CAPACITY 32
+#endif
+
 #define DYNAMIC_ARRAY_TEMPLATE(__name, __ty) \
     typedef struct {                         \
         size_t size;                         \
@@ -46,7 +50,7 @@
         if ((da)->capacity >= (new_capacity))                                         \
             break;                                                                    \
         if ((da)->capacity == 0)                                                      \
-            (da)->capacity = 1;                                                       \
+            (da)->capacity = DA_INIT_CAPACITY;                                        \
         else                                                                          \
             (da)->capacity <<= 1;                                                     \
         while ((da)->capacity < (new_capacity))                                       \
@@ -72,11 +76,11 @@
         (da)->store[(da)->size++] = (value);      \
     } while (0)
 
-#define da_append_buf(da, arr, n)                     \
-    do {                                              \
-        da_ensure_capacity((da), (da)->size + (n));   \
-        memcpy((da)->store + (da)->size, (arr), (n)); \
-        (da)->size += (n);                            \
+#define da_append_buf(da, arr, n)                                            \
+    do {                                                                     \
+        da_ensure_capacity((da), (da)->size + (n));                          \
+        memcpy((da)->store + (da)->size, (arr), (n) * sizeof(*(da)->store)); \
+        (da)->size += (n);                                                   \
     } while (0)
 
 #define da_pop(da)           \
@@ -85,17 +89,11 @@
             --(da)->size;    \
     } while (0)
 
-#define da_clear(da)        \
-    do {                    \
-        (da)->size = 0;     \
-        (da)->capacity = 0; \
-    } while (0)
+#define da_at(da, idx) ((da)->store + (idx))
 
-#define da_delete(da)         \
-    do {                      \
-        da_clear(da);         \
-        DA_FREE((da)->store); \
-        (da)->store = NULL;   \
-    } while (0)
+#define da_last(da) ((da)->store + (da)->size - 1)
+
+#define da_delete(da) \
+    DA_FREE((da)->store);
 
 #endif

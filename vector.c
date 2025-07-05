@@ -386,63 +386,86 @@ typedef enum {
 
     TYPE_F32,
     TYPE_F64,
+
+    BUILTIN_TYPE_ID_COUNT,
 } Builtin_Type_Id;
 
 #define DEFAULT_INT_LITERAL_TYPE_ID TYPE_I64
 
 typedef enum {
-    FLAG_INT_SIGNED,
-    FLAG_INT_UNSIGNED,
+    TYPE_KIND_INT_SIGNED,
+    TYPE_KIND_INT_UNSIGNED,
 
-    FLAG_FLOAT,
-} Type_Flag;
+    TYPE_KIND_FLOAT,
 
-typedef struct {
-    const char *name;
+    TYPE_KIND_FN,
+    TYPE_KIND_PTR,
+} Type_Kind;
+
+typedef struct Type Type;
+
+struct Type {
     Type_Id id;
 
     usize size;
     u8 alignment;
-    Type_Flag flag : 2;
-} Type;
+
+    Type_Kind kind;
+    union {
+        // function
+        struct {
+            Dynamic_Array(const Type *) params;
+            const Type *ret;
+        };
+
+        // ptr
+        const Type *internal;
+
+        // builtin type
+        const char *name;
+    };
+};
+
+#define INIT_FN_TYPE() ((Type){.size = 8, .alignment = 8, .kind = TYPE_KIND_FN})
+#define INIT_PTR_TYPE() ((Type){.size = 8, .alignment = 8, .kind = TYPE_KIND_PTR})
 
 static const Type *default_int_literal_type;
 
-INLINE bool strict_type_cmp(const Type *t1, const Type *t2) {
-    return t1->id == t2->id;
-}
+typedef struct {
+    const char *name;
+    Type type;
+} Builtin_Type;
 
-INLINE bool lenient_type_cmp(const Type *t1, const Type *t2) {
-    return t1->size == t2->size && t1->alignment == t2->alignment && t1->flag == t2->flag;
-}
+static const Builtin_Type builtin_types[] = {
+    {"i8", {TYPE_I8, 1, 1, TYPE_KIND_INT_SIGNED}},
+    {"u8", {TYPE_U8, 1, 1, TYPE_KIND_INT_UNSIGNED}},
+    {"i16", {TYPE_I16, 2, 2, TYPE_KIND_INT_SIGNED}},
+    {"u16", {TYPE_U16, 2, 2, TYPE_KIND_INT_UNSIGNED}},
+    {"i32", {TYPE_I32, 4, 4, TYPE_KIND_INT_SIGNED}},
+    {"u32", {TYPE_U32, 4, 4, TYPE_KIND_INT_UNSIGNED}},
+    {"i64", {TYPE_I64, 8, 8, TYPE_KIND_INT_SIGNED}},
+    {"u64", {TYPE_U64, 8, 8, TYPE_KIND_INT_UNSIGNED}},
 
-INLINE bool lenient_sign_type_cmp(const Type *t1, const Type *t2) {
-    return t1->size == t2->size && t1->alignment == t2->alignment;
-}
-
-static const Type builtin_types[] = {
-    {"i8", TYPE_I8, 1, 1, FLAG_INT_SIGNED},
-    {"u8", TYPE_U8, 1, 1, FLAG_INT_UNSIGNED},
-    {"i16", TYPE_I16, 2, 2, FLAG_INT_SIGNED},
-    {"u16", TYPE_U16, 2, 2, FLAG_INT_UNSIGNED},
-    {"i32", TYPE_I32, 4, 4, FLAG_INT_SIGNED},
-    {"u32", TYPE_U32, 4, 4, FLAG_INT_UNSIGNED},
-    {"i64", TYPE_I64, 8, 8, FLAG_INT_SIGNED},
-    {"u64", TYPE_U64, 8, 8, FLAG_INT_UNSIGNED},
-
-    {"f32", TYPE_F32, 4, 4, FLAG_FLOAT},
-    {"f64", TYPE_F64, 8, 8, FLAG_FLOAT},
+    {"f32", {TYPE_F32, 4, 4, TYPE_KIND_FLOAT}},
+    {"f64", {TYPE_F64, 8, 8, TYPE_KIND_FLOAT}},
 };
 
-// TODO: add storage type
+typedef struct Op Op;
+
+typedef enum {
+    VAR_TYPE_STACK,
+    VAR_TYPE_FN,
+} Var_Type;
+
 typedef struct {
-    const Type *type;
-    usize stack_index;
-} Var;
+    sv name;
+    usize index;
+} Func_Param;
 
 typedef enum {
     VALUE_TYPE_INT_LITERAL,
     VALUE_TYPE_VAR,
+    VALUE_TYPE_FUNC,
 } Value_Type;
 
 typedef struct {
@@ -453,8 +476,16 @@ typedef struct {
         // int literal
         i64 int_value;
 
-        // var
-        Var var;
+        // variable
+        usize stack_index;
+
+        // function
+        struct {
+            sv name;
+            Dynamic_Array(Func_Param) params;
+            Dynamic_Array(Op) ops;
+            usize stack_size;
+        };
     };
 } Value;
 
@@ -469,7 +500,7 @@ typedef enum {
     OP_TYPE_COUNT,
 } Op_Type;
 
-typedef struct {
+struct Op {
     Op_Type type;
 
     // used in almost all Ops to store its result
@@ -486,7 +517,7 @@ typedef struct {
             Value rhs;
         };
     };
-} Op;
+};
 
 #define OP_STORE(__index, __val) \
     ((Op){.type = OP_TYPE_STORE, .result = (__index), .val = (__val)})
@@ -530,18 +561,10 @@ static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
 };
 
 typedef struct {
-    sv name;
-    const Type *type;
-    usize index;
-} Func_Param;
-
-typedef struct {
-    sv name;
-    const Type *return_type;
-    Dynamic_Array(Func_Param) params;
-    Dynamic_Array(Op) ops;
-    usize stack_size;
-} Func;
+    Dynamic_Array(Type) types;
+    String_Hash_Table named_types;
+    usize next_id;
+} Types_Ctx;
 
 typedef struct {
     Lexer *l;
@@ -551,18 +574,19 @@ typedef struct {
 
     usize stack_index;
 
-    String_Hash_Table types;
+    Types_Ctx ty_ctx;
 
+    // Name (string) -> Value
     Dynamic_Array(String_Hash_Table) vars;
     usize scope;
 
     // current func compiler is working on
-    Func *func;
+    Value *func;
 
     // type hint for current expr compiler is working on
     const Type *hint;
 
-    Dynamic_Array(Func) funcs;
+    Dynamic_Array(const Value *) funcs;
 
     const char *err_msg;
     Location err_loc;
@@ -617,42 +641,233 @@ void compiler_init(Compiler *c, Lexer *l) {
     c->cur_token = lexer_next_token(l);
     c->peek_token = lexer_next_token(l);
 
-    sht_init(&c->types, sizeof(Type), 0);
+    Types_Ctx *ty_ctx = &c->ty_ctx;
+    sht_init(&ty_ctx->named_types, sizeof(const Type *), 0);
 
-    usize builtin_type_size = sizeof(builtin_types) / sizeof(Type);
-    for (usize i = 0; i < builtin_type_size; ++i) {
-        const Type *builtin = builtin_types + i;
-        if (builtin->id == DEFAULT_INT_LITERAL_TYPE_ID)
-            default_int_literal_type = builtin;
-        Type *t = sht_get(&c->types, builtin->name, strlen(builtin->name));
+    usize builtin_types_size = sizeof(builtin_types) / sizeof(*builtin_types);
+
+    for (usize i = 0; i < builtin_types_size; ++i) {
+        const Builtin_Type *builtin = builtin_types + i;
+
+        da_append(&ty_ctx->types, builtin->type);
+
+        Type *type = da_last(&ty_ctx->types);
+        if (type->id == DEFAULT_INT_LITERAL_TYPE_ID)
+            default_int_literal_type = type;
+        type->name = builtin->name;
+
+        const Type **t = sht_get(&ty_ctx->named_types, builtin->name, strlen(builtin->name));
         assert(t != NULL);
-        memcpy(t, builtin, sizeof(Type));
+
+        *t = type;
     }
+    ty_ctx->next_id = BUILTIN_TYPE_ID_COUNT;
 
     da_append(&c->vars, (String_Hash_Table){0});
-    sht_init(&c->vars.store[0], sizeof(Var), 0);
+    sht_init(&c->vars.store[0], sizeof(Value), 0);
 }
 
-INLINE const Type *lookup_type(const Compiler *c, const Token *token) {
-    assert(token->type == TOKEN_TYPE_IDENT);
-    return sht_try_get(&c->types, SV_SPREAD(&token->lit));
+INLINE const Type *lookup_named_type(const Types_Ctx *ty_ctx, sv name) {
+    return *(const Type **)sht_try_get(&ty_ctx->named_types, SV_SPREAD(&name));
+}
+
+INLINE bool type_cmp(const Type *t1, const Type *t2) {
+    if (t1->kind != t2->kind ||
+        t1->size != t2->size ||
+        t1->alignment != t2->alignment)
+        return false;
+
+    switch (t1->kind) {
+    case TYPE_KIND_FN: {
+        if (!type_cmp(t1->ret, t2->ret))
+            return false;
+
+        if (t1->params.size != t2->params.size)
+            return false;
+
+        for (usize i = 0; i < t1->params.size; ++i) {
+            const Type *param1 = *da_at(&t1->params, i);
+            const Type *param2 = *da_at(&t2->params, i);
+
+            if (!type_cmp(param1, param2))
+                return false;
+        }
+    } break;
+    case TYPE_KIND_PTR:
+        return type_cmp(t1->internal, t2->internal);
+    default: {
+    }
+    }
+
+    return true;
+}
+
+const Type *lookup_interned_type(const Types_Ctx *ty_ctx, const Type *local_ty) {
+    usize n = ty_ctx->types.size;
+    for (usize i = 0; i < n; ++i) {
+        const Type *type = da_at(&ty_ctx->types, i);
+        if (type_cmp(type, local_ty))
+            return type;
+    }
+
+    return NULL;
+}
+
+INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
+    const Type *existing = lookup_interned_type(ty_ctx, local_ty);
+    if (existing) return existing;
+
+    da_append(&ty_ctx->types, *local_ty);
+    Type *t = da_last(&ty_ctx->types);
+    t->id = ty_ctx->next_id++;
+    return t;
+}
+
+// TODO: move this to some sort of scratch memory, reduce heap allocations
+char *get_type_name(const Type *t) {
+    String_Builder type_name = {0};
+
+    if (t->kind != TYPE_KIND_PTR && t->kind != TYPE_KIND_FN) {
+        sb_append_cstr(&type_name, t->name);
+    }
+
+    else if (t->kind == TYPE_KIND_PTR) {
+        sb_append(&type_name, '*');
+
+        char *internal_type_name = get_type_name(t->internal);
+        sb_append_cstr(&type_name, internal_type_name);
+        free(internal_type_name);
+    }
+
+    else if (t->kind == TYPE_KIND_FN) {
+        sb_append_cstr(&type_name, "fn(");
+
+        for (usize i = 0; i + 1 < t->params.size; ++i) {
+            const Type *param = *da_at(&t->params, i);
+            char *param_type_name = get_type_name(param);
+            sb_append_cstr(&type_name, param_type_name);
+            sb_append_cstr(&type_name, ", ");
+            free(param_type_name);
+        }
+
+        if (t->params.size) {
+            const Type *param = *da_last(&t->params);
+            char *param_type_name = get_type_name(param);
+            sb_append_cstr(&type_name, param_type_name);
+            free(param_type_name);
+        }
+
+        sb_append_cstr(&type_name, "): ");
+
+        char *ret_type_name = get_type_name(t->ret);
+        sb_append_cstr(&type_name, ret_type_name);
+        free(ret_type_name);
+    }
+
+    sb_append_null(&type_name);
+    return type_name.store;
+}
+
+const Type *parse_type(Compiler *c) {
+    Types_Ctx *ty_ctx = &c->ty_ctx;
+
+    switch (c->cur_token.type) {
+    case TOKEN_TYPE_IDENT: {
+        const Type *t;
+        if (!(t = lookup_named_type(&c->ty_ctx, c->cur_token.lit))) {
+            unknown_type(c);
+            return NULL;
+        }
+        return t;
+    } break;
+
+    case TOKEN_TYPE_FN: {
+        Type fn_type = INIT_FN_TYPE();
+
+        if (!expect_peek(c, TOKEN_TYPE_LPAREN))
+            return NULL;
+
+        next_token(c);
+
+        while (!cur_tok_is(c, TOKEN_TYPE_RPAREN)) {
+            const Type *param = parse_type(c);
+            if (!param) {
+                if (!expect_peek(c, TOKEN_TYPE_COLON))
+                    goto parse_type_fn_cleanup;
+
+                next_token(c);
+                if (!(param = parse_type(c)))
+                    goto parse_type_fn_cleanup;
+            }
+
+            da_append(&fn_type.params, param);
+
+            if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
+                next_token(c);
+                next_token(c);
+            } else if (!expect_peek(c, TOKEN_TYPE_RPAREN)) {
+                goto parse_type_fn_cleanup;
+            }
+        }
+
+        if (!expect_peek(c, TOKEN_TYPE_COLON))
+            goto parse_type_fn_cleanup;
+        next_token(c);
+
+        const Type *ret = parse_type(c);
+        if (!ret)
+            goto parse_type_fn_cleanup;
+
+        fn_type.ret = ret;
+
+        const Type *t;
+        if (!(t = lookup_interned_type(ty_ctx, &fn_type)))
+            t = new_type(ty_ctx, &fn_type);
+        else
+            da_delete(&fn_type.params);
+
+        return t;
+
+    parse_type_fn_cleanup:
+        da_delete(&fn_type.params);
+
+        return NULL;
+    } break;
+
+    case TOKEN_TYPE_ASTERISK: {
+        Type ptr_type = INIT_PTR_TYPE();
+
+        next_token(c);
+        const Type *internal = parse_type(c);
+        if (!internal) return NULL;
+        ptr_type.internal = internal;
+
+        return new_type(ty_ctx, &ptr_type);
+    } break;
+    default:
+        compiler_error(c, &c->cur_token.loc, "Unable to parse type, expected %s, %s, or %s",
+                       tt_str[TOKEN_TYPE_IDENT], tt_str[TOKEN_TYPE_FN], tt_str[TOKEN_TYPE_ASTERISK]);
+        return NULL;
+    }
+
+    return NULL;
 }
 
 INLINE Prec peek_prec(const Compiler *c) {
     return prec_lookup[c->peek_token.type];
 }
 
-Var *find_scoped_var(const Compiler *c, usize scope, const sv *name) {
+Value *find_scoped_var(const Compiler *c, usize scope, const sv *name) {
     const String_Hash_Table *scope_vars = c->vars.store + scope;
-    return (Var *)sht_try_get(scope_vars, name->store, name->len);
+    return (Value *)sht_try_get(scope_vars, name->store, name->len);
 }
 
-INLINE Var *find_var_near(const Compiler *c, const sv *name) {
+INLINE Value *find_var_near(const Compiler *c, const sv *name) {
     return find_scoped_var(c, c->vars.size - 1, name);
 }
 
-Var *find_var_far(const Compiler *c, const sv *name) {
-    Var *v;
+Value *find_var_far(const Compiler *c, const sv *name) {
+    Value *v;
     for (i64 i = (i64)c->vars.size - 1; i >= 0; --i) {
         if ((v = find_scoped_var(c, i, name)) != NULL) {
             return v;
@@ -661,21 +876,37 @@ Var *find_var_far(const Compiler *c, const sv *name) {
     return NULL;
 }
 
-Func *find_func(const Compiler *c, const sv *func_name) {
-    for (usize i = 0; i < c->funcs.size; ++i) {
-        Func *func = c->funcs.store + i;
-        if (sveq(&func->name, func_name))
-            return func;
-    }
-    return NULL;
-}
-
-INLINE const Var *declare_var(Compiler *c, const sv *name, usize stack_index, const Type *type) {
+INLINE const Value *declare_var(Compiler *c, const sv *name, usize stack_index, const Type *type) {
     if (find_var_near(c, name) != NULL)
         return NULL;
-    Var *var = sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name));
-    *var = (Var){.type = type, .stack_index = stack_index};
+    Value *var = sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name));
+    *var = (Value){
+        .value_type = VALUE_TYPE_VAR,
+        .type = type,
+        .stack_index = stack_index,
+    };
     return var;
+}
+
+INLINE Value *declare_func(Compiler *c, const sv *name, const Type *type) {
+    if (find_var_near(c, name) != NULL)
+        return NULL;
+    Value *func = sht_get(c->vars.store, SV_SPREAD(name));
+    *func = (Value){
+        .value_type = VALUE_TYPE_FUNC,
+        .type = type,
+        .name = *name,
+    };
+    da_append(&c->funcs, func);
+    return func;
+}
+
+INLINE Func_Param *get_param(const Value *func, usize param_idx) {
+    return func->params.store + param_idx;
+}
+
+INLINE const Type *get_param_type(const Value *func, usize param_idx) {
+    return func->type->params.store[param_idx];
 }
 
 INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
@@ -697,7 +928,7 @@ INLINE bool is_constant(const Value *arg) {
 }
 
 INLINE bool is_integer_type(const Type *t) {
-    return t->flag == FLAG_INT_SIGNED || t->flag == FLAG_INT_UNSIGNED;
+    return t->kind == TYPE_KIND_INT_SIGNED || t->kind == TYPE_KIND_INT_UNSIGNED;
 }
 
 INLINE bool coerce_constant_type(Value *arg, const Type *t) {
@@ -709,7 +940,7 @@ INLINE bool coerce_constant_type(Value *arg, const Type *t) {
 INLINE void push_scope(Compiler *c) {
     da_append(&c->vars, (String_Hash_Table){0});
     ++c->scope;
-    sht_init(c->vars.store + c->scope, sizeof(Var), 0);
+    sht_init(c->vars.store + c->scope, sizeof(Value), 0);
 }
 
 INLINE void pop_scope(Compiler *c) {
@@ -741,13 +972,9 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
     } break;
 
     case TOKEN_TYPE_IDENT: {
-        const Var *var;
+        const Value *var;
         CHECK(var = find_var_far(c, &c->cur_token.lit));
-        *val = (Value){
-            .value_type = VALUE_TYPE_VAR,
-            .type = var->type,
-            .var = *var,
-        };
+        *val = *var;
         lval = true;
     } break;
 
@@ -775,7 +1002,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
             .int_value = 1,
         };
 
-        da_append(&c->func->ops, OP_BINOP(arg.var.stack_index, TOKEN_TYPE_PLUS, arg, one));
+        da_append(&c->func->ops, OP_BINOP(arg.stack_index, TOKEN_TYPE_PLUS, arg, one));
         *val = arg;
 
         lval = false;
@@ -799,7 +1026,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
             .int_value = 1,
         };
 
-        da_append(&c->func->ops, OP_BINOP(arg.var.stack_index, TOKEN_TYPE_MINUS, arg, one));
+        da_append(&c->func->ops, OP_BINOP(arg.stack_index, TOKEN_TYPE_MINUS, arg, one));
         *val = arg;
 
         lval = false;
@@ -823,13 +1050,12 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
             .type = arg.type,
-            .var = (Var){
-                .type = arg.type,
-                .stack_index = result,
-            }};
+            .stack_index = result,
+        };
 
         lval = false;
     } break;
+
     default: {
         unexpected_token(c);
         return false;
@@ -848,7 +1074,7 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         Value arg;
         CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
 
-        da_append(&c->func->ops, OP_STORE(val->var.stack_index, arg));
+        da_append(&c->func->ops, OP_STORE(val->stack_index, arg));
     } break;
 
     case TOKEN_TYPE_PLUSPLUS: {
@@ -867,15 +1093,12 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         usize pre = alloc_scoped_var(c, val->type);
         da_append(&c->func->ops, OP_STORE(pre, *val));
 
-        da_append(&c->func->ops, OP_BINOP(val->var.stack_index, TOKEN_TYPE_PLUS, *val, one));
+        da_append(&c->func->ops, OP_BINOP(val->stack_index, TOKEN_TYPE_PLUS, *val, one));
 
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
             .type = val->type,
-            .var = {
-                .type = val->type,
-                .stack_index = pre,
-            },
+            .stack_index = pre,
         };
 
         lval = false;
@@ -897,15 +1120,12 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         usize pre = alloc_scoped_var(c, val->type);
         da_append(&c->func->ops, OP_STORE(pre, *val));
 
-        da_append(&c->func->ops, OP_BINOP(val->var.stack_index, TOKEN_TYPE_MINUS, *val, one));
+        da_append(&c->func->ops, OP_BINOP(val->stack_index, TOKEN_TYPE_MINUS, *val, one));
 
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
             .type = val->type,
-            .var = {
-                .type = val->type,
-                .stack_index = pre,
-            },
+            .stack_index = pre,
         };
 
         lval = false;
@@ -938,7 +1158,7 @@ bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
         c->hint = old_hint;
 
         // NOTE: temporary
-        if (!strict_type_cmp(rhs.type, val->type)) {
+        if (!type_cmp(rhs.type, val->type)) {
             compiler_error(c, &op.loc, "Type Error: invalid binary operation");
             return false;
         }
@@ -949,10 +1169,7 @@ bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
         *val = (Value){
             .value_type = VALUE_TYPE_VAR,
             .type = val->type,
-            .var = (Var){
-                .type = val->type,
-                .stack_index = temp,
-            },
+            .stack_index = temp,
         };
 
         if (is_lvalue)
@@ -976,9 +1193,9 @@ bool compile_var_stmt(Compiler *c) {
 
         const Type *decl_type = NULL;
         if (try_peek_tok(c, TOKEN_TYPE_COLON)) {
-            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
+            next_token(c);
 
-            decl_type = lookup_type(c, &c->cur_token);
+            decl_type = parse_type(c);
             if (decl_type == NULL) {
                 compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", CUR_TOKEN_FMT(c));
                 return false;
@@ -997,14 +1214,22 @@ bool compile_var_stmt(Compiler *c) {
             c->hint = NULL;
 
             if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
-                compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
-                               decl_type->name);
+                char *decl_type_name = get_type_name(decl_type);
+                compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type '%s'",
+                               decl_type_name);
+                free(decl_type_name);
                 return false;
             }
 
-            if (decl_type && !strict_type_cmp(arg.type, decl_type)) {
-                compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type %s to variable of type %s",
-                               arg.type->name, decl_type->name);
+            if (decl_type && !type_cmp(arg.type, decl_type)) {
+                char *arg_type_name = get_type_name(arg.type),
+                     *decl_type_name = get_type_name(decl_type);
+
+                compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type '%s' to variable of type '%s'",
+                               arg_type_name, decl_type_name);
+
+                free(decl_type_name);
+                free(arg_type_name);
                 return false;
             } else {
                 decl_type = arg.type;
@@ -1033,23 +1258,33 @@ bool compile_var_stmt(Compiler *c) {
 bool compile_return_stmt(Compiler *c) {
     next_token(c);
     Value val;
-    const Type *ret_type = c->func->return_type;
+    const Type *ret_type = c->func->type->ret;
 
     c->hint = ret_type;
     CHECK(compile_expr_save_stack(c, PREC_LOWEST, &val, NULL));
     c->hint = NULL;
 
     if (is_constant(&val) && !coerce_constant_type(&val, ret_type)) {
-        compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type %s",
-                       ret_type->name);
+        char *ret_type_name = get_type_name(ret_type);
+
+        compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type '%s'",
+                       ret_type_name);
+
+        free(ret_type_name);
         return false;
     }
 
     const Type *expr_type = val.type;
-    if (!strict_type_cmp(expr_type, ret_type)) {
+    if (!type_cmp(expr_type, ret_type)) {
+        char *expr_type_name = get_type_name(expr_type),
+             *ret_type_name = get_type_name(ret_type);
+
         compiler_error(c, &c->cur_token.loc,
-                       "Type Error: returning expression of type %s, expected %s",
-                       expr_type->name, ret_type->name);
+                       "Type Error: returning expression of type '%s', expected '%s'",
+                       expr_type_name, ret_type_name);
+
+        free(ret_type_name);
+        free(expr_type_name);
         return false;
     }
 
@@ -1100,12 +1335,17 @@ bool compile_program(Compiler *c) {
         } break;
 
         case TOKEN_TYPE_FN: {
-            Func func = {0};
+            // TODO: construct func type
+            Value func = {0};
+            Type func_type = {
+                .size = 8,
+                .alignment = 8,
+                .kind = TYPE_KIND_FN,
+            };
 
             CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
             Token name = c->cur_token;
-            func.name = name.lit;
 
             CHECK(expect_peek(c, TOKEN_TYPE_LPAREN));
 
@@ -1118,38 +1358,41 @@ bool compile_program(Compiler *c) {
 
                     CHECK(expect_peek(c, TOKEN_TYPE_COLON));
 
-                    CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
-                    const Type *param_type = lookup_type(c, &c->cur_token);
+                    next_token(c);
+                    const Type *param_type = parse_type(c);
                     if (!param_type) {
-                        unknown_type(c);
                         return false;
                     }
 
+                    da_append(&func_type.params, param_type);
+
                     for (usize i = 0; i < func.params.size; ++i) {
                         const Func_Param *param = func.params.store + i;
-                        if (sveq(&param->name, &param_token.lit)) {
+                        if (sveq(param->name, param_token.lit)) {
                             compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(&param_token));
                             return false;
                         }
                     }
 
-                    da_append(&func.params, ((Func_Param){param_token.lit, param_type}));
+                    da_append(&func.params, ((Func_Param){param_token.lit}));
                 } while (try_peek_tok(c, TOKEN_TYPE_COMMA));
 
                 CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
             }
 
             CHECK(expect_peek(c, TOKEN_TYPE_COLON));
-            CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
-            func.return_type = lookup_type(c, &c->cur_token);
-            if (!func.return_type) {
+            next_token(c);
+
+            func_type.ret = parse_type(c);
+            if (!func_type.ret) {
                 unknown_type(c);
                 return false;
             }
 
             bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);
 
-            Func *existing_func = find_func(c, &name.lit);
+            Value *existing_func = find_var_near(c, &name.lit);
+            const Type *interned_func_type = new_type(&c->ty_ctx, &func_type);
 
             bool already_declared = existing_func != NULL;
             bool already_defined = false;
@@ -1157,8 +1400,8 @@ bool compile_program(Compiler *c) {
             if (already_declared) {
                 already_defined = existing_func->ops.store == NULL;
             } else {
-                da_append(&c->funcs, ((Func){.name = name.lit}));
-                existing_func = c->funcs.store + c->funcs.size - 1;
+                existing_func = declare_func(c, &name.lit, interned_func_type);
+                existing_func->params = func.params;
             }
 
             if (already_defined && !is_declaration) {
@@ -1167,7 +1410,7 @@ bool compile_program(Compiler *c) {
             }
 
             if (already_declared) {
-                if (!strict_type_cmp(func.return_type, existing_func->return_type)) {
+                if (!type_cmp(func_type.ret, existing_func->type->ret)) {
                     compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                     return false;
                 }
@@ -1179,13 +1422,11 @@ bool compile_program(Compiler *c) {
 
                 usize n = func.params.size;
                 for (usize i = 0; i < n; ++i) {
-                    if (!strict_type_cmp(func.params.store[i].type, existing_func->params.store[i].type)) {
+                    if (!type_cmp(func_type.params.store[i], existing_func->type->params.store[i])) {
                         compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                         return false;
                     }
                 }
-            } else {
-                *existing_func = func;
             }
 
             if (is_declaration) {
@@ -1198,13 +1439,12 @@ bool compile_program(Compiler *c) {
             push_scope(c);
             c->func = existing_func;
 
-            Dynamic_Array(Func_Param) *func_params = &existing_func->params;
-
-            for (usize i = 0; i < func_params->size; ++i) {
-                Func_Param *param = func_params->store + i;
-                usize stack_index = alloc_scoped_var(c, param->type);
+            for (usize i = 0; i < existing_func->params.size; ++i) {
+                Func_Param *param = get_param(existing_func, i);
+                const Type *param_type = get_param_type(existing_func, i);
+                usize stack_index = alloc_scoped_var(c, get_param_type(existing_func, i));
                 param->index = stack_index;
-                assert(declare_var(c, &param->name, stack_index, param->type) != NULL);
+                assert(declare_var(c, &param->name, stack_index, param_type) != NULL);
             }
 
             CHECK(compile_block(c));
@@ -1234,7 +1474,7 @@ bool compile_program(Compiler *c) {
 #include "x86_64_linux.c"
 #endif
 
-const char *generate_out_file(const char *v3_file) {
+char *generate_out_file(const char *v3_file) {
     String_Builder sb = {0};
     sb_append_cstr(&sb, v3_file);
     if (sb.size > 3 &&
@@ -1378,7 +1618,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    const char *out_file;
+    char *out_file;
     FILE *out;
     if (*to_stdout) {
         out = stdout;
