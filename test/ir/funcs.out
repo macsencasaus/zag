@@ -35,3 +35,13 @@ func_ptrs[8]():
     %s[0] = ptr func_ptrs
     ret i32 0
 
+ptrs[32]():
+    %s[0] = i64 3
+    %s[8] = ref i64 %s[0]
+    %s[8] = ptr %s[8]
+    %s[16] = ptr %s[8]
+    %s[16] = i64 deref %s[16]
+    %s[24] = ptr %s[8]
+    store [%s[24]], i64 2
+    ret i32 0
+

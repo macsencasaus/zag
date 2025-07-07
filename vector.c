@@ -23,10 +23,13 @@
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
 #define CHECK(__expr) \
-    if (!(__expr)) return false
+    if (!(__expr)) return NULL
 
 #define SB_IMPLEMENTATION
 #include "sb.h"
+
+#define BUMPALLOC_IMPLEMENTATION
+#include "bumpalloc.h"
 
 typedef String_View sv;
 
@@ -436,18 +439,26 @@ typedef struct {
     Type type;
 } Builtin_Type;
 
-static const Builtin_Type builtin_types[] = {
-    {"i8", {TYPE_I8, 1, 1, TYPE_KIND_INT_SIGNED}},
-    {"u8", {TYPE_U8, 1, 1, TYPE_KIND_INT_UNSIGNED}},
-    {"i16", {TYPE_I16, 2, 2, TYPE_KIND_INT_SIGNED}},
-    {"u16", {TYPE_U16, 2, 2, TYPE_KIND_INT_UNSIGNED}},
-    {"i32", {TYPE_I32, 4, 4, TYPE_KIND_INT_SIGNED}},
-    {"u32", {TYPE_U32, 4, 4, TYPE_KIND_INT_UNSIGNED}},
-    {"i64", {TYPE_I64, 8, 8, TYPE_KIND_INT_SIGNED}},
-    {"u64", {TYPE_U64, 8, 8, TYPE_KIND_INT_UNSIGNED}},
+#define BUILTIN_TYPE(__name, __id, __size, __alignment, __kind) \
+    (Builtin_Type) {                                            \
+        .name = (__name), .type = {.id = (__id),                \
+                                   .size = (__size),            \
+                                   .alignment = (__alignment),  \
+                                   .kind = (__kind) }           \
+    }
 
-    {"f32", {TYPE_F32, 4, 4, TYPE_KIND_FLOAT}},
-    {"f64", {TYPE_F64, 8, 8, TYPE_KIND_FLOAT}},
+static const Builtin_Type builtin_types[] = {
+    BUILTIN_TYPE("i8", TYPE_I8, 1, 1, TYPE_KIND_INT_SIGNED),
+    BUILTIN_TYPE("u8", TYPE_U8, 1, 1, TYPE_KIND_INT_UNSIGNED),
+    BUILTIN_TYPE("i16", TYPE_I16, 2, 2, TYPE_KIND_INT_SIGNED),
+    BUILTIN_TYPE("u16", TYPE_U16, 2, 2, TYPE_KIND_INT_UNSIGNED),
+    BUILTIN_TYPE("i32", TYPE_I32, 4, 4, TYPE_KIND_INT_SIGNED),
+    BUILTIN_TYPE("u32", TYPE_U32, 4, 4, TYPE_KIND_INT_UNSIGNED),
+    BUILTIN_TYPE("i64", TYPE_I64, 8, 8, TYPE_KIND_INT_SIGNED),
+    BUILTIN_TYPE("u64", TYPE_U64, 8, 8, TYPE_KIND_INT_UNSIGNED),
+
+    BUILTIN_TYPE("f32", TYPE_F32, 4, 4, TYPE_KIND_FLOAT),
+    BUILTIN_TYPE("f64", TYPE_F64, 8, 8, TYPE_KIND_FLOAT),
 };
 
 typedef struct Op Op;
@@ -466,6 +477,8 @@ typedef enum {
     VALUE_TYPE_INT_LITERAL,
     VALUE_TYPE_VAR,
     VALUE_TYPE_FUNC,
+
+    VALUE_TYPE_DEREF,
 } Value_Type;
 
 typedef struct {
@@ -474,28 +487,30 @@ typedef struct {
 
     union {
         // int literal
-        i64 int_value;
+        u64 int_value;
 
-        // variable
+        // variable, deref
         usize stack_index;
 
         // function
         struct {
             sv name;
             Dynamic_Array(Func_Param) params;
-            Dynamic_Array(Op) ops;
+            Dynamic_Array(const Op *) ops;
             usize stack_size;
         };
     };
 } Value;
 
 typedef enum {
+    OP_TYPE_ASSIGN,
     OP_TYPE_STORE,
     OP_TYPE_NEG,
     OP_TYPE_BINOP,
     OP_TYPE_RET,
     OP_TYPE_BNOT,
     OP_TYPE_LNOT,
+    OP_TYPE_REF,
 
     OP_TYPE_COUNT,
 } Op_Type;
@@ -507,29 +522,21 @@ struct Op {
     usize result;
 
     union {
-        // store, prefix expr, return
-        Value val;
+        // assign, store, prefix expr, return, ref, deref
+        const Value *val;
 
         // binary
         struct {
             Token_Type op;
-            Value lhs;
-            Value rhs;
+            const Value *lhs;
+            const Value *rhs;
         };
     };
 };
 
-#define OP_STORE(__index, __val) \
-    ((Op){.type = OP_TYPE_STORE, .result = (__index), .val = (__val)})
-#define OP_PRE(__op_type, __index, __val) \
-    ((Op){.type = (__op_type), .result = (__index), .val = (__val)})
-#define OP_BINOP(__index, __op, __lhs, __rhs) \
-    ((Op){.type = OP_TYPE_BINOP, .result = (__index), .op = (__op), .lhs = (__lhs), .rhs = (__rhs)})
-#define OP_RET(__val) \
-    ((Op){.type = OP_TYPE_RET, .val = (__val)})
-
 typedef enum {
     PREC_LOWEST,
+    PREC_ASSIGN,
     PREC_BOR,
     PREC_XOR,
     PREC_BAND,
@@ -542,6 +549,7 @@ typedef enum {
 } Prec;
 
 static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
+    [TOKEN_TYPE_ASSIGN] = PREC_ASSIGN,
     [TOKEN_TYPE_BOR] = PREC_BOR,
     [TOKEN_TYPE_XOR] = PREC_XOR,
     [TOKEN_TYPE_BAND] = PREC_BAND,
@@ -587,6 +595,9 @@ typedef struct {
     const Type *hint;
 
     Dynamic_Array(const Value *) funcs;
+
+    Bump_Alloc value_alloc;
+    Bump_Alloc op_alloc;
 
     const char *err_msg;
     Location err_loc;
@@ -667,6 +678,96 @@ void compiler_init(Compiler *c, Lexer *l) {
     sht_init(&c->vars.store[0], sizeof(Value), 0);
 }
 
+INLINE Value *new_int_literal(Compiler *c, const Type *type, u64 value) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_INT_LITERAL,
+        .type = type,
+        .int_value = value,
+    };
+    return v;
+}
+
+INLINE Value *new_var(Compiler *c, const Type *type, usize stack_index) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_VAR,
+        .type = type,
+        .stack_index = stack_index,
+    };
+    return v;
+}
+
+INLINE Value *new_func(Compiler *c) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_FUNC,
+    };
+    return v;
+}
+
+INLINE Value *new_deref(Compiler *c, const Type *type, usize stack_index) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_DEREF,
+        .type = type,
+        .stack_index = stack_index,
+    };
+    return v;
+}
+
+INLINE Op *new_assign_op(Compiler *c, usize result, const Value *val) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_ASSIGN,
+        .result = result,
+        .val = val,
+    };
+    return o;
+}
+
+INLINE Op *new_store_op(Compiler *c, usize result_addr, const Value *val) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_STORE,
+        .result = result_addr,
+        .val = val,
+    };
+    return o;
+}
+
+INLINE Op *new_prefix_op(Compiler *c, Op_Type type, usize result, const Value *arg) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = type,
+        .result = result,
+        .val = arg,
+    };
+    return o;
+}
+
+INLINE Op *new_binop(Compiler *c, Token_Type op, usize result,
+                     const Value *lhs, const Value *rhs) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_BINOP,
+        .result = result,
+        .op = op,
+        .lhs = lhs,
+        .rhs = rhs,
+    };
+    return o;
+}
+
+INLINE Op *new_ret_op(Compiler *c, const Value *val) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_RET,
+        .val = val,
+    };
+    return o;
+}
+
 INLINE const Type *lookup_named_type(const Types_Ctx *ty_ctx, sv name) {
     return *(const Type **)sht_try_get(&ty_ctx->named_types, SV_SPREAD(&name));
 }
@@ -723,7 +824,12 @@ INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
     return t;
 }
 
-// TODO: move this to some sort of scratch memory, reduce heap allocations
+INLINE const Type *get_ptr_type(Types_Ctx *ty_ctx, const Type *internal) {
+    Type local = INIT_PTR_TYPE();
+    local.internal = internal;
+    return new_type(ty_ctx, &local);
+}
+
 char *get_type_name(const Type *t) {
     String_Builder type_name = {0};
 
@@ -918,11 +1024,6 @@ INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
     return frame;
 }
 
-INLINE void pop_scoped_var(Compiler *c, const Type *type) {
-    assert(c->stack_index >= type->size);
-    c->stack_index -= type->size;
-}
-
 INLINE bool is_constant(const Value *arg) {
     return arg->value_type == VALUE_TYPE_INT_LITERAL;
 }
@@ -950,10 +1051,11 @@ INLINE void pop_scope(Compiler *c) {
 
 typedef bool Compile_Stmt_Fn(Compiler *);
 
-bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue)
+Value *compile_expr(Compiler *c, Prec prec, bool *is_lvalue)
     __attribute__((warn_unused_result));
 
-bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
+Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
+    Value *val;
     bool lval;
 
     Op_Type op_type;
@@ -963,24 +1065,19 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         const Type *type = c->hint && is_integer_type(c->hint)
                                ? c->hint
                                : default_int_literal_type;
-        *val = (Value){
-            .value_type = VALUE_TYPE_INT_LITERAL,
-            .type = type,
-            .int_value = atoll(c->cur_token.lit.store),
-        };
+
+        val = new_int_literal(c, type, atoll(c->cur_token.lit.store));
         lval = false;
     } break;
 
     case TOKEN_TYPE_IDENT: {
-        const Value *var;
-        CHECK(var = find_var_far(c, &c->cur_token.lit));
-        *val = *var;
+        CHECK(val = find_var_far(c, &c->cur_token.lit));
         lval = true;
     } break;
 
     case TOKEN_TYPE_LPAREN: {
         next_token(c);
-        CHECK(compile_expr(c, PREC_LOWEST, val, &lval));
+        CHECK(val = compile_expr(c, PREC_LOWEST, &lval));
         CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
     } break;
 
@@ -988,22 +1085,18 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         Location loc = c->cur_token.loc;
         next_token(c);
 
-        Value arg;
-        bool arg_is_lval;
-        CHECK(compile_expr(c, PREC_PREFIX, &arg, &arg_is_lval));
-        if (!arg_is_lval) {
+        bool val_is_lval;
+        CHECK(val = compile_expr(c, PREC_PREFIX, &val_is_lval));
+        if (!val_is_lval) {
             compiler_error(c, &loc, "Cannot increment an rvalue");
             return false;
         }
 
-        Value one = {
-            .value_type = VALUE_TYPE_INT_LITERAL,
-            .type = arg.type,
-            .int_value = 1,
-        };
+        // TODO: intern constants mayhaps
+        Value *one = new_int_literal(c, val->type, 1);
 
-        da_append(&c->func->ops, OP_BINOP(arg.stack_index, TOKEN_TYPE_PLUS, arg, one));
-        *val = arg;
+        da_append(&c->func->ops,
+                  new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
 
         lval = false;
     } break;
@@ -1012,24 +1105,64 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
         Location loc = c->cur_token.loc;
         next_token(c);
 
-        Value arg;
-        bool arg_is_lval;
-        CHECK(compile_expr(c, PREC_PREFIX, &arg, &arg_is_lval));
-        if (!arg_is_lval) {
+        bool val_is_lval;
+        CHECK(val = compile_expr(c, PREC_PREFIX, &val_is_lval));
+        if (!val_is_lval) {
             compiler_error(c, &loc, "Cannot decrement an rvalue");
             return false;
         }
 
-        Value one = {
-            .value_type = VALUE_TYPE_INT_LITERAL,
-            .type = arg.type,
-            .int_value = 1,
-        };
+        Value *one = new_int_literal(c, val->type, 1);
 
-        da_append(&c->func->ops, OP_BINOP(arg.stack_index, TOKEN_TYPE_MINUS, arg, one));
-        *val = arg;
+        da_append(&c->func->ops,
+                  new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
 
         lval = false;
+    } break;
+
+    case TOKEN_TYPE_BAND: {
+        Location loc = c->cur_token.loc;
+
+        next_token(c);
+        Value *arg;
+        bool arg_lval;
+        CHECK(arg = compile_expr(c, PREC_PREFIX, &arg_lval));
+
+        if (!arg_lval) {
+            compiler_error(c, &loc, "Cannot take the address of an rvalue");
+            return false;
+        }
+
+        const Type *ptr_type = get_ptr_type(&c->ty_ctx, arg->type);
+
+        usize result = alloc_scoped_var(c, ptr_type);
+        da_append(&c->func->ops,
+                  new_prefix_op(c, OP_TYPE_REF, result, arg));
+
+        val = new_var(c, ptr_type, result);
+        lval = false;
+    } break;
+
+    case TOKEN_TYPE_ASTERISK: {
+        next_token(c);
+
+        Location loc = c->cur_token.loc;
+        Value *arg;
+        CHECK(arg = compile_expr(c, PREC_PREFIX, NULL));
+
+        if (arg->type->kind == TYPE_KIND_FN) {
+            compiler_error(c, &loc, "Cannot dereference function pointer");
+            return NULL;
+        } else if (arg->type->kind != TYPE_KIND_PTR) {
+            compiler_error(c, &loc, "Cannot dereference non pointer type");
+            return NULL;
+        }
+
+        usize result = alloc_scoped_var(c, arg->type->internal);
+        da_append(&c->func->ops, new_assign_op(c, result, arg));
+
+        val = new_deref(c, arg->type->internal, result);
+        lval = true;
     } break;
 
     // prefix tokens
@@ -1042,146 +1175,225 @@ bool compile_primary_expr(Compiler *c, Value *val, bool *is_lvalue) {
 
         next_token(c);
 
-        Value arg;
-        CHECK(compile_expr(c, PREC_PREFIX, &arg, NULL));
-        usize result = alloc_scoped_var(c, arg.type);
-        da_append(&c->func->ops, OP_PRE(op_type, result, arg));
+        Value *arg;
+        CHECK(arg = compile_expr(c, PREC_PREFIX, NULL));
+        usize result = alloc_scoped_var(c, arg->type);
 
-        *val = (Value){
-            .value_type = VALUE_TYPE_VAR,
-            .type = arg.type,
-            .stack_index = result,
-        };
+        da_append(&c->func->ops, new_prefix_op(c, op_type, result, arg));
 
+        val = new_var(c, arg->type, result);
         lval = false;
     } break;
 
     default: {
         unexpected_token(c);
-        return false;
+        return NULL;
     }
     }
 
-    switch (c->peek_token.type) {
-    case TOKEN_TYPE_ASSIGN: {
-        if (!lval) {
-            compiler_error(c, &c->cur_token.loc, "Cannot assign rvalue\n");
-            return false;
+    for (;;) {
+        switch (c->peek_token.type) {
+        case TOKEN_TYPE_PLUSPLUS: {
+            next_token(c);
+            if (!lval) {
+                compiler_error(c, &c->cur_token.loc, "Cannot increment rvalue");
+                return false;
+            }
+
+            usize pre = alloc_scoped_var(c, val->type);
+            da_append(&c->func->ops, new_assign_op(c, pre, val));
+
+            Value *one = new_int_literal(c, val->type, 1);
+
+            da_append(&c->func->ops,
+                      new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
+
+            val = new_var(c, val->type, pre);
+            lval = false;
+        } break;
+
+        case TOKEN_TYPE_MINUSMINUS: {
+            next_token(c);
+            if (!lval) {
+                compiler_error(c, &c->cur_token.loc, "Cannot decrement rvalue");
+                return false;
+            }
+
+            Value *one = new_int_literal(c, val->type, 1);
+
+            usize pre = alloc_scoped_var(c, val->type);
+            da_append(&c->func->ops, new_assign_op(c, pre, val));
+
+            da_append(&c->func->ops,
+                      new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
+
+            val = new_var(c, val->type, pre);
+            lval = false;
+        } break;
+
+        default:
+            goto compile_primary_expr_end_loop;
         }
-        next_token(c);
-        next_token(c);
-
-        Value arg;
-        CHECK(compile_expr(c, PREC_LOWEST, &arg, NULL));
-
-        da_append(&c->func->ops, OP_STORE(val->stack_index, arg));
-    } break;
-
-    case TOKEN_TYPE_PLUSPLUS: {
-        next_token(c);
-        if (!lval) {
-            compiler_error(c, &c->cur_token.loc, "Cannot increment rvalue");
-            return false;
-        }
-
-        Value one = {
-            .value_type = VALUE_TYPE_INT_LITERAL,
-            .type = val->type,
-            .int_value = 1,
-        };
-
-        usize pre = alloc_scoped_var(c, val->type);
-        da_append(&c->func->ops, OP_STORE(pre, *val));
-
-        da_append(&c->func->ops, OP_BINOP(val->stack_index, TOKEN_TYPE_PLUS, *val, one));
-
-        *val = (Value){
-            .value_type = VALUE_TYPE_VAR,
-            .type = val->type,
-            .stack_index = pre,
-        };
-
-        lval = false;
-    } break;
-
-    case TOKEN_TYPE_MINUSMINUS: {
-        next_token(c);
-        if (!lval) {
-            compiler_error(c, &c->cur_token.loc, "Cannot decrement rvalue");
-            return false;
-        }
-
-        Value one = {
-            .value_type = VALUE_TYPE_INT_LITERAL,
-            .type = val->type,
-            .int_value = 1,
-        };
-
-        usize pre = alloc_scoped_var(c, val->type);
-        da_append(&c->func->ops, OP_STORE(pre, *val));
-
-        da_append(&c->func->ops, OP_BINOP(val->stack_index, TOKEN_TYPE_MINUS, *val, one));
-
-        *val = (Value){
-            .value_type = VALUE_TYPE_VAR,
-            .type = val->type,
-            .stack_index = pre,
-        };
-
-        lval = false;
-    } break;
-
-    default: {
     }
-    }
+
+compile_primary_expr_end_loop:
 
     if (is_lvalue)
         *is_lvalue = lval;
 
-    return true;
+    return val;
 }
 
-bool compile_expr(Compiler *c, Prec prec, Value *val, bool *is_lvalue) {
-    CHECK(compile_primary_expr(c, val, is_lvalue));
+Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
+    Value *val;
 
-    while (peek_prec(c) > prec) {
-        next_token(c);
-        Token op = c->cur_token;
-        next_token(c);
+    Token op = c->cur_token;
+    next_token(c);
 
+    const Type *old_hint = c->hint;
+    c->hint = left->type;
+
+    c->hint = old_hint;
+
+    switch (op.type) {
+    case TOKEN_TYPE_ASSIGN: {
+        if (!left_is_lval) {
+            compiler_error(c, &op.loc, "Cannot assign rvalue");
+            return NULL;
+        }
+
+        // - 1 on precedence to make assign right associative
+        CHECK(val = compile_expr(c, PREC_ASSIGN - 1, NULL));
+
+        if (!type_cmp(left->type, val->type)) {
+            char *left_type_name = get_type_name(left->type),
+                 *right_type_name = get_type_name(val->type);
+
+            compiler_error(c, &op.loc, "Type Error: assigning expression of type '%s' to value of type '%s'",
+                           right_type_name, left_type_name);
+
+            free(right_type_name);
+            free(left_type_name);
+            return NULL;
+        }
+
+        if (left->value_type == VALUE_TYPE_DEREF) {
+            da_append(&c->func->ops, new_store_op(c, left->stack_index, val));
+        } else {
+            da_append(&c->func->ops, new_assign_op(c, left->stack_index, val));
+        }
+    } break;
+    case TOKEN_TYPE_PLUS:
+    case TOKEN_TYPE_MINUS: {
+        if (left->type->kind == TYPE_KIND_PTR) {
+            const Type *u64_type = lookup_named_type(&c->ty_ctx, sv_from_cstr("u64"));
+
+            const Type *old_hint = c->hint;
+            c->hint = u64_type;
+
+            Value *right;
+            CHECK(right = compile_expr(c, prec_lookup[op.type], NULL));
+
+            c->hint = old_hint;
+
+            usize ptr_internal_type_size = left->type->internal->size;
+
+            // TODO: implement type promotion for all number types
+            if (!type_cmp(right->type, u64_type)) {
+                compiler_error(c, &op.loc, "Type Error: invalid operand to pointer arithmetic");
+                return NULL;
+            }
+
+            if (type_cmp(right->type, u64_type)) {
+                if (right->value_type == VALUE_TYPE_INT_LITERAL) {
+                    right->int_value *= ptr_internal_type_size;
+
+                    usize result = alloc_scoped_var(c, left->type);
+                    da_append(&c->func->ops, new_binop(c, op.type, result, left, right));
+
+                    val = new_var(c, left->type, result);
+                } else {
+                    usize temp = alloc_scoped_var(c, u64_type);
+
+                    Value *m = new_int_literal(c, u64_type, ptr_internal_type_size);
+
+                    da_append(&c->func->ops, new_binop(c, TOKEN_TYPE_ASTERISK, temp, right, m));
+
+                    right = new_var(c, u64_type, temp);
+
+                    usize result = alloc_scoped_var(c, left->type);
+                    da_append(&c->func->ops, new_binop(c, op.type, result, left, right));
+
+                    val = new_var(c, left->type, result);
+                }
+            } else if (op.type == TOKEN_TYPE_MINUS && type_cmp(left->type, right->type)) {
+                usize temp = alloc_scoped_var(c, u64_type);
+
+                da_append(&c->func->ops, new_binop(c, TOKEN_TYPE_MINUS, temp, left, right));
+
+                Value *d = new_var(c, u64_type, temp);
+                Value *m = new_int_literal(c, u64_type, ptr_internal_type_size);
+
+                usize result = alloc_scoped_var(c, u64_type);
+
+                da_append(&c->func->ops, new_binop(c, TOKEN_TYPE_SLASH, result, d, m));
+
+                val = new_var(c, u64_type, result);
+            } else {
+                compiler_error(c, &op.loc, "Type Error: invalid operand to pointer arithmetic");
+                return NULL;
+            }
+
+            return val;
+        }
+    }
+    default: {
         const Type *old_hint = c->hint;
-        c->hint = val->type;
+        c->hint = left->type;
 
-        Value rhs;
-        CHECK(compile_expr(c, prec_lookup[op.type], &rhs, NULL));
+        Value *right;
+        CHECK(right = compile_expr(c, prec_lookup[op.type], NULL));
 
         c->hint = old_hint;
 
-        // NOTE: temporary
-        if (!type_cmp(rhs.type, val->type)) {
+        if (!type_cmp(left->type, right->type)) {
             compiler_error(c, &op.loc, "Type Error: invalid binary operation");
-            return false;
+            return NULL;
         }
 
-        usize temp = alloc_scoped_var(c, val->type);
-        da_append(&c->func->ops, OP_BINOP(temp, op.type, *val, rhs));
+        usize result = alloc_scoped_var(c, left->type);
+        da_append(&c->func->ops, new_binop(c, op.type, result, left, right));
 
-        *val = (Value){
-            .value_type = VALUE_TYPE_VAR,
-            .type = val->type,
-            .stack_index = temp,
-        };
+        val = new_var(c, left->type, result);
+    }
+    }
+
+    return val;
+}
+
+Value *compile_expr(Compiler *c, Prec prec, bool *is_lvalue) {
+    Value *val;
+    bool left_is_lval;
+    CHECK(val = compile_primary_expr(c, &left_is_lval));
+
+    if (is_lvalue)
+        *is_lvalue = left_is_lval;
+
+    while (peek_prec(c) > prec) {
+        next_token(c);
+
+        CHECK(val = compile_binary_expr(c, val, left_is_lval));
 
         if (is_lvalue)
             *is_lvalue = false;
     }
 
-    return true;
+    return val;
 }
 
-bool compile_expr_save_stack(Compiler *c, Prec prec, Value *val, bool *is_value) {
+Value *compile_expr_save_stack(Compiler *c, Prec prec, bool *is_value) {
     usize saved_stack = c->stack_index;
-    bool res = compile_expr(c, prec, val, is_value);
+    Value *res = compile_expr(c, prec, is_value);
     c->stack_index = saved_stack;
     return res;
 }
@@ -1209,11 +1421,11 @@ bool compile_var_stmt(Compiler *c) {
             next_token(c);
 
             c->hint = decl_type;
-            Value arg;
-            CHECK(compile_expr_save_stack(c, PREC_LOWEST, &arg, NULL));
+            Value *arg;
+            CHECK(arg = compile_expr_save_stack(c, PREC_LOWEST, NULL));
             c->hint = NULL;
 
-            if (is_constant(&arg) && !coerce_constant_type(&arg, decl_type)) {
+            if (is_constant(arg) && !coerce_constant_type(arg, decl_type)) {
                 char *decl_type_name = get_type_name(decl_type);
                 compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type '%s'",
                                decl_type_name);
@@ -1221,8 +1433,8 @@ bool compile_var_stmt(Compiler *c) {
                 return false;
             }
 
-            if (decl_type && !type_cmp(arg.type, decl_type)) {
-                char *arg_type_name = get_type_name(arg.type),
+            if (decl_type && !type_cmp(arg->type, decl_type)) {
+                char *arg_type_name = get_type_name(arg->type),
                      *decl_type_name = get_type_name(decl_type);
 
                 compiler_error(c, &c->cur_token.loc, "Type Error: assigning expression of type '%s' to variable of type '%s'",
@@ -1232,11 +1444,11 @@ bool compile_var_stmt(Compiler *c) {
                 free(arg_type_name);
                 return false;
             } else {
-                decl_type = arg.type;
+                decl_type = arg->type;
             }
 
             stack_index = alloc_scoped_var(c, decl_type);
-            da_append(&c->func->ops, OP_STORE(stack_index, arg));
+            da_append(&c->func->ops, new_assign_op(c, stack_index, arg));
         } else {
             if (!decl_type) {
                 compiler_error(c, &c->cur_token.loc, "Variable declaration must have type");
@@ -1257,14 +1469,14 @@ bool compile_var_stmt(Compiler *c) {
 
 bool compile_return_stmt(Compiler *c) {
     next_token(c);
-    Value val;
+    Value *val;
     const Type *ret_type = c->func->type->ret;
 
     c->hint = ret_type;
-    CHECK(compile_expr_save_stack(c, PREC_LOWEST, &val, NULL));
+    CHECK(val = compile_expr_save_stack(c, PREC_LOWEST, NULL));
     c->hint = NULL;
 
-    if (is_constant(&val) && !coerce_constant_type(&val, ret_type)) {
+    if (is_constant(val) && !coerce_constant_type(val, ret_type)) {
         char *ret_type_name = get_type_name(ret_type);
 
         compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type '%s'",
@@ -1274,7 +1486,7 @@ bool compile_return_stmt(Compiler *c) {
         return false;
     }
 
-    const Type *expr_type = val.type;
+    const Type *expr_type = val->type;
     if (!type_cmp(expr_type, ret_type)) {
         char *expr_type_name = get_type_name(expr_type),
              *ret_type_name = get_type_name(ret_type);
@@ -1290,14 +1502,13 @@ bool compile_return_stmt(Compiler *c) {
 
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
 
-    da_append(&c->func->ops, OP_RET(val));
+    da_append(&c->func->ops, new_ret_op(c, val));
 
     return true;
 }
 
 bool compile_expr_stmt(Compiler *c) {
-    Value _;
-    CHECK(compile_expr_save_stack(c, PREC_LOWEST, &_, NULL));
+    CHECK(compile_expr_save_stack(c, PREC_LOWEST, NULL));
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     return true;
 }
@@ -1335,8 +1546,7 @@ bool compile_program(Compiler *c) {
         } break;
 
         case TOKEN_TYPE_FN: {
-            // TODO: construct func type
-            Value func = {0};
+            Value *func = new_func(c);
             Type func_type = {
                 .size = 8,
                 .alignment = 8,
@@ -1366,15 +1576,15 @@ bool compile_program(Compiler *c) {
 
                     da_append(&func_type.params, param_type);
 
-                    for (usize i = 0; i < func.params.size; ++i) {
-                        const Func_Param *param = func.params.store + i;
+                    for (usize i = 0; i < func->params.size; ++i) {
+                        const Func_Param *param = func->params.store + i;
                         if (sveq(param->name, param_token.lit)) {
                             compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(&param_token));
                             return false;
                         }
                     }
 
-                    da_append(&func.params, ((Func_Param){param_token.lit}));
+                    da_append(&func->params, ((Func_Param){.name = param_token.lit}));
                 } while (try_peek_tok(c, TOKEN_TYPE_COMMA));
 
                 CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
@@ -1401,7 +1611,7 @@ bool compile_program(Compiler *c) {
                 already_defined = existing_func->ops.store == NULL;
             } else {
                 existing_func = declare_func(c, &name.lit, interned_func_type);
-                existing_func->params = func.params;
+                existing_func->params = func->params;
             }
 
             if (already_defined && !is_declaration) {
@@ -1415,12 +1625,12 @@ bool compile_program(Compiler *c) {
                     return false;
                 }
 
-                if (func.params.size != existing_func->params.size) {
+                if (func->params.size != existing_func->params.size) {
                     compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                     return false;
                 }
 
-                usize n = func.params.size;
+                usize n = func->params.size;
                 for (usize i = 0; i < n; ++i) {
                     if (!type_cmp(func_type.params.store[i], existing_func->type->params.store[i])) {
                         compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));

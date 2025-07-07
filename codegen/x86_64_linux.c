@@ -224,31 +224,31 @@ void zero_reg(X86_64_Register reg) {
 
 void generate_op(const Op *op) {
     switch (op->type) {
-    case OP_TYPE_STORE: {
-        load_value_to_reg(&op->val, RAX);
-        store_reg_to_stack(RAX, op->result, op->val.type->size);
+    case OP_TYPE_ASSIGN: {
+        load_value_to_reg(op->val, RAX);
+        store_reg_to_stack(RAX, op->result, op->val->type->size);
     } break;
     case OP_TYPE_NEG: {
-        load_value_to_reg(&op->val, RAX);
-        if (op->val.type->size == 8)
+        load_value_to_reg(op->val, RAX);
+        if (op->val->type->size == 8)
             push_op(REX_PRE(1, 0, 0, 0));
         push_op(NEG);
         push_op(MODR_M(MOD_REG, 3, RAX));
-        store_reg_to_stack(RAX, op->result, op->val.type->size);
+        store_reg_to_stack(RAX, op->result, op->val->type->size);
     } break;
     case OP_TYPE_LNOT: {
-        load_value_to_reg(&op->val, RAX);
-        if (op->val.type->size == 8)
+        load_value_to_reg(op->val, RAX);
+        if (op->val->type->size == 8)
             push_op(REX_PRE(1, 0, 0, 0));
         push_op(CMP_IMM8);
     } break;
     case OP_TYPE_BINOP: {
-        usize size = op->lhs.type->size;
+        usize size = op->lhs->type->size;
         bool is64 = size == 8;
-        bool is_signed = op->lhs.type->kind == TYPE_KIND_INT_SIGNED;
+        bool is_signed = op->lhs->type->kind == TYPE_KIND_INT_SIGNED;
 
-        load_value_to_reg(&op->lhs, RAX);
-        load_value_to_reg(&op->rhs, RCX);
+        load_value_to_reg(op->lhs, RAX);
+        load_value_to_reg(op->rhs, RCX);
         switch (op->op) {
         case TOKEN_TYPE_PLUS: {
             if (is64)
@@ -313,7 +313,7 @@ void generate_op(const Op *op) {
         store_reg_to_stack(RAX, op->result, size);
     } break;
     case OP_TYPE_RET: {
-        load_value_to_reg(&op->val, RAX);
+        load_value_to_reg(op->val, RAX);
         push_op(LEAVE);
         push_op(RET);
     } break;
@@ -337,7 +337,7 @@ void generate_func(const Value *func) {
     }
 
     for (usize i = 0; i < func->ops.size; ++i) {
-        const Op *op = func->ops.store + i;
+        const Op *op = func->ops.store[i];
         generate_op(op);
     }
 }

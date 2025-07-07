@@ -162,8 +162,6 @@ void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
 }
 
 void *sht_try_get(const String_Hash_Table *ht, const char *key, size_t key_t_size) {
-    size_t item_size = sizeof(int64_t) + key_t_size + ht->value_t_size;
-
     if (ht->arena == NULL)
         return NULL;
 

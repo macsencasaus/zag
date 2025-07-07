@@ -35,3 +35,12 @@ fn func_ptrs(): i32 {
     var this_fn: fn(): i32 = func_ptrs;
     return 0;
 }
+
+fn ptrs(): i32 {
+    var x = 3;
+    var p: *i64 = &x;
+    var y = *p;
+    *p = 2;
+
+    return 0;
+}

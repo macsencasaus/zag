@@ -29,6 +29,9 @@ void print_ir_val(const Value *val, FILE *out) {
     case VALUE_TYPE_FUNC: {
         fprintf(out, "%.*s", SV_FMT(&val->name));
     } break;
+    case VALUE_TYPE_DEREF: {
+        fprintf(out, "deref %%s[%zu]", val->stack_index);
+    } break;
     default: UNIMPLEMENTED();
     }
 }
@@ -54,42 +57,45 @@ static char *binop_inst_lookup[TOKEN_TYPE_COUNT] = {
 
 void print_ir_op(const Op *op, FILE *out) {
     switch (op->type) {
-    case OP_TYPE_STORE: {
+    case OP_TYPE_ASSIGN: {
         fprintf(out, "    %%s[%zu] = ", op->result);
-        print_ir_val(&op->val, out);
-        fprintf(out, "\n");
+        print_ir_val(op->val, out);
+    } break;
+    case OP_TYPE_STORE: {
+        fprintf(out, "    store [%%s[%zu]], ", op->result);
+        print_ir_val(op->val, out);
     } break;
     case OP_TYPE_RET: {
         fprintf(out, "    ret ");
-        print_ir_val(&op->val, out);
-        fprintf(out, "\n");
+        print_ir_val(op->val, out);
+    } break;
+    case OP_TYPE_REF: {
+        fprintf(out, "    %%s[%zu] = ref ", op->result);
+        print_ir_val(op->val, out);
     } break;
     case OP_TYPE_NEG: {
         fprintf(out, "    %%s[%zu] = neg ", op->result);
-        print_ir_val(&op->val, out);
-        fprintf(out, "\n");
+        print_ir_val(op->val, out);
     } break;
     case OP_TYPE_BNOT: {
         fprintf(out, "    %%s[%zu] = bnot ", op->result);
-        print_ir_val(&op->val, out);
-        fprintf(out, "\n");
+        print_ir_val(op->val, out);
     } break;
     case OP_TYPE_LNOT: {
         fprintf(out, "    %%s[%zu] = lnot ", op->result);
-        print_ir_val(&op->val, out);
-        fprintf(out, "\n");
+        print_ir_val(op->val, out);
     } break;
     case OP_TYPE_BINOP: {
         const char *op_lit = binop_inst_lookup[op->op];
         if (!op_lit) UNIMPLEMENTED();
         fprintf(out, "    %%s[%zu] = %s ", op->result, op_lit);
-        print_ir_val(&op->lhs, out);
+        print_ir_val(op->lhs, out);
         fprintf(out, ", ");
-        print_ir_val(&op->rhs, out);
-        fprintf(out, "\n");
+        print_ir_val(op->rhs, out);
     } break;
     default: UNIMPLEMENTED();
     }
+    fprintf(out, "\n");
 }
 
 void print_ir_func(const Value *func, FILE *out) {
@@ -103,7 +109,7 @@ void print_ir_func(const Value *func, FILE *out) {
     fprintf(out, "):\n");
 
     for (usize i = 0; i < func->ops.size; ++i) {
-        const Op *op = func->ops.store + i;
+        const Op *op = func->ops.store[i];
         print_ir_op(op, out);
     }
     fprintf(out, "\n");
