@@ -1,3 +1,12 @@
 -Iinclude
 -Icodegen
 -Ias
+-Werror
+-Wpedantic
+-Wall
+-Wextra
+-std=c11
+
+-Wno-bitwise-instead-of-logical 
+-Wno-gnu-folding-constant
+-Wno-error=unused-functions
