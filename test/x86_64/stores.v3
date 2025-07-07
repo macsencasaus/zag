@@ -30,3 +30,11 @@ fn params(a: i32, b: i32): i32 {
 fn add(a: i32, b: i32): i32 {
     return a + b;
 }
+
+fn store(): i64 {
+    var x = 2;
+    var p = &x;
+    *p = 3;
+
+    return *p;
+}

@@ -1262,8 +1262,13 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
             return NULL;
         }
 
+        const Type *old_hint = c->hint;
+        c->hint = left->type;
+
         // - 1 on precedence to make assign right associative
         CHECK(val = compile_expr(c, PREC_ASSIGN - 1, NULL));
+
+        c->hint = old_hint;
 
         if (!type_cmp(left->type, val->type)) {
             char *left_type_name = get_type_name(left->type),

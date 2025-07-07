@@ -45,3 +45,25 @@ Disassembly of section .text:
   50:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
   53:	c9                   	leave
   54:	c3                   	ret
+
+0000000000000055 <store>:
+  55:	55                   	push   rbp
+  56:	48 89 e5             	mov    rbp,rsp
+  59:	48 83 ec 20          	sub    rsp,0x20
+  5d:	b8 02 00 00 00       	mov    eax,0x2
+  62:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  66:	48 8d 45 f8          	lea    rax,[rbp-0x8]
+  6a:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  6e:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  72:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  76:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  7a:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  7e:	b8 03 00 00 00       	mov    eax,0x3
+  83:	48 8b 4d e8          	mov    rcx,QWORD PTR [rbp-0x18]
+  87:	48 89 01             	mov    QWORD PTR [rcx],rax
+  8a:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  8e:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  92:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+  96:	48 8b 00             	mov    rax,QWORD PTR [rax]
+  99:	c9                   	leave
+  9a:	c3                   	ret

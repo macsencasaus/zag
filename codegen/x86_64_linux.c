@@ -51,6 +51,8 @@ typedef enum {
 
 static X86_64_Register x86_64_linux_registers[] = {RDI, RSI, RDX, RCX, R8, R9};
 
+#define WORD_PRE() 0x66
+
 // REX Prefix byte
 typedef struct {
     u8 b : 1;
@@ -73,22 +75,25 @@ typedef struct {
 
 // Mod addressing modes
 #define MOD_MEM 0
-#define MOD_MEM8 1
-#define MOD_MEM32 2
+#define MOD_MEM_BYTE 1
+#define MOD_MEM_DWORD 2
 #define MOD_REG 3
 
 // Opcodes
 #define MOV_REG 0x8B
+#define MOV_REG_BYTE 0x8a
 #define MOV_MEM 0x89
+#define MOV_MEM_BYTE 0x88
+
 #define MOV_IMM(reg) (0xB8 + (reg & 7))
-#define MOV_IMM8 0xC6
-#define MOV_IMM32 0xC7
+
+#define LEA 0x8D
 
 #define ADD 0x01
 
 #define SUB 0x29
-#define SUB_IMM32 0x81
-#define SUB_IMM8 0x83
+#define SUB_IMM 0x81
+#define SUB_IMM_BYTE 0x83
 
 #define IMUL (char[]){0x0F, 0xAF}
 
@@ -125,123 +130,213 @@ typedef struct {
 #define LEAVE 0xC9
 #define RET 0xC3
 
-void load_value_to_reg(const Value *v, X86_64_Register reg) {
-    switch (v->value_type) {
-    case VALUE_TYPE_INT_LITERAL: {
-        bool is64 = (v->int_value & 0xFFFFFFFF00000000) > 0ull;
-        u8 w, b;
-        if ((w = is64) | (b = (reg > 0x7))) {  // require REX prefix
-            push_op(REX_PRE(w, 0, 0, b));
-        }
-        push_op(MOV_IMM(reg));
-        if (is64) {
-            push_multi_op(&v->int_value, sizeof(i64));
-        } else {
-            i32 imm = (i32)v->int_value;
-            push_multi_op(&imm, sizeof(i32));
-        }
-    } break;
-    case VALUE_TYPE_VAR: {
-        bool is64 = v->type->size == 8;
-        u8 w, r;
-        if ((w = is64) | (r = (reg > 0x7))) {  // require REX prefix
-            push_op(REX_PRE(w, r, 0, 0));
-        }
+void move_imm_to_reg(u64 value, X86_64_Register reg) {
+    u8 w = value > UINT32_MAX,
+       b = reg > 0x7;
 
-        usize disp = v->stack_index + v->type->size;
+    if (w || b)
+        push_op(REX_PRE(w, 0, 0, b));
 
-        if (disp < 255) {
-            u8 imm = -disp;
-            push_op(MOV_REG);
-            push_op(MODR_M(MOD_MEM8, reg, RBP));
-            push_op(imm);
-        } else {
-            u32 imm = -disp;
-            push_op(MOV_REG);
-            push_op(MODR_M(MOD_MEM32, reg, RBP));
-            push_multi_op(&imm, sizeof(imm));
-        }
-    } break;
-    default: UNIMPLEMENTED();
+    push_op(MOV_IMM(reg));
+    if (w) {
+        push_multi_op(&value, sizeof(value));
+    } else {
+        i32 imm = (i32)value;
+        push_multi_op(&imm, sizeof(imm));
+    }
+}
+
+void move_stack_to_reg(usize stack_index, usize size, X86_64_Register reg) {
+    u8 w = size == 8,
+       r = reg > 0x7;
+
+    if (size == 2)
+        push_op(WORD_PRE());
+
+    if (w || r)
+        push_op(REX_PRE(w, r, 0, 0));
+
+    u8 mov_code = size == 1 ? MOV_REG_BYTE : MOV_REG;
+    push_op(mov_code);
+
+    usize disp = stack_index + size;
+
+    if (disp <= UINT8_MAX) {
+        u8 imm = -disp;
+        push_op(MODR_M(MOD_MEM_BYTE, reg, RBP));
+        push_op(imm);
+    } else {
+        u32 imm = -disp;
+        push_op(MODR_M(MOD_MEM_DWORD, reg, RBP));
+        push_multi_op(&imm, sizeof(imm));
     }
 }
 
 void store_reg_to_stack(X86_64_Register reg, usize stack_index, usize size) {
-    bool is64 = size == 8;
-    u8 w, r;
-    if ((w = is64) | (r = (reg > 0x7))) {  // require REX prefix
+    u8 w = size == 8,
+       r = reg > 0x7;
+
+    if (size == 2)
+        push_op(WORD_PRE());
+
+    if (w || r)
         push_op(REX_PRE(w, r, 0, 0));
-    }
+
+    u8 mov_code = size == 1 ? MOV_MEM_BYTE : MOV_MEM;
 
     usize disp = stack_index + size;
-
-    if (disp < 255) {
+    if (disp <= UINT8_MAX) {
         u8 imm = -disp;
-        push_op(MOV_MEM);
-        push_op(MODR_M(MOD_MEM8, reg, RBP));
+        push_op(mov_code);
+        push_op(MODR_M(MOD_MEM_BYTE, reg, RBP));
         push_op(imm);
     } else {
         u32 imm = -disp;
-        push_op(MOV_MEM);
-        push_op(MODR_M(MOD_MEM32, reg, RBP));
+        push_op(mov_code);
+        push_op(MODR_M(MOD_MEM_DWORD, reg, RBP));
         push_multi_op(&imm, sizeof(imm));
     }
 }
 
 void move_reg_to_reg(X86_64_Register from, X86_64_Register to) {
-    u8 r = from > 0x7;
-    u8 b = to > 0x7;
+    u8 r = from > 0x7,
+       b = to > 0x7;
+
     push_op(REX_PRE(1, r, 0, b));
     push_op(MOV_MEM);
     push_op(MODR_M(MOD_REG, from & 0x7, to & 0x7));
 }
 
-void alloc_rsp(const Value *func) {
-    usize stack_size = func->stack_size;
+void load_reg_to_reg_addr(X86_64_Register from, X86_64_Register to, usize size) {
+    u8 w = size == 8,
+       r = from > 0x7,
+       b = to > 0x7;
+
+    if (size == 2)
+        push_op(WORD_PRE());
+
+    if (w || r || b)
+        push_op(REX_PRE(w, r, 0, b));
+
+    if (size == 1)
+        push_op(MOV_MEM_BYTE);
+    else
+        push_op(MOV_MEM);
+
+    push_op(MODR_M(MOD_MEM, from & 0x7, to & 0x7));
+}
+
+void load_reg_addr_to_reg(X86_64_Register from, X86_64_Register to, usize size) {
+    u8 w = size == 8,
+       r = to > 0x7,
+       b = from > 0x7;
+
+    if (size == 2)
+        push_op(WORD_PRE());
+
+    if (w || r || b)
+        push_op(REX_PRE(w, r, 0, b));
+
+    if (size == 1)
+        push_op(MOV_REG_BYTE);
+    else
+        push_op(MOV_REG);
+
+    push_op(MODR_M(MOD_MEM, to & 0x7, from & 0x7));
+}
+
+void load_effective_address(usize stack_index, usize size, X86_64_Register reg) {
+    u8 r = reg > 0x7;
+
+    push_op(REX_PRE(1, r, 0, 0));
+    push_op(LEA);
+
+    usize disp = stack_index + size;
+
+    if (disp <= UINT8_MAX) {
+        u8 imm = -disp;
+        push_op(MODR_M(MOD_MEM_BYTE, reg, RBP));
+        push_op(imm);
+    } else {
+        u32 imm = -disp;
+        push_op(MODR_M(MOD_MEM_DWORD, reg, RBP));
+        push_multi_op(&imm, sizeof(imm));
+    }
+}
+
+
+void load_value_to_reg(const Value *v, X86_64_Register reg) {
+    switch (v->value_type) {
+    case VALUE_TYPE_INT_LITERAL: {
+        move_imm_to_reg(v->int_value, reg);
+    } break;
+
+    case VALUE_TYPE_VAR: {
+        move_stack_to_reg(v->stack_index, v->type->size, reg);
+    } break;
+
+    case VALUE_TYPE_DEREF: {
+        move_stack_to_reg(v->stack_index, 8, RAX);
+        load_reg_addr_to_reg(RAX, reg, v->type->size);
+    } break;
+
+    default: UNIMPLEMENTED();
+    }
+}
+void alloc_rsp(usize stack_size) {
     stack_size += (16 - (stack_size % 16)) % 16;  // 16 byte alignment
 
     push_op(REX_PRE(1, 0, 0, 0));
     if (stack_size <= 255) {
         u8 imm = (u8)stack_size;
-        push_op(SUB_IMM8);
+        push_op(SUB_IMM_BYTE);
         push_op(MODR_M(MOD_REG, 5, RSP));
         push_op(imm);
     } else {
         assert(stack_size < (usize)(u32)-1);
         u32 imm = (u32)stack_size;
-        push_op(SUB_IMM32);
+        push_op(SUB_IMM);
         push_op(MODR_M(MOD_REG, 5, RSP));
         push_multi_op(&imm, sizeof(imm));
     }
 }
 
-void zero_reg(X86_64_Register reg) {
-    u8 r = reg > 0x7;
-    push_op(REX_PRE(1, r, 0, r));
-    push_op(XOR);
-    push_op(MODR_M(MOD_REG, reg, reg));
-}
-
 void generate_op(const Op *op) {
+    const Value *val = op->val;
+
     switch (op->type) {
     case OP_TYPE_ASSIGN: {
-        load_value_to_reg(op->val, RAX);
-        store_reg_to_stack(RAX, op->result, op->val->type->size);
+        load_value_to_reg(val, RAX);
+        store_reg_to_stack(RAX, op->result, val->type->size);
     } break;
+
+    case OP_TYPE_STORE: {
+        load_value_to_reg(val, RAX);
+        move_stack_to_reg(op->result, 8, RCX);
+        load_reg_to_reg_addr(RAX, RCX, val->type->size);
+    } break;
+
     case OP_TYPE_NEG: {
-        load_value_to_reg(op->val, RAX);
-        if (op->val->type->size == 8)
+        load_value_to_reg(val, RAX);
+        if (val->type->size == 8)
             push_op(REX_PRE(1, 0, 0, 0));
         push_op(NEG);
         push_op(MODR_M(MOD_REG, 3, RAX));
-        store_reg_to_stack(RAX, op->result, op->val->type->size);
+        store_reg_to_stack(RAX, op->result, val->type->size);
     } break;
+
+    case OP_TYPE_REF: {
+        load_effective_address(val->stack_index, val->type->size, RAX);
+        store_reg_to_stack(RAX, op->result, 8);
+    } break;
+
     case OP_TYPE_LNOT: {
-        load_value_to_reg(op->val, RAX);
-        if (op->val->type->size == 8)
+        load_value_to_reg(val, RAX);
+        if (val->type->size == 8)
             push_op(REX_PRE(1, 0, 0, 0));
         push_op(CMP_IMM8);
     } break;
+
     case OP_TYPE_BINOP: {
         usize size = op->lhs->type->size;
         bool is64 = size == 8;
@@ -256,12 +351,14 @@ void generate_op(const Op *op) {
             push_op(ADD);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
+
         case TOKEN_TYPE_MINUS: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
             push_op(SUB);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
+
         case TOKEN_TYPE_ASTERISK: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
@@ -271,6 +368,7 @@ void generate_op(const Op *op) {
             } else
                 UNIMPLEMENTED();
         } break;
+
         case TOKEN_TYPE_SLASH: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
@@ -280,6 +378,7 @@ void generate_op(const Op *op) {
             } else
                 UNIMPLEMENTED();
         } break;
+
         case TOKEN_TYPE_PERCENT: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
@@ -290,33 +389,40 @@ void generate_op(const Op *op) {
             } else
                 UNIMPLEMENTED();
         } break;
+
         case TOKEN_TYPE_XOR: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
             push_op(XOR);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
+
         case TOKEN_TYPE_BAND: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
             push_op(AND);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
+
         case TOKEN_TYPE_BOR: {
             if (is64)
                 push_op(REX_PRE(1, 0, 0, 0));
             push_op(OR);
             push_op(MODR_M(MOD_REG, RCX, RAX));
         } break;
+
         default: UNREACHABLE();
         }
+
         store_reg_to_stack(RAX, op->result, size);
     } break;
+
     case OP_TYPE_RET: {
-        load_value_to_reg(op->val, RAX);
+        load_value_to_reg(val, RAX);
         push_op(LEAVE);
         push_op(RET);
     } break;
+
     default: UNREACHABLE();
     }
 }
@@ -326,9 +432,8 @@ void generate_func(const Value *func) {
     push_op(PUSH_REG(RBP));
     move_reg_to_reg(RSP, RBP);
 
-    if (func->stack_size > 0) {
-        alloc_rsp(func);
-    }
+    if (func->stack_size > 0)
+        alloc_rsp(func->stack_size);
 
     for (usize i = 0; i < func->params.size; ++i) {
         const Func_Param *param = get_param(func, i);
