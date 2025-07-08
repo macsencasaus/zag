@@ -5,12 +5,58 @@
 
 #include "elf.c"
 
-// TODO: add register allocator
+typedef struct {
+    usize label_id;
+    i32 pos;
+} X86_64_Label;
+
+typedef struct {
+    usize label_id;
+    i32 *disp;
+    i32 pos;
+} X86_64_Label_Patches;
+
 typedef struct {
     String_Builder ops;
+
+    Dynamic_Array(X86_64_Label) labels;
+    Dynamic_Array(X86_64_Label_Patches) patches;
 } X86_64_Ctx;
 
 static X86_64_Ctx x86_64_global_ctx;
+
+void push_x86_patch(usize label_id, i32 *disp, i32 pos) {
+    X86_64_Ctx *ctx = &x86_64_global_ctx;
+    for (usize i = 0; i < ctx->labels.size; ++i) {
+        X86_64_Label *label = ctx->labels.store + i;
+
+        if (label->label_id == label_id) {
+            *disp = label->pos - pos;
+            return;
+        }
+    }
+
+    da_append(&ctx->patches, ((X86_64_Label_Patches){label_id, disp, pos}));
+}
+
+void push_x86_label(usize label_id, i32 pos) {
+    X86_64_Ctx *ctx = &x86_64_global_ctx;
+    da_append(&ctx->labels, ((X86_64_Label){label_id, pos}));
+
+    for (usize i = 0; i < ctx->patches.size; ++i) {
+        X86_64_Label_Patches *patch = ctx->patches.store + i;
+
+        if (patch->label_id == label_id) {
+            *patch->disp = pos - patch->pos;
+            da_remove(&ctx->patches, i);
+            --i;
+        }
+    }
+}
+
+INLINE i32 x86_pos(void) {
+    return x86_64_global_ctx.ops.size;
+}
 
 INLINE char *push_x86_op(u8 op) {
     char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
@@ -18,7 +64,7 @@ INLINE char *push_x86_op(u8 op) {
     return r;
 }
 
-INLINE char *push_multi_op(const void *ops, usize n) {
+INLINE char *push_x86_multi_op(const void *ops, usize n) {
     char *r = x86_64_global_ctx.ops.store + x86_64_global_ctx.ops.size;
     sb_append_buf(&x86_64_global_ctx.ops, ops, n);
     return r;
@@ -117,15 +163,11 @@ typedef struct {
 #define CMP 0x39
 
 #define TEST 0x85
+#define TEST_BYTE 0x84
 
-#define JMP_REL8 0xEB
-#define JMP_REL32 0xE9
+#define JMP 0xE9
 
-#define JE_REL8 0x74
-#define JE_REL32 (char[]){0x0F, 0x84}
-
-#define JNE_REL8 0x75
-#define JNE_REL32 (char[]){0x0F, 0x85}
+#define JE (char[]){0x0F, 0x84}
 
 #define LEAVE 0xC9
 #define RET 0xC3
@@ -139,10 +181,10 @@ void move_imm_to_reg(u64 value, X86_64_Register reg) {
 
     push_x86_op(MOV_IMM(reg));
     if (w) {
-        push_multi_op(&value, sizeof(value));
+        push_x86_multi_op(&value, sizeof(value));
     } else {
         i32 imm = (i32)value;
-        push_multi_op(&imm, sizeof(imm));
+        push_x86_multi_op(&imm, sizeof(imm));
     }
 }
 
@@ -168,7 +210,7 @@ void move_stack_to_reg(usize stack_index, usize size, X86_64_Register reg) {
     } else {
         u32 imm = -disp;
         push_x86_op(MODR_M(MOD_MEM_DWORD, reg, RBP));
-        push_multi_op(&imm, sizeof(imm));
+        push_x86_multi_op(&imm, sizeof(imm));
     }
 }
 
@@ -194,7 +236,7 @@ void store_reg_to_stack(X86_64_Register reg, usize stack_index, usize size) {
         u32 imm = -disp;
         push_x86_op(mov_code);
         push_x86_op(MODR_M(MOD_MEM_DWORD, reg, RBP));
-        push_multi_op(&imm, sizeof(imm));
+        push_x86_multi_op(&imm, sizeof(imm));
     }
 }
 
@@ -260,10 +302,9 @@ void load_effective_address(usize stack_index, usize size, X86_64_Register reg) 
     } else {
         u32 imm = -disp;
         push_x86_op(MODR_M(MOD_MEM_DWORD, reg, RBP));
-        push_multi_op(&imm, sizeof(imm));
+        push_x86_multi_op(&imm, sizeof(imm));
     }
 }
-
 
 void load_value_to_reg(const Value *v, X86_64_Register reg) {
     switch (v->value_type) {
@@ -297,11 +338,31 @@ void alloc_rsp(usize stack_size) {
         u32 imm = (u32)stack_size;
         push_x86_op(SUB_IMM);
         push_x86_op(MODR_M(MOD_REG, 5, RSP));
-        push_multi_op(&imm, sizeof(imm));
+        push_x86_multi_op(&imm, sizeof(imm));
     }
 }
 
+void test_registers(X86_64_Register reg1, X86_64_Register reg2, usize size) {
+    u8 w = size == 8,
+       r = reg1 > 0x7,
+       b = reg2 > 0x7;
+
+    if (size == 2)
+        push_x86_op(WORD_PRE());
+
+    if (w || r || b)
+        push_x86_op(REX_PRE(w, r, 0, b));
+
+    if (size == 1)
+        push_x86_op(TEST_BYTE);
+    else
+        push_x86_op(TEST);
+
+    push_x86_op(MODR_M(MOD_REG, reg1 & 0x7, reg2 & 0x7));
+}
+
 void generate_op(const Op *op) {
+    X86_64_Ctx *ctx = &x86_64_global_ctx;
     const Value *val = op->val;
 
     switch (op->type) {
@@ -330,11 +391,26 @@ void generate_op(const Op *op) {
         store_reg_to_stack(RAX, op->result, 8);
     } break;
 
-    case OP_TYPE_LNOT: {
+    case OP_TYPE_LABEL: {
+        i32 pos = x86_pos();
+        push_x86_label(op->label_id, pos);
+    } break;
+
+    case OP_TYPE_JMP: {
+        push_x86_op(JMP);
+        i32 *disp = (i32 *)(ctx->ops.store + ctx->ops.size);
+        push_u32(0);
+        push_x86_patch(op->label_id, disp, x86_pos());
+    } break;
+
+    case OP_TYPE_JMPZ: {
         load_value_to_reg(val, RAX);
-        if (val->type->size == 8)
-            push_x86_op(REX_PRE(1, 0, 0, 0));
-        push_x86_op(CMP_IMM8);
+        test_registers(RAX, RAX, val->type->size);
+
+        push_x86_multi_op(JE, sizeof(JE));
+        i32 *disp = (i32 *)(ctx->ops.store + ctx->ops.size);
+        push_u32(0);
+        push_x86_patch(op->label_id, disp, x86_pos());
     } break;
 
     case OP_TYPE_BINOP: {
@@ -363,7 +439,7 @@ void generate_op(const Op *op) {
             if (is64)
                 push_x86_op(REX_PRE(1, 0, 0, 0));
             if (is_signed) {
-                push_multi_op(IMUL, sizeof(IMUL));
+                push_x86_multi_op(IMUL, sizeof(IMUL));
                 push_x86_op(MODR_M(MOD_REG, RAX, RCX));
             } else
                 UNIMPLEMENTED();
@@ -467,11 +543,16 @@ void generate_program(const Compiler *c, FILE *out) {
         op_offset = ctx->ops.size;
 
         sb_free(&func_name);
+
+        assert(ctx->patches.size == 0);
     }
 
     ELF_Builder_compile(&elf_builder);
     ELF_write_o_file(&elf_builder, out);
 
     ELF_Builder_delete(&elf_builder);
+
     sb_free(&ctx->ops);
+    da_delete(&ctx->labels);
+    da_delete(&ctx->patches);
 }

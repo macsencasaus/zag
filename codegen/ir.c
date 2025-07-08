@@ -93,6 +93,16 @@ void print_ir_op(const Op *op, FILE *out) {
         fprintf(out, ", ");
         print_ir_val(op->rhs, out);
     } break;
+    case OP_TYPE_LABEL: {
+        fprintf(out, ".L%zu:", op->label_id);
+    } break;
+    case OP_TYPE_JMP: {
+        fprintf(out, "    jmp .L%zu", op->label_id);
+    } break;
+    case OP_TYPE_JMPZ: {
+        fprintf(out, "    jmpz .L%zu, ", op->label_id);
+        print_ir_val(op->val, out);
+    } break;
     default: UNIMPLEMENTED();
     }
     fprintf(out, "\n");

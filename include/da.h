@@ -93,6 +93,8 @@
 
 #define da_last(da) ((da)->store + (da)->size - 1)
 
+#define da_remove(da, idx) ((da)->store[(idx)] = (da)->store[--(da)->size])
+
 #define da_delete(da) \
     DA_FREE((da)->store);
 

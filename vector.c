@@ -96,6 +96,8 @@ typedef enum {
     TOKEN_TYPE_FN,
     TOKEN_TYPE_RETURN,
     TOKEN_TYPE_VAR,
+    TOKEN_TYPE_IF,
+    TOKEN_TYPE_ELSE,
 
     TOKEN_TYPE_COUNT,
 } Token_Type;
@@ -135,6 +137,8 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_ASSIGN] = "'='",
     [TOKEN_TYPE_FN] = "fn",
     [TOKEN_TYPE_RETURN] = "return",
+    [TOKEN_TYPE_IF] = "if",
+    [TOKEN_TYPE_ELSE] = "else",
     [TOKEN_TYPE_VAR] = "var",
 };
 
@@ -207,16 +211,19 @@ INLINE bool valid_ident_char(char ch) { return (ch >= 'A' && ch <= 'Z') ||
 
 INLINE void eat_whitespace(Lexer *l) { for (; is_whitespace(l->ch); read_char(l)); }
 
-Token_Type lookup_keyword(const char *literal, usize n) {
-    if (n == 2 && strncmp("fn", literal, 2) == 0) {
+Token_Type lookup_keyword(sv lit) {
+    if (sveq(lit, sv_from_cstr("fn")))
         return TOKEN_TYPE_FN;
-    } else if (n == 6 && strncmp("return", literal, 6) == 0) {
+    else if (sveq(lit, sv_from_cstr("return")))
         return TOKEN_TYPE_RETURN;
-    } else if (n == 3 && strncmp("var", literal, 3) == 0) {
+    else if (sveq(lit, sv_from_cstr("var")))
         return TOKEN_TYPE_VAR;
-    } else {
+    else if (sveq(lit, sv_from_cstr("if")))
+        return TOKEN_TYPE_IF;
+    else if (sveq(lit, sv_from_cstr("else")))
+        return TOKEN_TYPE_ELSE;
+    else
         return TOKEN_TYPE_IDENT;
-    }
 }
 
 INLINE void read_comment(Lexer *l) {
@@ -363,7 +370,7 @@ Token lexer_next_token(Lexer *l) {
             read_char(l);
             for (; valid_ident_char(l->ch) || is_digit(l->ch); read_char(l));
             tok.lit.len = (l->input + l->pos) - tok.lit.store;
-            tok.type = lookup_keyword(tok.lit.store, tok.lit.len);
+            tok.type = lookup_keyword((sv){tok.lit.store, tok.lit.len});
         } else {
             tok.type = TOKEN_TYPE_ILLEGAL;
         }
@@ -512,6 +519,10 @@ typedef enum {
     OP_TYPE_LNOT,
     OP_TYPE_REF,
 
+    OP_TYPE_LABEL,
+    OP_TYPE_JMP,
+    OP_TYPE_JMPZ,
+
     OP_TYPE_COUNT,
 } Op_Type;
 
@@ -522,8 +533,14 @@ struct Op {
     usize result;
 
     union {
-        // assign, store, prefix expr, return, ref, deref
-        const Value *val;
+        // jmpz
+        struct {
+            // assign, store, prefix expr, return, ref, deref
+            const Value *val;
+
+            // label, jmp
+            usize label_id;
+        };
 
         // binary
         struct {
@@ -598,6 +615,8 @@ typedef struct {
 
     Bump_Alloc value_alloc;
     Bump_Alloc op_alloc;
+
+    usize next_label_id;
 
     const char *err_msg;
     Location err_loc;
@@ -676,6 +695,10 @@ void compiler_init(Compiler *c, Lexer *l) {
 
     da_append(&c->vars, (String_Hash_Table){0});
     sht_init(&c->vars.store[0], sizeof(Value), 0);
+}
+
+INLINE void push_op(Compiler *c, const Op *op) {
+    da_append(&c->func->ops, op);
 }
 
 INLINE Value *new_int_literal(Compiler *c, const Type *type, u64 value) {
@@ -764,6 +787,34 @@ INLINE Op *new_ret_op(Compiler *c, const Value *val) {
     *o = (Op){
         .type = OP_TYPE_RET,
         .val = val,
+    };
+    return o;
+}
+
+INLINE Op *new_label(Compiler *c) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_LABEL,
+        .label_id = c->next_label_id++,
+    };
+    return o;
+}
+
+INLINE Op *new_jmp(Compiler *c, usize label_id) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_JMP,
+        .label_id = label_id,
+    };
+    return o;
+}
+
+INLINE Op *new_jmpz(Compiler *c, usize label_id, const Value *val) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_JMPZ,
+        .val = val,
+        .label_id = label_id,
     };
     return o;
 }
@@ -1095,8 +1146,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         // TODO: intern constants mayhaps
         Value *one = new_int_literal(c, val->type, 1);
 
-        da_append(&c->func->ops,
-                  new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
+        push_op(c, new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
 
         lval = false;
     } break;
@@ -1114,8 +1164,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
         Value *one = new_int_literal(c, val->type, 1);
 
-        da_append(&c->func->ops,
-                  new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
+        push_op(c, new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
 
         lval = false;
     } break;
@@ -1136,8 +1185,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         const Type *ptr_type = get_ptr_type(&c->ty_ctx, arg->type);
 
         usize result = alloc_scoped_var(c, ptr_type);
-        da_append(&c->func->ops,
-                  new_prefix_op(c, OP_TYPE_REF, result, arg));
+        push_op(c, new_prefix_op(c, OP_TYPE_REF, result, arg));
 
         val = new_var(c, ptr_type, result);
         lval = false;
@@ -1159,7 +1207,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         }
 
         usize result = alloc_scoped_var(c, arg->type->internal);
-        da_append(&c->func->ops, new_assign_op(c, result, arg));
+        push_op(c, new_assign_op(c, result, arg));
 
         val = new_deref(c, arg->type->internal, result);
         lval = true;
@@ -1179,7 +1227,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         CHECK(arg = compile_expr(c, PREC_PREFIX, NULL));
         usize result = alloc_scoped_var(c, arg->type);
 
-        da_append(&c->func->ops, new_prefix_op(c, op_type, result, arg));
+        push_op(c, new_prefix_op(c, op_type, result, arg));
 
         val = new_var(c, arg->type, result);
         lval = false;
@@ -1201,12 +1249,11 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
             }
 
             usize pre = alloc_scoped_var(c, val->type);
-            da_append(&c->func->ops, new_assign_op(c, pre, val));
+            push_op(c, new_assign_op(c, pre, val));
 
             Value *one = new_int_literal(c, val->type, 1);
 
-            da_append(&c->func->ops,
-                      new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
+            push_op(c, new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
 
             val = new_var(c, val->type, pre);
             lval = false;
@@ -1222,10 +1269,9 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
             Value *one = new_int_literal(c, val->type, 1);
 
             usize pre = alloc_scoped_var(c, val->type);
-            da_append(&c->func->ops, new_assign_op(c, pre, val));
+            push_op(c, new_assign_op(c, pre, val));
 
-            da_append(&c->func->ops,
-                      new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
+            push_op(c, new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
 
             val = new_var(c, val->type, pre);
             lval = false;
@@ -1283,9 +1329,9 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
         }
 
         if (left->value_type == VALUE_TYPE_DEREF) {
-            da_append(&c->func->ops, new_store_op(c, left->stack_index, val));
+            push_op(c, new_store_op(c, left->stack_index, val));
         } else {
-            da_append(&c->func->ops, new_assign_op(c, left->stack_index, val));
+            push_op(c, new_assign_op(c, left->stack_index, val));
         }
     } break;
     case TOKEN_TYPE_PLUS:
@@ -1314,7 +1360,7 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
                     right->int_value *= ptr_internal_type_size;
 
                     usize result = alloc_scoped_var(c, left->type);
-                    da_append(&c->func->ops, new_binop(c, op.type, result, left, right));
+                    push_op(c, new_binop(c, op.type, result, left, right));
 
                     val = new_var(c, left->type, result);
                 } else {
@@ -1322,26 +1368,26 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
 
                     Value *m = new_int_literal(c, u64_type, ptr_internal_type_size);
 
-                    da_append(&c->func->ops, new_binop(c, TOKEN_TYPE_ASTERISK, temp, right, m));
+                    push_op(c, new_binop(c, TOKEN_TYPE_ASTERISK, temp, right, m));
 
                     right = new_var(c, u64_type, temp);
 
                     usize result = alloc_scoped_var(c, left->type);
-                    da_append(&c->func->ops, new_binop(c, op.type, result, left, right));
+                    push_op(c, new_binop(c, op.type, result, left, right));
 
                     val = new_var(c, left->type, result);
                 }
             } else if (op.type == TOKEN_TYPE_MINUS && type_cmp(left->type, right->type)) {
                 usize temp = alloc_scoped_var(c, u64_type);
 
-                da_append(&c->func->ops, new_binop(c, TOKEN_TYPE_MINUS, temp, left, right));
+                push_op(c, new_binop(c, TOKEN_TYPE_MINUS, temp, left, right));
 
                 Value *d = new_var(c, u64_type, temp);
                 Value *m = new_int_literal(c, u64_type, ptr_internal_type_size);
 
                 usize result = alloc_scoped_var(c, u64_type);
 
-                da_append(&c->func->ops, new_binop(c, TOKEN_TYPE_SLASH, result, d, m));
+                push_op(c, new_binop(c, TOKEN_TYPE_SLASH, result, d, m));
 
                 val = new_var(c, u64_type, result);
             } else {
@@ -1367,7 +1413,7 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
         }
 
         usize result = alloc_scoped_var(c, left->type);
-        da_append(&c->func->ops, new_binop(c, op.type, result, left, right));
+        push_op(c, new_binop(c, op.type, result, left, right));
 
         val = new_var(c, left->type, result);
     }
@@ -1402,6 +1448,12 @@ Value *compile_expr_save_stack(Compiler *c, Prec prec, bool *is_value) {
     c->stack_index = saved_stack;
     return res;
 }
+
+bool compile_stmt(Compiler *c)
+    __attribute__((warn_unused_result));
+
+bool compile_block(Compiler *c)
+    __attribute__((warn_unused_result));
 
 bool compile_var_stmt(Compiler *c) {
     do {
@@ -1453,7 +1505,7 @@ bool compile_var_stmt(Compiler *c) {
             }
 
             stack_index = alloc_scoped_var(c, decl_type);
-            da_append(&c->func->ops, new_assign_op(c, stack_index, arg));
+            push_op(c, new_assign_op(c, stack_index, arg));
         } else {
             if (!decl_type) {
                 compiler_error(c, &c->cur_token.loc, "Variable declaration must have type");
@@ -1507,8 +1559,39 @@ bool compile_return_stmt(Compiler *c) {
 
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
 
-    da_append(&c->func->ops, new_ret_op(c, val));
+    push_op(c, new_ret_op(c, val));
 
+    return true;
+}
+
+bool compile_if_stmt(Compiler *c) {
+    next_token(c);
+    Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL);
+
+    Op *else_label = new_label(c);
+    push_op(c, new_jmpz(c, else_label->label_id, cond));
+
+    next_token(c);
+    CHECK(compile_stmt(c));
+
+    if (try_peek_tok(c, TOKEN_TYPE_ELSE)) {
+        Op *success_label = new_label(c);
+        push_op(c, new_jmp(c, success_label->label_id));
+        push_op(c, else_label);
+        next_token(c);
+        CHECK(compile_stmt(c));
+        push_op(c, success_label);
+    } else {
+        push_op(c, else_label);
+    }
+
+    return true;
+}
+
+bool compile_block_stmt(Compiler *c) {
+    push_scope(c);
+    CHECK(compile_block(c));
+    pop_scope(c);
     return true;
 }
 
@@ -1521,6 +1604,8 @@ bool compile_expr_stmt(Compiler *c) {
 static Compile_Stmt_Fn *compile_stmt_fns[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_VAR] = compile_var_stmt,
     [TOKEN_TYPE_RETURN] = compile_return_stmt,
+    [TOKEN_TYPE_IF] = compile_if_stmt,
+    [TOKEN_TYPE_LBRACE] = compile_block_stmt,
 };
 
 bool compile_stmt(Compiler *c) {
