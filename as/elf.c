@@ -202,12 +202,12 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
 void ELF_write_o_file(const ELF_Builder *ctx, FILE *out) {
     String_Builder o = {0};
 
-    da_append_buf(&o, &ctx->header, sizeof(Elf64_Ehdr));
-    da_append_buf(&o, ctx->text.store, ctx->text.size);
-    da_append_buf(&o, ctx->symbols.store, ctx->symbols.size * sizeof(Elf64_Sym));
-    da_append_buf(&o, ctx->strtab.store, ctx->strtab.size);
-    da_append_buf(&o, ctx->shstrtab.store, ctx->shstrtab.size);
-    da_append_buf(&o, ctx->section_headers.store, ctx->section_headers.size * sizeof(Elf64_Shdr));
+    sb_append_buf(&o, (char *)&ctx->header, sizeof(Elf64_Ehdr));
+    sb_append_buf(&o, ctx->text.store, ctx->text.size);
+    sb_append_buf(&o, (char *)ctx->symbols.store, ctx->symbols.size * sizeof(Elf64_Sym));
+    sb_append_buf(&o, ctx->strtab.store, ctx->strtab.size);
+    sb_append_buf(&o, ctx->shstrtab.store, ctx->shstrtab.size);
+    sb_append_buf(&o, (char *)ctx->section_headers.store, ctx->section_headers.size * sizeof(Elf64_Shdr));
 
     assert(fwrite(o.store, 1, o.size, out) == o.size);
 
