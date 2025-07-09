@@ -15,7 +15,7 @@
 #define STRTAB_SECTION_IDX 4
 #define SHSTRTAB_SECTION_IDX 5
 
-usize st_append(String_Builder *st, const char *section_name) {
+INLINE usize st_append(String_Builder *st, const char *section_name) {
     usize off = st->size;
     usize n = strlen(section_name) + 1;
     da_append_buf(st, section_name, n);
@@ -35,6 +35,16 @@ typedef struct {
     Dynamic_Array(Elf64_Shdr) section_headers;
 } ELF_Builder;
 
+INLINE Elf64_Sym *new_symbol(ELF_Builder *ctx) {
+    da_append(&ctx->symbols, (Elf64_Sym){0});
+    return da_last(&ctx->symbols);
+}
+
+INLINE Elf64_Shdr *new_section_header(ELF_Builder *ctx) {
+    da_append(&ctx->section_headers, (Elf64_Shdr){0});
+    return da_last(&ctx->section_headers);
+}
+
 void ELF_Builder_init(ELF_Builder *ctx, const char *filename) {
     *ctx = (ELF_Builder){0};
 
@@ -43,7 +53,8 @@ void ELF_Builder_init(ELF_Builder *ctx, const char *filename) {
     da_append(&ctx->symbols, (Elf64_Sym){0});
 
     usize filename_off = st_append(&ctx->strtab, filename);
-    Elf64_Sym file_symbol = {
+    Elf64_Sym *file_symbol = new_symbol(ctx);
+    *file_symbol = (Elf64_Sym){
         .st_name = filename_off,
         .st_info = ELF64_ST_INFO(STB_LOCAL, STT_FILE),
         .st_other = STV_DEFAULT,
@@ -51,9 +62,9 @@ void ELF_Builder_init(ELF_Builder *ctx, const char *filename) {
         .st_value = 0,
         .st_size = 0,
     };
-    da_append(&ctx->symbols, file_symbol);
 
-    Elf64_Sym text_section_symbol = {
+    Elf64_Sym *text_section_symbol = new_symbol(ctx);
+    *text_section_symbol = (Elf64_Sym){
         .st_name = 0,
         .st_info = ELF64_ST_INFO(STB_LOCAL, STT_SECTION),
         .st_other = STV_DEFAULT,
@@ -61,7 +72,6 @@ void ELF_Builder_init(ELF_Builder *ctx, const char *filename) {
         .st_value = 0,
         .st_size = 0,
     };
-    da_append(&ctx->symbols, text_section_symbol);
 }
 
 void ELF_Builder_delete(ELF_Builder *ctx) {
@@ -86,7 +96,8 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
     // text
     usize text_name_off = st_append(&ctx->shstrtab, ".text");
     assert(TEXT_SECTION_IDX == ctx->section_headers.size);
-    Elf64_Shdr text_section_header = {
+    Elf64_Shdr *text_section_header = new_section_header(ctx);
+    *text_section_header = (Elf64_Shdr){
         .sh_name = text_name_off,
         .sh_type = SHT_PROGBITS,
         .sh_flags = SHF_ALLOC | SHF_EXECINSTR,
@@ -98,25 +109,25 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
         .sh_addralign = 1,
         .sh_entsize = 0,
     };
-    da_append(&ctx->section_headers, text_section_header);
 
-    offset += text_section_header.sh_size;
+    offset += text_section_header->sh_size;
 
     // note.gnu-stack
     usize note_gnu_stack_name_off = st_append(&ctx->shstrtab, ".note.GNU-stack");
     assert(NOTE_GNU_STACK_SECTION_IDX == ctx->section_headers.size);
-    Elf64_Shdr note_gnu_stack_section_header = {
+    Elf64_Shdr *note_gnu_stack_section_header = new_section_header(ctx);
+    *note_gnu_stack_section_header = (Elf64_Shdr){
         .sh_name = note_gnu_stack_name_off,
         .sh_type = SHT_PROGBITS,
         .sh_offset = offset,
         .sh_addralign = 1,
     };
-    da_append(&ctx->section_headers, note_gnu_stack_section_header);
 
     // symtab
     usize symtab_name_off = st_append(&ctx->shstrtab, ".symtab");
     assert(SYMTAB_SECTION_IDX == ctx->section_headers.size);
-    Elf64_Shdr symtab_section_header = {
+    Elf64_Shdr *symtab_section_header = new_section_header(ctx);
+    *symtab_section_header = (Elf64_Shdr){
         .sh_name = symtab_name_off,
         .sh_type = SHT_SYMTAB,
         .sh_flags = 0,
@@ -128,14 +139,14 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
         .sh_addralign = 8,
         .sh_entsize = sizeof(Elf64_Sym),
     };
-    da_append(&ctx->section_headers, symtab_section_header);
 
-    offset += symtab_section_header.sh_size;
+    offset += symtab_section_header->sh_size;
 
     // strtab
     assert(STRTAB_SECTION_IDX == ctx->section_headers.size);
     usize strtab_name_off = st_append(&ctx->shstrtab, ".strtab");
-    Elf64_Shdr strtab_section_header = {
+    Elf64_Shdr *strtab_section_header = new_section_header(ctx);
+    *strtab_section_header = (Elf64_Shdr){
         .sh_name = strtab_name_off,
         .sh_type = SHT_STRTAB,
         .sh_flags = 0,
@@ -147,14 +158,14 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
         .sh_addralign = 1,
         .sh_entsize = 0,
     };
-    da_append(&ctx->section_headers, strtab_section_header);
 
-    offset += strtab_section_header.sh_size;
+    offset += strtab_section_header->sh_size;
 
     // shstrtab
     usize shstrtab_name_off = st_append(&ctx->shstrtab, ".shstrtab");
     assert(SHSTRTAB_SECTION_IDX == ctx->section_headers.size);
-    Elf64_Shdr shstrtab_section_header = {
+    Elf64_Shdr *shstrtab_section_header = new_section_header(ctx);
+    *shstrtab_section_header = (Elf64_Shdr){
         .sh_name = shstrtab_name_off,
         .sh_type = SHT_STRTAB,
         .sh_flags = 0,
@@ -166,9 +177,8 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
         .sh_addralign = 1,
         .sh_entsize = 0,
     };
-    da_append(&ctx->section_headers, shstrtab_section_header);
 
-    offset += shstrtab_section_header.sh_size;
+    offset += shstrtab_section_header->sh_size;
 
     // header
     ctx->header = (Elf64_Ehdr){
@@ -221,7 +231,8 @@ void ELF_new_func(ELF_Builder *ctx, const char *name,
     usize text_off = ctx->text.size;
     da_append_buf(&ctx->text, code, n);
 
-    Elf64_Sym symbol = {
+    Elf64_Sym *symbol = new_symbol(ctx);
+    *symbol = (Elf64_Sym){
         .st_name = name_tab_off,
         .st_info = ELF64_ST_INFO(STB_GLOBAL, STT_FUNC),
         .st_other = STV_DEFAULT,
@@ -229,8 +240,6 @@ void ELF_new_func(ELF_Builder *ctx, const char *name,
         .st_value = text_off,
         .st_size = n,
     };
-
-    da_append(&ctx->symbols, symbol);
 }
 
 #endif  // ELF_C
