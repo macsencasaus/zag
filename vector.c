@@ -99,6 +99,10 @@ typedef enum {
     TOKEN_TYPE_IF,
     TOKEN_TYPE_ELSE,
 
+    TOKEN_TYPE_WHILE,
+    TOKEN_TYPE_BREAK,
+    TOKEN_TYPE_CONTINUE,
+
     TOKEN_TYPE_COUNT,
 } Token_Type;
 
@@ -137,9 +141,12 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_ASSIGN] = "'='",
     [TOKEN_TYPE_FN] = "fn",
     [TOKEN_TYPE_RETURN] = "return",
+    [TOKEN_TYPE_VAR] = "var",
     [TOKEN_TYPE_IF] = "if",
     [TOKEN_TYPE_ELSE] = "else",
-    [TOKEN_TYPE_VAR] = "var",
+    [TOKEN_TYPE_WHILE] = "while",
+    [TOKEN_TYPE_BREAK] = "break",
+    [TOKEN_TYPE_CONTINUE] = "continue",
 };
 
 typedef struct {
@@ -222,6 +229,12 @@ Token_Type lookup_keyword(sv lit) {
         return TOKEN_TYPE_IF;
     else if (sveq(lit, sv_from_cstr("else")))
         return TOKEN_TYPE_ELSE;
+    else if (sveq(lit, sv_from_cstr("while")))
+        return TOKEN_TYPE_WHILE;
+    else if (sveq(lit, sv_from_cstr("break")))
+        return TOKEN_TYPE_BREAK;
+    else if (sveq(lit, sv_from_cstr("continue")))
+        return TOKEN_TYPE_CONTINUE;
     else
         return TOKEN_TYPE_IDENT;
 }
@@ -592,6 +605,12 @@ typedef struct {
 } Types_Ctx;
 
 typedef struct {
+    bool in_loop;
+    usize loop_label_id;
+    usize leave_label_id;
+} Loop_Ctx;
+
+typedef struct {
     Lexer *l;
 
     Token cur_token;
@@ -600,6 +619,7 @@ typedef struct {
     usize stack_index;
 
     Types_Ctx ty_ctx;
+    Loop_Ctx loop_ctx;
 
     // Name (string) -> Value
     Dynamic_Array(String_Hash_Table) vars;
@@ -1567,6 +1587,7 @@ bool compile_return_stmt(Compiler *c) {
 bool compile_if_stmt(Compiler *c) {
     next_token(c);
     Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL);
+    CHECK(cond);
 
     Op *else_label = new_label(c);
     push_op(c, new_jmpz(c, else_label->label_id, cond));
@@ -1595,6 +1616,58 @@ bool compile_block_stmt(Compiler *c) {
     return true;
 }
 
+bool compile_while_stmt(Compiler *c) {
+    next_token(c);
+
+    const Op *loop = new_label(c);
+    push_op(c, loop);
+
+    const Op *leave = new_label(c);
+
+    Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL);
+    CHECK(cond);
+
+    push_op(c, new_jmpz(c, leave->label_id, cond));
+
+    next_token(c);
+
+    Loop_Ctx old_loop_ctx = c->loop_ctx;
+    c->loop_ctx = (Loop_Ctx){
+        .in_loop = true,
+        .loop_label_id = loop->label_id,
+        .leave_label_id = leave->label_id,
+    };
+
+    CHECK(compile_stmt(c));
+
+    c->loop_ctx = old_loop_ctx;
+
+    push_op(c, new_jmp(c, loop->label_id));
+    push_op(c, leave);
+
+    return true;
+}
+
+bool compile_break_stmt(Compiler *c) {
+    if (!c->loop_ctx.in_loop) {
+        compiler_error(c, &c->cur_token.loc, "'break' statement not in loop");
+        return false;
+    }
+    push_op(c, new_jmp(c, c->loop_ctx.leave_label_id));
+    CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
+    return true;
+}
+
+bool compile_continue_stmt(Compiler *c) {
+    if (!c->loop_ctx.in_loop) {
+        compiler_error(c, &c->cur_token.loc, "'continue' statement not in loop");
+        return false;
+    }
+    push_op(c, new_jmp(c, c->loop_ctx.loop_label_id));
+    CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
+    return true;
+}
+
 bool compile_expr_stmt(Compiler *c) {
     CHECK(compile_expr_save_stack(c, PREC_LOWEST, NULL));
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
@@ -1606,6 +1679,9 @@ static Compile_Stmt_Fn *compile_stmt_fns[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_RETURN] = compile_return_stmt,
     [TOKEN_TYPE_IF] = compile_if_stmt,
     [TOKEN_TYPE_LBRACE] = compile_block_stmt,
+    [TOKEN_TYPE_WHILE] = compile_while_stmt,
+    [TOKEN_TYPE_BREAK] = compile_break_stmt,
+    [TOKEN_TYPE_CONTINUE] = compile_continue_stmt,
 };
 
 bool compile_stmt(Compiler *c) {
