@@ -36,23 +36,31 @@ void print_ir_val(const Value *val, FILE *out) {
     }
 }
 
-static char *binop_inst_lookup[TOKEN_TYPE_COUNT] = {
-    [TOKEN_TYPE_PLUS] = "add",
-    [TOKEN_TYPE_MINUS] = "sub",
-    [TOKEN_TYPE_ASTERISK] = "mul",
-    [TOKEN_TYPE_SLASH] = "div",
-    [TOKEN_TYPE_PERCENT] = "mod",
-    [TOKEN_TYPE_LT] = "icmp lt",
-    [TOKEN_TYPE_LTEQ] = "icmp lteq",
-    [TOKEN_TYPE_GT] = "icmp gt",
-    [TOKEN_TYPE_GTEQ] = "icmp gteq",
-    [TOKEN_TYPE_EQ] = "icmp eq",
-    [TOKEN_TYPE_NEQ] = "icmp neq",
-    [TOKEN_TYPE_BAND] = "and",
-    [TOKEN_TYPE_BOR] = "or",
-    [TOKEN_TYPE_XOR] = "xor",
-    [TOKEN_TYPE_SHL] = "shl",
-    [TOKEN_TYPE_SHR] = "shr",
+static char *binop_inst_lookup[BINOP_COUNT] = {
+    [BINOP_ADD] = "add",
+    [BINOP_SUB] = "sub",
+    [BINOP_IMUL] = "imul",
+    [BINOP_MUL] = "mul",
+    [BINOP_IDIV] = "idiv",
+    [BINOP_DIV] = "div",
+    [BINOP_IMOD] = "imod",
+    [BINOP_MOD] = "mod",
+    [BINOP_SLT] = "slt",
+    [BINOP_ULT] = "ult",
+    [BINOP_SLE] = "sle",
+    [BINOP_ULE] = "ule",
+    [BINOP_SGT] = "sgt",
+    [BINOP_UGT] = "ugt",
+    [BINOP_SGE] = "sge",
+    [BINOP_UGE] = "uge",
+    [BINOP_EQ] = "eq",
+    [BINOP_NE] = "ne",
+    [BINOP_AND] = "and",
+    [BINOP_OR] = "or",
+    [BINOP_XOR] = "xor",
+    [BINOP_SHL] = "shl",
+    [BINOP_ASHR] = "ashr",
+    [BINOP_LSHR] = "lshr",
 };
 
 void print_ir_op(const Op *op, FILE *out) {

@@ -41,12 +41,12 @@ Disassembly of section .text:
   4c:	48 89 55 e8          	mov    QWORD PTR [rbp-0x18],rdx
   50:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
   54:	48 8b 4d e8          	mov    rcx,QWORD PTR [rbp-0x18]
-  58:	48 0f af c1          	imul   rax,rcx
-  5c:	48 89 45 e0          	mov    QWORD PTR [rbp-0x20],rax
-  60:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  64:	48 8b 4d e0          	mov    rcx,QWORD PTR [rbp-0x20]
-  68:	48 01 c8             	add    rax,rcx
-  6b:	48 89 45 d8          	mov    QWORD PTR [rbp-0x28],rax
-  6f:	48 8b 45 d8          	mov    rax,QWORD PTR [rbp-0x28]
-  73:	c9                   	leave
-  74:	c3                   	ret
+  58:	48 f7 e9             	imul   rcx
+  5b:	48 89 45 e0          	mov    QWORD PTR [rbp-0x20],rax
+  5f:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  63:	48 8b 4d e0          	mov    rcx,QWORD PTR [rbp-0x20]
+  67:	48 01 c8             	add    rax,rcx
+  6a:	48 89 45 d8          	mov    QWORD PTR [rbp-0x28],rax
+  6e:	48 8b 45 d8          	mov    rax,QWORD PTR [rbp-0x28]
+  72:	c9                   	leave
+  73:	c3                   	ret

@@ -5,7 +5,7 @@
 loop[16]():
     %s[0] = i64 0
 .L0:
-    %s[8] = icmp lt i64 %s[0], i64 1000
+    %s[8] = slt i64 %s[0], i64 1000
     jmpz .L1, i64 %s[8]
     %s[0] = add i64 %s[0], i64 1
     jmp .L0
@@ -15,10 +15,10 @@ loop[16]():
 loop_break[16]():
     %s[0] = i64 0
 .L2:
-    %s[8] = icmp lt i64 %s[0], i64 1000
+    %s[8] = slt i64 %s[0], i64 1000
     jmpz .L3, i64 %s[8]
     %s[0] = add i64 %s[0], i64 1
-    %s[8] = icmp eq i64 %s[0], i64 500
+    %s[8] = eq i64 %s[0], i64 500
     jmpz .L4, i64 %s[8]
     jmp .L3
 .L4:
@@ -29,10 +29,10 @@ loop_break[16]():
 loop_continue[16]():
     %s[0] = i64 0
 .L5:
-    %s[8] = icmp lt i64 %s[0], i64 1000
+    %s[8] = slt i64 %s[0], i64 1000
     jmpz .L6, i64 %s[8]
     %s[0] = add i64 %s[0], i64 1
-    %s[8] = icmp gt i64 %s[0], i64 500
+    %s[8] = sgt i64 %s[0], i64 500
     jmpz .L7, i64 %s[8]
     jmp .L5
 .L7:

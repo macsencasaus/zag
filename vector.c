@@ -523,6 +523,60 @@ typedef struct {
 } Value;
 
 typedef enum {
+    BINOP_ADD,
+    BINOP_SUB,
+    BINOP_IMUL,  // signed
+    BINOP_MUL,
+    BINOP_IDIV,  // signed
+    BINOP_DIV,
+    BINOP_IMOD,  // signed
+    BINOP_MOD,
+
+    BINOP_ULT,
+    BINOP_SLT,
+    BINOP_ULE,
+    BINOP_SLE,
+    BINOP_UGT,
+    BINOP_SGT,
+    BINOP_UGE,
+    BINOP_SGE,
+    BINOP_EQ,
+    BINOP_NE,
+
+    BINOP_AND,
+    BINOP_OR,
+    BINOP_XOR,
+
+    BINOP_SHL,
+    BINOP_ASHR,
+    BINOP_LSHR,
+
+    BINOP_COUNT,
+} Binop;
+
+Binop lookup_binop(Token_Type tt, bool is_signed) {
+    switch (tt) {
+    case TOKEN_TYPE_PLUS: return BINOP_ADD;
+    case TOKEN_TYPE_MINUS: return BINOP_SUB;
+    case TOKEN_TYPE_ASTERISK: return is_signed ? BINOP_IMUL : BINOP_MUL;
+    case TOKEN_TYPE_SLASH: return is_signed ? BINOP_IDIV : BINOP_DIV;
+    case TOKEN_TYPE_PERCENT: return is_signed ? BINOP_IMOD : BINOP_MOD;
+    case TOKEN_TYPE_LT: return is_signed ? BINOP_SLT : BINOP_ULT;
+    case TOKEN_TYPE_LTEQ: return is_signed ? BINOP_SLE : BINOP_ULE;
+    case TOKEN_TYPE_GT: return is_signed ? BINOP_SGT : BINOP_UGT;
+    case TOKEN_TYPE_GTEQ: return is_signed ? BINOP_SGE : BINOP_UGE;
+    case TOKEN_TYPE_EQ: return BINOP_EQ;
+    case TOKEN_TYPE_NEQ: return BINOP_NE;
+    case TOKEN_TYPE_BAND: return BINOP_AND;
+    case TOKEN_TYPE_BOR: return BINOP_OR;
+    case TOKEN_TYPE_XOR: return BINOP_XOR;
+    case TOKEN_TYPE_SHL: return BINOP_SHL;
+    case TOKEN_TYPE_SHR: return is_signed ? BINOP_ASHR : BINOP_LSHR;
+    default: UNREACHABLE();
+    };
+}
+
+typedef enum {
     OP_TYPE_ASSIGN,
     OP_TYPE_STORE,
     OP_TYPE_NEG,
@@ -557,7 +611,7 @@ struct Op {
 
         // binary
         struct {
-            Token_Type op;
+            Binop op;
             const Value *lhs;
             const Value *rhs;
         };
@@ -789,7 +843,7 @@ INLINE Op *new_prefix_op(Compiler *c, Op_Type type, usize result, const Value *a
     return o;
 }
 
-INLINE Op *new_binop(Compiler *c, Token_Type op, usize result,
+INLINE Op *new_binop(Compiler *c, Binop op, usize result,
                      const Value *lhs, const Value *rhs) {
     Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
     *o = (Op){
@@ -872,6 +926,10 @@ INLINE bool type_cmp(const Type *t1, const Type *t2) {
     }
 
     return true;
+}
+
+INLINE bool is_signed(const Type *t) {
+    return t->kind == TYPE_KIND_INT_SIGNED || t->kind == TYPE_KIND_FLOAT;
 }
 
 const Type *lookup_interned_type(const Types_Ctx *ty_ctx, const Type *local_ty) {
@@ -1166,7 +1224,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         // TODO: intern constants mayhaps
         Value *one = new_int_literal(c, val->type, 1);
 
-        push_op(c, new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
+        push_op(c, new_binop(c, BINOP_ADD, val->stack_index, val, one));
 
         lval = false;
     } break;
@@ -1184,7 +1242,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
         Value *one = new_int_literal(c, val->type, 1);
 
-        push_op(c, new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
+        push_op(c, new_binop(c, BINOP_SUB, val->stack_index, val, one));
 
         lval = false;
     } break;
@@ -1273,7 +1331,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
             Value *one = new_int_literal(c, val->type, 1);
 
-            push_op(c, new_binop(c, TOKEN_TYPE_PLUS, val->stack_index, val, one));
+            push_op(c, new_binop(c, BINOP_ADD, val->stack_index, val, one));
 
             val = new_var(c, val->type, pre);
             lval = false;
@@ -1291,7 +1349,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
             usize pre = alloc_scoped_var(c, val->type);
             push_op(c, new_assign_op(c, pre, val));
 
-            push_op(c, new_binop(c, TOKEN_TYPE_MINUS, val->stack_index, val, one));
+            push_op(c, new_binop(c, BINOP_SUB, val->stack_index, val, one));
 
             val = new_var(c, val->type, pre);
             lval = false;
@@ -1380,7 +1438,8 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
                     right->int_value *= ptr_internal_type_size;
 
                     usize result = alloc_scoped_var(c, left->type);
-                    push_op(c, new_binop(c, op.type, result, left, right));
+                    Binop binop = lookup_binop(op.type, is_signed(left->type));
+                    push_op(c, new_binop(c, binop, result, left, right));
 
                     val = new_var(c, left->type, result);
                 } else {
@@ -1388,26 +1447,27 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
 
                     Value *m = new_int_literal(c, u64_type, ptr_internal_type_size);
 
-                    push_op(c, new_binop(c, TOKEN_TYPE_ASTERISK, temp, right, m));
+                    push_op(c, new_binop(c, BINOP_MUL, temp, right, m));
 
                     right = new_var(c, u64_type, temp);
 
                     usize result = alloc_scoped_var(c, left->type);
-                    push_op(c, new_binop(c, op.type, result, left, right));
+                    Binop binop = lookup_binop(op.type, is_signed(left->type));
+                    push_op(c, new_binop(c, binop, result, left, right));
 
                     val = new_var(c, left->type, result);
                 }
             } else if (op.type == TOKEN_TYPE_MINUS && type_cmp(left->type, right->type)) {
                 usize temp = alloc_scoped_var(c, u64_type);
 
-                push_op(c, new_binop(c, TOKEN_TYPE_MINUS, temp, left, right));
+                push_op(c, new_binop(c, BINOP_SUB, temp, left, right));
 
                 Value *d = new_var(c, u64_type, temp);
                 Value *m = new_int_literal(c, u64_type, ptr_internal_type_size);
 
                 usize result = alloc_scoped_var(c, u64_type);
 
-                push_op(c, new_binop(c, TOKEN_TYPE_SLASH, result, d, m));
+                push_op(c, new_binop(c, BINOP_DIV, result, d, m));
 
                 val = new_var(c, u64_type, result);
             } else {
@@ -1433,7 +1493,8 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
         }
 
         usize result = alloc_scoped_var(c, left->type);
-        push_op(c, new_binop(c, op.type, result, left, right));
+        Binop binop = lookup_binop(op.type, left->type);
+        push_op(c, new_binop(c, binop, result, left, right));
 
         val = new_var(c, left->type, result);
     }

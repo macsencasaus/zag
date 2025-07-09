@@ -1,0 +1,29 @@
+
+/tmp/tmp.bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <loop>:
+   0:	55                   	push   rbp
+   1:	48 89 e5             	mov    rbp,rsp
+   4:	48 83 ec 10          	sub    rsp,0x10
+   8:	b8 00 00 00 00       	mov    eax,0x0
+   d:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  11:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  15:	b9 e8 03 00 00       	mov    ecx,0x3e8
+  1a:	48 39 c8             	cmp    rax,rcx
+  1d:	0f 9c c0             	setl   al
+  20:	48 0f b6 c0          	movzx  rax,al
+  24:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  28:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  2c:	48 85 c0             	test   rax,rax
+  2f:	0f 84 15 00 00 00    	je     4a <loop+0x4a>
+  35:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  39:	b9 01 00 00 00       	mov    ecx,0x1
+  3e:	48 01 c8             	add    rax,rcx
+  41:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  45:	e9 c7 ff ff ff       	jmp    11 <loop+0x11>
+  4a:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  4e:	c9                   	leave
+  4f:	c3                   	ret

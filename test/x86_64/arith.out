@@ -1,0 +1,261 @@
+
+/tmp/tmp.bin:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <square>:
+   0:	55                   	push   rbp
+   1:	48 89 e5             	mov    rbp,rsp
+   4:	48 83 ec 10          	sub    rsp,0x10
+   8:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
+   b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+   e:	8b 4d fc             	mov    ecx,DWORD PTR [rbp-0x4]
+  11:	f7 e9                	imul   ecx
+  13:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  16:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+  19:	c9                   	leave
+  1a:	c3                   	ret
+
+000000000000001b <sum>:
+  1b:	55                   	push   rbp
+  1c:	48 89 e5             	mov    rbp,rsp
+  1f:	48 83 ec 20          	sub    rsp,0x20
+  23:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
+  26:	89 75 f8             	mov    DWORD PTR [rbp-0x8],esi
+  29:	89 55 f4             	mov    DWORD PTR [rbp-0xc],edx
+  2c:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  2f:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
+  32:	01 c8                	add    eax,ecx
+  34:	89 45 f0             	mov    DWORD PTR [rbp-0x10],eax
+  37:	8b 45 f0             	mov    eax,DWORD PTR [rbp-0x10]
+  3a:	8b 4d f4             	mov    ecx,DWORD PTR [rbp-0xc]
+  3d:	01 c8                	add    eax,ecx
+  3f:	89 45 ec             	mov    DWORD PTR [rbp-0x14],eax
+  42:	8b 45 ec             	mov    eax,DWORD PTR [rbp-0x14]
+  45:	c9                   	leave
+  46:	c3                   	ret
+
+0000000000000047 <prec>:
+  47:	55                   	push   rbp
+  48:	48 89 e5             	mov    rbp,rsp
+  4b:	48 83 ec 20          	sub    rsp,0x20
+  4f:	b8 02 00 00 00       	mov    eax,0x2
+  54:	b9 03 00 00 00       	mov    ecx,0x3
+  59:	48 f7 e9             	imul   rcx
+  5c:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  60:	b8 01 00 00 00       	mov    eax,0x1
+  65:	48 8b 4d f8          	mov    rcx,QWORD PTR [rbp-0x8]
+  69:	48 01 c8             	add    rax,rcx
+  6c:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  70:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  74:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  78:	b8 01 00 00 00       	mov    eax,0x1
+  7d:	b9 02 00 00 00       	mov    ecx,0x2
+  82:	48 f7 f9             	idiv   rcx
+  85:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  89:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  8d:	b9 03 00 00 00       	mov    ecx,0x3
+  92:	48 29 c8             	sub    rax,rcx
+  95:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  99:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+  9d:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  a1:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  a5:	48 8b 4d f0          	mov    rcx,QWORD PTR [rbp-0x10]
+  a9:	48 f7 f9             	idiv   rcx
+  ac:	48 89 d0             	mov    rax,rdx
+  af:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  b3:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+  b7:	c9                   	leave
+  b8:	c3                   	ret
+
+00000000000000b9 <mismatch>:
+  b9:	55                   	push   rbp
+  ba:	48 89 e5             	mov    rbp,rsp
+  bd:	48 83 ec 10          	sub    rsp,0x10
+  c1:	b8 03 00 00 00       	mov    eax,0x3
+  c6:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  c9:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  cc:	b9 02 00 00 00       	mov    ecx,0x2
+  d1:	01 c8                	add    eax,ecx
+  d3:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  d6:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+  d9:	c9                   	leave
+  da:	c3                   	ret
+
+00000000000000db <prec2>:
+  db:	55                   	push   rbp
+  dc:	48 89 e5             	mov    rbp,rsp
+  df:	48 83 ec 20          	sub    rsp,0x20
+  e3:	b8 02 00 00 00       	mov    eax,0x2
+  e8:	b9 02 00 00 00       	mov    ecx,0x2
+  ed:	48 f7 e9             	imul   rcx
+  f0:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  f4:	b8 03 00 00 00       	mov    eax,0x3
+  f9:	b9 03 00 00 00       	mov    ecx,0x3
+  fe:	48 f7 e9             	imul   rcx
+ 101:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+ 105:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+ 109:	48 8b 4d f0          	mov    rcx,QWORD PTR [rbp-0x10]
+ 10d:	48 01 c8             	add    rax,rcx
+ 110:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+ 114:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+ 118:	c9                   	leave
+ 119:	c3                   	ret
+
+000000000000011a <prec3>:
+ 11a:	55                   	push   rbp
+ 11b:	48 89 e5             	mov    rbp,rsp
+ 11e:	48 83 ec 20          	sub    rsp,0x20
+ 122:	b8 02 00 00 00       	mov    eax,0x2
+ 127:	b9 03 00 00 00       	mov    ecx,0x3
+ 12c:	48 01 c8             	add    rax,rcx
+ 12f:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+ 133:	b8 02 00 00 00       	mov    eax,0x2
+ 138:	48 8b 4d f8          	mov    rcx,QWORD PTR [rbp-0x8]
+ 13c:	48 f7 e9             	imul   rcx
+ 13f:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+ 143:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+ 147:	b9 03 00 00 00       	mov    ecx,0x3
+ 14c:	48 f7 e9             	imul   rcx
+ 14f:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+ 153:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+ 157:	c9                   	leave
+ 158:	c3                   	ret
+
+0000000000000159 <prefix>:
+ 159:	55                   	push   rbp
+ 15a:	48 89 e5             	mov    rbp,rsp
+ 15d:	48 83 ec 10          	sub    rsp,0x10
+ 161:	b8 02 00 00 00       	mov    eax,0x2
+ 166:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 169:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 16c:	f7 d8                	neg    eax
+ 16e:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 171:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 174:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 177:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 17a:	85 c0                	test   eax,eax
+ 17c:	0f 94 c0             	sete   al
+ 17f:	0f b6 c0             	movzx  eax,al
+ 182:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 185:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 188:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 18b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 18e:	f7 d0                	not    eax
+ 190:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 193:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 196:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 199:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 19c:	b9 01 00 00 00       	mov    ecx,0x1
+ 1a1:	01 c8                	add    eax,ecx
+ 1a3:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 1a6:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1a9:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 1ac:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1af:	b9 01 00 00 00       	mov    ecx,0x1
+ 1b4:	01 c8                	add    eax,ecx
+ 1b6:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 1b9:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 1bc:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 1bf:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1c2:	b9 01 00 00 00       	mov    ecx,0x1
+ 1c7:	29 c8                	sub    eax,ecx
+ 1c9:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 1cc:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1cf:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 1d2:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1d5:	b9 01 00 00 00       	mov    ecx,0x1
+ 1da:	29 c8                	sub    eax,ecx
+ 1dc:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+ 1df:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 1e2:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 1e5:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1e8:	c9                   	leave
+ 1e9:	c3                   	ret
+
+00000000000001ea <more_binops>:
+ 1ea:	55                   	push   rbp
+ 1eb:	48 89 e5             	mov    rbp,rsp
+ 1ee:	48 83 ec 10          	sub    rsp,0x10
+ 1f2:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 1f5:	b9 01 00 00 00       	mov    ecx,0x1
+ 1fa:	39 c8                	cmp    eax,ecx
+ 1fc:	0f 9c c0             	setl   al
+ 1ff:	0f b6 c0             	movzx  eax,al
+ 202:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 205:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 208:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 20b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 20e:	b9 02 00 00 00       	mov    ecx,0x2
+ 213:	39 c8                	cmp    eax,ecx
+ 215:	0f 9e c0             	setle  al
+ 218:	0f b6 c0             	movzx  eax,al
+ 21b:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 21e:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 221:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 224:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 227:	b9 03 00 00 00       	mov    ecx,0x3
+ 22c:	39 c8                	cmp    eax,ecx
+ 22e:	0f 94 c0             	sete   al
+ 231:	0f b6 c0             	movzx  eax,al
+ 234:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 237:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 23a:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 23d:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 240:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
+ 243:	39 c8                	cmp    eax,ecx
+ 245:	0f 95 c0             	setne  al
+ 248:	0f b6 c0             	movzx  eax,al
+ 24b:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 24e:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 251:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 254:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 257:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
+ 25a:	39 c8                	cmp    eax,ecx
+ 25c:	0f 9f c0             	setg   al
+ 25f:	0f b6 c0             	movzx  eax,al
+ 262:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 265:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 268:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 26b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 26e:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
+ 271:	39 c8                	cmp    eax,ecx
+ 273:	0f 9d c0             	setge  al
+ 276:	0f b6 c0             	movzx  eax,al
+ 279:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 27c:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 27f:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 282:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 285:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
+ 288:	21 c8                	and    eax,ecx
+ 28a:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 28d:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 290:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 293:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 296:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
+ 299:	09 c8                	or     eax,ecx
+ 29b:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 29e:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 2a1:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 2a4:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 2a7:	8b 4d fc             	mov    ecx,DWORD PTR [rbp-0x4]
+ 2aa:	31 c8                	xor    eax,ecx
+ 2ac:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 2af:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 2b2:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 2b5:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 2b8:	b9 01 00 00 00       	mov    ecx,0x1
+ 2bd:	d3 e0                	shl    eax,cl
+ 2bf:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 2c2:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 2c5:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 2c8:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+ 2cb:	b9 01 00 00 00       	mov    ecx,0x1
+ 2d0:	d3 f8                	sar    eax,cl
+ 2d2:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+ 2d5:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+ 2d8:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+ 2db:	b8 00 00 00 00       	mov    eax,0x0
+ 2e0:	c9                   	leave
+ 2e1:	c3                   	ret
