@@ -17,10 +17,17 @@ typedef struct {
 } X86_64_Label_Patches;
 
 typedef struct {
+    sv symbol_name;
+    u64 pos;
+} X86_64_Relocation_Patch;
+
+typedef struct {
     String_Builder ops;
 
     Dynamic_Array(X86_64_Label) labels;
     Dynamic_Array(X86_64_Label_Patches) patches;
+
+    Dynamic_Array(X86_64_Relocation_Patch) rela_patches;
 } X86_64_Ctx;
 
 static X86_64_Ctx x86_64_global_ctx;
@@ -52,6 +59,11 @@ void push_x86_label(usize label_id, i32 pos) {
             --i;
         }
     }
+}
+
+INLINE void push_x86_rela_patch(sv symbol_name, i32 pos) {
+    X86_64_Ctx *ctx = &x86_64_global_ctx;
+    da_append(&ctx->rela_patches, ((X86_64_Relocation_Patch){symbol_name, pos}));
 }
 
 INLINE i32 x86_pos(void) {
@@ -174,6 +186,8 @@ typedef struct {
 #define TEST_BYTE 0x84
 
 #define JMP 0xE9
+
+#define CALL 0xE8
 
 #define LEAVE 0xC9
 #define RET 0xC3
@@ -626,6 +640,22 @@ void generate_op(const Op *op) {
         push_x86_op(RET);
     } break;
 
+    case OP_TYPE_CALL: {
+        if (op->params.size > 6)
+            UNIMPLEMENTED();
+
+        for (usize i = 0; i < op->params.size; ++i) {
+            const Value *param = *da_at(&op->params, i);
+            load_value_to_reg(param, x86_64_linux_registers[i]);
+        }
+
+        push_x86_op(CALL);
+        push_x86_rela_patch(op->func->name, x86_pos());
+        push_u32(0);
+
+        store_reg_to_stack(RAX, op->result, op->func->type->ret->size);
+    } break;
+
     default: UNREACHABLE();
     }
 }
@@ -654,6 +684,9 @@ void generate_program(const Compiler *c, FILE *out) {
     X86_64_Ctx *ctx = &x86_64_global_ctx;
     *ctx = (X86_64_Ctx){0};
 
+    String_Hash_Table symbols = {0};
+    sht_init(&symbols, sizeof(usize), 0);
+
     ELF_Builder elf_builder;
     ELF_Builder_init(&elf_builder, c->l->input_file);
 
@@ -666,18 +699,29 @@ void generate_program(const Compiler *c, FILE *out) {
         sb_append_sv(&func_name, &func->name);
         sb_append_null(&func_name);
 
-        ELF_new_func(&elf_builder, func_name.store, ctx->ops.store + op_offset, ctx->ops.size - op_offset);
+        usize symbol_idx = ELF_new_func(&elf_builder, func_name.store, ctx->ops.store + op_offset, ctx->ops.size - op_offset);
         op_offset = ctx->ops.size;
+
+        *(usize *)sht_get(&symbols, SV_SPREAD(&func->name)) = symbol_idx;
 
         sb_free(&func_name);
 
         assert(ctx->patches.size == 0);
     }
 
+    for (usize i = 0; i < ctx->rela_patches.size; ++i) {
+        const X86_64_Relocation_Patch *rela_patch = da_at(&ctx->rela_patches, i);
+        usize *symbol_idx = sht_try_get(&symbols, SV_SPREAD(&rela_patch->symbol_name));
+        assert(symbol_idx);
+        ELF_add_relocation(&elf_builder, rela_patch->pos, *symbol_idx);
+    }
+
     ELF_Builder_compile(&elf_builder);
     ELF_write_o_file(&elf_builder, out);
 
     ELF_Builder_delete(&elf_builder);
+
+    sht_free(&symbols);
 
     sb_free(&ctx->ops);
     da_delete(&ctx->labels);

@@ -111,18 +111,30 @@ void print_ir_op(const Op *op, FILE *out) {
         fprintf(out, "    jmpz .L%zu, ", op->label_id);
         print_ir_val(op->val, out);
     } break;
+    case OP_TYPE_CALL: {
+        fprintf(out, "    %%s[%zu] = %s call @%.*s(",
+                op->result, get_ir_type_name(op->func->type->ret), SV_FMT(&op->func->name));
+        for (usize i = 0; i < op->params.size; ++i) {
+            const Value *param = op->params.store[i];
+            print_ir_val(param, out);
+
+            if (i < op->params.size - 1)
+                fprintf(out, ", ");
+        }
+        fprintf(out, ")");
+    } break;
     default: UNIMPLEMENTED();
     }
     fprintf(out, "\n");
 }
 
 void print_ir_func(const Value *func, FILE *out) {
-    fprintf(out, "%.*s[%zu](", SV_FMT(&func->name), func->stack_size);
-    if (func->params.size > 0) {
-        for (usize i = 0; i < func->params.size - 1; ++i) {
-            fprintf(out, "%zu,", get_param_type(func, i)->size);
-        }
-        fprintf(out, "%zu", get_param_type(func, func->params.size - 1)->size);
+    fprintf(out, "@%.*s[%zu](", SV_FMT(&func->name), func->stack_size);
+    for (usize i = 0; i < func->params.size; ++i) {
+        fprintf(out, "%s", get_ir_type_name(get_param_type(func, i)));
+
+        if (i < func->params.size - 1)
+            fprintf(out, ", ");
     }
     fprintf(out, "):\n");
 
@@ -144,7 +156,7 @@ void print_description(FILE *out) {
     fprintf(out,
             "; V3 Readable Intermediate Representation\n"
             "; Function header formatted as:\n"
-            "; func[<max-stack-size>](<size-of-param>,...)\n"
+            "; @func[<max-stack-size>](<param-type>,...)\n"
             "\n");
 }
 

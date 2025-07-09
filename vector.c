@@ -518,6 +518,7 @@ typedef struct {
             Dynamic_Array(Func_Param) params;
             Dynamic_Array(const Op *) ops;
             usize stack_size;
+            bool is_variadic;
         };
     };
 } Value;
@@ -590,6 +591,8 @@ typedef enum {
     OP_TYPE_JMP,
     OP_TYPE_JMPZ,
 
+    OP_TYPE_CALL,
+
     OP_TYPE_COUNT,
 } Op_Type;
 
@@ -614,6 +617,12 @@ struct Op {
             Binop op;
             const Value *lhs;
             const Value *rhs;
+        };
+
+        // call
+        struct {
+            const Value *func;
+            Dynamic_Array(const Value *) params;
         };
     };
 };
@@ -889,6 +898,15 @@ INLINE Op *new_jmpz(Compiler *c, usize label_id, const Value *val) {
         .type = OP_TYPE_JMPZ,
         .val = val,
         .label_id = label_id,
+    };
+    return o;
+}
+
+INLINE Op *new_call(Compiler *c, usize result) {
+    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    *o = (Op){
+        .type = OP_TYPE_CALL,
+        .result = result,
     };
     return o;
 }
@@ -1218,7 +1236,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         CHECK(val = compile_expr(c, PREC_PREFIX, &val_is_lval));
         if (!val_is_lval) {
             compiler_error(c, &loc, "Cannot increment an rvalue");
-            return false;
+            return NULL;
         }
 
         // TODO: intern constants mayhaps
@@ -1237,7 +1255,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         CHECK(val = compile_expr(c, PREC_PREFIX, &val_is_lval));
         if (!val_is_lval) {
             compiler_error(c, &loc, "Cannot decrement an rvalue");
-            return false;
+            return NULL;
         }
 
         Value *one = new_int_literal(c, val->type, 1);
@@ -1257,7 +1275,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
         if (!arg_lval) {
             compiler_error(c, &loc, "Cannot take the address of an rvalue");
-            return false;
+            return NULL;
         }
 
         const Type *ptr_type = get_ptr_type(&c->ty_ctx, arg->type);
@@ -1323,7 +1341,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
             next_token(c);
             if (!lval) {
                 compiler_error(c, &c->cur_token.loc, "Cannot increment rvalue");
-                return false;
+                return NULL;
             }
 
             usize pre = alloc_scoped_var(c, val->type);
@@ -1341,7 +1359,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
             next_token(c);
             if (!lval) {
                 compiler_error(c, &c->cur_token.loc, "Cannot decrement rvalue");
-                return false;
+                return NULL;
             }
 
             Value *one = new_int_literal(c, val->type, 1);
@@ -1355,8 +1373,72 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
             lval = false;
         } break;
 
-        default:
-            goto compile_primary_expr_end_loop;
+        case TOKEN_TYPE_LPAREN: {
+            next_token(c);
+            if (val->value_type != VALUE_TYPE_FUNC) {
+                compiler_error(c, &c->cur_token.loc, "Called object is not a function");
+                return NULL;
+            }
+
+            Location loc = c->cur_token.loc;
+
+            usize result = alloc_scoped_var(c, val->type->ret);
+            Op *call = new_call(c, result);
+            call->func = val;
+
+            next_token(c);
+
+            while (!cur_tok_is(c, TOKEN_TYPE_RPAREN)) {
+                const Value *val = compile_expr(c, PREC_LOWEST, NULL);
+                da_append(&call->params, val);
+
+                if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
+                    next_token(c);
+                    next_token(c);
+                } else {
+                    CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
+                }
+            }
+
+            if (val->is_variadic && val->params.size > call->params.size) {
+                compiler_error(c, &loc, "Too few arguments to function call, require at least %zu", val->params.size);
+                return NULL;
+            }
+
+            if (!val->is_variadic && val->params.size < call->params.size) {
+                compiler_error(c, &loc, "Too many arguments to function call, got %zu, expected %zu",
+                               call->params.size, val->params.size);
+                return NULL;
+            } else if (!val->is_variadic && val->params.size > call->params.size) {
+                compiler_error(c, &loc, "Too few arguments to function call, got %zu, expected %zu",
+                               call->params.size, val->params.size);
+                return NULL;
+            }
+
+            for (usize i = 0; i < val->params.size; ++i) {
+                const Type *expected_type = val->type->params.store[i];
+                const Type *actual_type = call->params.store[i]->type;
+
+                if (!type_cmp(expected_type, actual_type)) {
+                    char *expected_type_name = get_type_name(expected_type);
+                    char *actual_type_name = get_type_name(actual_type);
+
+                    compiler_error(c, &loc, "Type Error: expected argument %zu of functional call to be %s, got %s",
+                                   i + 1, expected_type_name, actual_type_name);
+
+                    free(actual_type_name);
+                    free(expected_type_name);
+                    return NULL;
+                }
+            }
+
+            push_op(c, call);
+
+            val = new_var(c, val->type->ret, result);
+            lval = false;
+        } break;
+
+        default: goto compile_primary_expr_end_loop;
         }
     }
 
