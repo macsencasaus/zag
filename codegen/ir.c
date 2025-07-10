@@ -136,7 +136,7 @@ void print_ir_func(const Value *func, FILE *out) {
         if (i < func->params.size - 1)
             fprintf(out, ", ");
     }
-    fprintf(out, "):\n");
+    fprintf(out, ") %s:\n", get_ir_type_name(func->type->ret));
 
     for (usize i = 0; i < func->ops.size; ++i) {
         const Op *op = func->ops.store[i];

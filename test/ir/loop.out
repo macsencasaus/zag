@@ -2,7 +2,8 @@
 ; Function header formatted as:
 ; @func[<max-stack-size>](<param-type>,...)
 
-@loop[16]():
+
+@loop[16]() i64:
     %s[0] = i64 0
 .L0:
     %s[8] = slt i64 %s[0], i64 1000
@@ -12,7 +13,7 @@
 .L1:
     ret i64 %s[0]
 
-@loop_break[16]():
+@loop_break[16]() i64:
     %s[0] = i64 0
 .L2:
     %s[8] = slt i64 %s[0], i64 1000
@@ -26,7 +27,7 @@
 .L3:
     ret i64 %s[0]
 
-@loop_continue[16]():
+@loop_continue[16]() i64:
     %s[0] = i64 0
 .L5:
     %s[8] = slt i64 %s[0], i64 1000
