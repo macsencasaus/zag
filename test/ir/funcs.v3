@@ -1,6 +1,6 @@
 // RUN: %vector -emit-ir %s
 
-fn main(): i32 {
+fn main() i32 {
     var x: i32 = 2;
     var y: i32 = 1, z: i32 = 3;
     var aa = 3;
@@ -9,15 +9,15 @@ fn main(): i32 {
     return 0;
 }
 
-fn id(x: i64): i64 {
+fn id(x: i64) i64 {
     return x; 
 }
 
-fn three(): i64 {
+fn three() i64 {
     return 3;
 }
 
-fn stack_alignment(): i32 {
+fn stack_alignment() i32 {
     var a: i8 = 0;
     var b: i8 = 1;
     var c: i16 = 2;
@@ -31,12 +31,12 @@ fn stack_alignment(): i32 {
     return 0;
 }
 
-fn func_ptrs(): i32 {
-    var this_fn: fn(): i32 = func_ptrs;
+fn func_ptrs() i32 {
+    var this_fn: fn() i32 = func_ptrs;
     return 0;
 }
 
-fn ptrs(): i32 {
+fn ptrs() i32 {
     var x = 3;
     var p: *i64 = &x;
     var y = *p;

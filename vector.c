@@ -1078,8 +1078,6 @@ const Type *parse_type(Compiler *c) {
             }
         }
 
-        if (!expect_peek(c, TOKEN_TYPE_COLON))
-            goto parse_type_fn_cleanup;
         next_token(c);
 
         const Type *ret = parse_type(c);
@@ -1936,7 +1934,6 @@ bool compile_program(Compiler *c) {
                 CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
             }
 
-            CHECK(expect_peek(c, TOKEN_TYPE_COLON));
             next_token(c);
 
             func_type.ret = parse_type(c);

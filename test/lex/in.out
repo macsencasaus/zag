@@ -16,9 +16,8 @@ identifier: argv at 5:20 in lex/in.v3
 '*': * at 5:27 in lex/in.v3
 identifier: i8 at 5:28 in lex/in.v3
 ')': ) at 5:30 in lex/in.v3
-':': : at 5:31 in lex/in.v3
-identifier: i32 at 5:33 in lex/in.v3
-'{': { at 5:37 in lex/in.v3
+identifier: i32 at 5:32 in lex/in.v3
+'{': { at 5:36 in lex/in.v3
 var: var at 6:5 in lex/in.v3
 identifier: x at 6:9 in lex/in.v3
 '=': = at 6:11 in lex/in.v3

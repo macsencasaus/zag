@@ -1,6 +1,6 @@
 // RUN: %vector -stdout %s > /tmp/tmp.bin && objdump -d -M intel /tmp/tmp.bin
 
-fn ifs(cond: i32): i32 {
+fn ifs(cond: i32) i32 {
     var x: i32;
     if cond
         x = 1;
@@ -9,7 +9,7 @@ fn ifs(cond: i32): i32 {
     return x;
 }
 
-fn more_ifs(cond: i32): i32 {
+fn more_ifs(cond: i32) i32 {
     if cond {
         return cond;
     } else {

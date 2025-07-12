@@ -1,11 +1,11 @@
 // RUN: %vector -stdout %s > /tmp/tmp.bin && objdump -d -M intel /tmp/tmp.bin
 
-fn main(): i32 {
+fn main() i32 {
     var x: i32 = 2;
     return x;
 }
 
-fn big_stack(): i32 {
+fn big_stack() i32 {
     var a: i64,
         b: i64,
         c: i64,
@@ -23,15 +23,15 @@ fn big_stack(): i32 {
     return 0;
 }
 
-fn params(a: i32, b: i32): i32 {
+fn params(a: i32, b: i32) i32 {
     return a;
 }
 
-fn add(a: i32, b: i32): i32 {
+fn add(a: i32, b: i32) i32 {
     return a + b;
 }
 
-fn store(): i64 {
+fn store() i64 {
     var x = 2;
     var p = &x;
     *p = 3;

@@ -1,6 +1,6 @@
 // RUN: %vector -stdout %s > /tmp/tmp.bin && objdump -d -M intel /tmp/tmp.bin
 
-fn loop(): i64 {
+fn loop() i64 {
     var x = 0;
 
     while (x < 1000) {

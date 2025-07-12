@@ -1,6 +1,6 @@
 // RUN: %vector -emit-ir %s
 
-fn loop(): i64 {
+fn loop() i64 {
     var x = 0;
 
     while (x < 1000) {
@@ -10,7 +10,7 @@ fn loop(): i64 {
     return x;
 }
 
-fn loop_break(): i64 {
+fn loop_break() i64 {
     var x = 0;
 
     while (x < 1000) {
@@ -22,7 +22,7 @@ fn loop_break(): i64 {
     return x;
 }
 
-fn loop_continue(): i64{
+fn loop_continue() i64{
     var x = 0;
 
     while (x < 1000) {
