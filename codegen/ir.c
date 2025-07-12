@@ -27,7 +27,7 @@ void print_ir_val(const Value *val, FILE *out) {
         fprintf(out, "%%s[%zu]", val->stack_index);
     } break;
     case VALUE_TYPE_FUNC: {
-        fprintf(out, "%.*s", SV_FMT(&val->name));
+        fprintf(out, "%.*s", SV_FMT(val->name));
     } break;
     case VALUE_TYPE_DEREF: {
         fprintf(out, "deref %%s[%zu]", val->stack_index);
@@ -112,8 +112,16 @@ void print_ir_op(const Op *op, FILE *out) {
         print_ir_val(op->val, out);
     } break;
     case OP_TYPE_CALL: {
-        fprintf(out, "    %%s[%zu] = %s call @%.*s(",
-                op->result, get_ir_type_name(op->func->type->ret), SV_FMT(&op->func->name));
+        const Type *return_type = op->func->type->ret;
+        if (op->func->value_type == VALUE_TYPE_FUNC ||
+            op->func->value_type == VALUE_TYPE_EXTERN_FUNC) {
+            fprintf(out, "    %%s[%zu] = %s call @%.*s(",
+                    op->result, get_ir_type_name(return_type), SV_FMT(op->func->name));
+        } else {
+            fprintf(out, "    %%s[%zu] = %s call [", op->result, get_ir_type_name(return_type));
+            print_ir_val(op->func, out);
+            fprintf(out, "](");
+        }
         for (usize i = 0; i < op->params.size; ++i) {
             const Value *param = op->params.store[i];
             print_ir_val(param, out);
@@ -129,7 +137,7 @@ void print_ir_op(const Op *op, FILE *out) {
 }
 
 void print_ir_func(const Value *func, FILE *out) {
-    fprintf(out, "@%.*s[%zu](", SV_FMT(&func->name), func->stack_size);
+    fprintf(out, "@%.*s[%zu](", SV_FMT(func->name), func->stack_size);
     for (usize i = 0; i < func->params.size; ++i) {
         fprintf(out, "%s", get_ir_type_name(get_param_type(func, i)));
 
@@ -152,6 +160,21 @@ void print_ir_funcs(const Compiler *c, FILE *out) {
     }
 }
 
+void print_ir_external_funcs(const Compiler *c, FILE *out) {
+    for (usize i = 0; i < c->extern_funcs.size; ++i) {
+        const Value *func = c->extern_funcs.store[i];
+        fprintf(out, "extern @%.*s(", SV_FMT(func->name));
+        for (usize i = 0; i < func->params.size; ++i) {
+            fprintf(out, "%s", get_ir_type_name(get_param_type(func, i)));
+
+            if (i < func->params.size - 1)
+                fprintf(out, ", ");
+        }
+        fprintf(out, ") %s\n", get_ir_type_name(func->type->ret));
+    }
+    fprintf(out, "\n");
+}
+
 void print_description(FILE *out) {
     fprintf(out,
             "; V3 Readable Intermediate Representation\n"
@@ -162,5 +185,6 @@ void print_description(FILE *out) {
 
 void print_ir_program(const Compiler *c, FILE *out) {
     print_description(out);
+    print_ir_external_funcs(c, out);
     print_ir_funcs(c, out);
 }

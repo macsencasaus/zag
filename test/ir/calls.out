@@ -30,3 +30,7 @@
     %s[8] = i32 call @factorial_tail(i32 %s[12], i32 %s[16])
     ret i32 %s[8]
 
+@func_ptrs[12](ptr) i32:
+    %s[8] = i32 call [ptr %s[0]](i32 2)
+    ret i32 %s[8]
+

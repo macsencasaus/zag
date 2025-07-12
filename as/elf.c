@@ -19,7 +19,14 @@
 INLINE usize st_append(String_Builder *st, const char *section_name) {
     usize off = st->size;
     usize n = strlen(section_name) + 1;
-    da_append_buf(st, section_name, n);
+    sb_append_buf(st, section_name, n);
+    return off;
+}
+
+INLINE usize st_append_sv(String_Builder *st, sv name) {
+    usize off = st->size;
+    sb_append_buf(st, name.store, name.len);
+    sb_append_null(st);
     return off;
 }
 
@@ -251,9 +258,9 @@ void ELF_write_o_file(const ELF_Builder *ctx, FILE *out) {
     sb_free(&o);
 }
 
-usize ELF_new_func(ELF_Builder *ctx, const char *name,
+usize ELF_new_func(ELF_Builder *ctx, sv name,
                    const char *code, usize n) {
-    usize name_tab_off = st_append(&ctx->strtab, name);
+    usize name_tab_off = st_append_sv(&ctx->strtab, name);
 
     usize text_off = ctx->text.size;
     da_append_buf(&ctx->text, code, n);
@@ -276,6 +283,19 @@ void ELF_add_relocation(ELF_Builder *ctx, u64 offset, usize symbol) {
         .r_info = ELF64_R_INFO(symbol, R_X86_64_PLT32),
         .r_addend = -0x4,
     };
+}
+
+usize ELF_add_external_func(ELF_Builder *ctx, sv name) {
+    usize name_tab_off = st_append_sv(&ctx->strtab, name);
+
+    *new_symbol(ctx) = (Elf64_Sym){
+        .st_name = name_tab_off,
+        .st_info = ELF64_ST_INFO(STB_GLOBAL, STT_NOTYPE),
+        .st_other = STV_DEFAULT,
+        .st_shndx = SHN_UNDEF,
+    };
+
+    return ctx->symbols.size - 1;
 }
 
 #endif  // ELF_C

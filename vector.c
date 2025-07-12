@@ -33,8 +33,8 @@
 
 typedef String_View sv;
 
-#define SV_SPREAD(__sv) (__sv)->store, (__sv)->len
-#define SV_FMT(__sv) (int)((__sv)->len), (__sv)->store
+#define SV_SPREAD(__sv) (__sv).store, (__sv).len
+#define SV_FMT(__sv) (int)((__sv).len), (__sv).store
 
 #define SHT_IMPLEMENTATION
 #include "sht.h"
@@ -103,6 +103,8 @@ typedef enum {
     TOKEN_TYPE_BREAK,
     TOKEN_TYPE_CONTINUE,
 
+    TOKEN_TYPE_EXTERN,
+
     TOKEN_TYPE_COUNT,
 } Token_Type;
 
@@ -147,6 +149,7 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_WHILE] = "while",
     [TOKEN_TYPE_BREAK] = "break",
     [TOKEN_TYPE_CONTINUE] = "continue",
+    [TOKEN_TYPE_EXTERN] = "extern",
 };
 
 typedef struct {
@@ -158,7 +161,7 @@ typedef struct {
     Location loc;
 } Token;
 
-#define TOKEN_FMT(t) SV_FMT(&(t)->lit)
+#define TOKEN_FMT(t) SV_FMT((t)->lit)
 #define CUR_TOKEN_FMT(c) TOKEN_FMT(&(c)->cur_token)
 
 void inspect_token(const Token *token) {
@@ -235,6 +238,8 @@ Token_Type lookup_keyword(sv lit) {
         return TOKEN_TYPE_BREAK;
     else if (sveq(lit, sv_from_cstr("continue")))
         return TOKEN_TYPE_CONTINUE;
+    else if (sveq(lit, sv_from_cstr("extern")))
+        return TOKEN_TYPE_EXTERN;
     else
         return TOKEN_TYPE_IDENT;
 }
@@ -439,6 +444,7 @@ struct Type {
         struct {
             Dynamic_Array(const Type *) params;
             const Type *ret;
+            bool is_variadic;
         };
 
         // ptr
@@ -497,6 +503,7 @@ typedef enum {
     VALUE_TYPE_INT_LITERAL,
     VALUE_TYPE_VAR,
     VALUE_TYPE_FUNC,
+    VALUE_TYPE_EXTERN_FUNC,
 
     VALUE_TYPE_DEREF,
 } Value_Type;
@@ -512,13 +519,12 @@ typedef struct {
         // variable, deref
         usize stack_index;
 
-        // function
+        // function, extern function (no ops, stack_size)
         struct {
             sv name;
             Dynamic_Array(Func_Param) params;
             Dynamic_Array(const Op *) ops;
             usize stack_size;
-            bool is_variadic;
         };
     };
 } Value;
@@ -695,6 +701,7 @@ typedef struct {
     const Type *hint;
 
     Dynamic_Array(const Value *) funcs;
+    Dynamic_Array(const Value *) extern_funcs;
 
     Bump_Alloc value_alloc;
     Bump_Alloc op_alloc;
@@ -744,7 +751,7 @@ INLINE void unexpected_token(Compiler *p) {
     compiler_error(p, &p->cur_token.loc, "Unexpected token %s", tt_str[p->cur_token.type]);
 }
 INLINE void unknown_type(Compiler *c) {
-    compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", SV_SPREAD(&c->cur_token.lit));
+    compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", SV_SPREAD(c->cur_token.lit));
 }
 
 void compiler_init(Compiler *c, Lexer *l) {
@@ -777,7 +784,7 @@ void compiler_init(Compiler *c, Lexer *l) {
     ty_ctx->next_id = BUILTIN_TYPE_ID_COUNT;
 
     da_append(&c->vars, (String_Hash_Table){0});
-    sht_init(&c->vars.store[0], sizeof(Value), 0);
+    sht_init(&c->vars.store[0], sizeof(const Value *), 0);
 }
 
 INLINE void push_op(Compiler *c, const Op *op) {
@@ -808,6 +815,14 @@ INLINE Value *new_func(Compiler *c) {
     Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
     *v = (Value){
         .value_type = VALUE_TYPE_FUNC,
+    };
+    return v;
+}
+
+INLINE Value *new_extern_func(Compiler *c) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_EXTERN_FUNC,
     };
     return v;
 }
@@ -912,7 +927,7 @@ INLINE Op *new_call(Compiler *c, usize result) {
 }
 
 INLINE const Type *lookup_named_type(const Types_Ctx *ty_ctx, sv name) {
-    return *(const Type **)sht_try_get(&ty_ctx->named_types, SV_SPREAD(&name));
+    return *(const Type **)sht_try_get(&ty_ctx->named_types, SV_SPREAD(name));
 }
 
 INLINE bool type_cmp(const Type *t1, const Type *t2) {
@@ -1110,16 +1125,18 @@ INLINE Prec peek_prec(const Compiler *c) {
     return prec_lookup[c->peek_token.type];
 }
 
-Value *find_scoped_var(const Compiler *c, usize scope, const sv *name) {
+Value *find_scoped_var(const Compiler *c, usize scope, sv name) {
     const String_Hash_Table *scope_vars = c->vars.store + scope;
-    return (Value *)sht_try_get(scope_vars, name->store, name->len);
+    Value **val = sht_try_get(scope_vars, name.store, name.len);
+    if (!val) return NULL;
+    return *val;
 }
 
-INLINE Value *find_var_near(const Compiler *c, const sv *name) {
+INLINE Value *find_var_near(const Compiler *c, sv name) {
     return find_scoped_var(c, c->vars.size - 1, name);
 }
 
-Value *find_var_far(const Compiler *c, const sv *name) {
+Value *find_var_far(const Compiler *c, sv name) {
     Value *v;
     for (i64 i = (i64)c->vars.size - 1; i >= 0; --i) {
         if ((v = find_scoped_var(c, i, name)) != NULL) {
@@ -1129,28 +1146,33 @@ Value *find_var_far(const Compiler *c, const sv *name) {
     return NULL;
 }
 
-INLINE const Value *declare_var(Compiler *c, const sv *name, usize stack_index, const Type *type) {
+INLINE const Value *declare_var(Compiler *c, sv name, usize stack_index, const Type *type) {
     if (find_var_near(c, name) != NULL)
         return NULL;
-    Value *var = sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name));
-    *var = (Value){
-        .value_type = VALUE_TYPE_VAR,
-        .type = type,
-        .stack_index = stack_index,
-    };
+    Value *var = new_var(c, type, stack_index);
+    *(Value **)sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name)) = var;
     return var;
 }
 
-INLINE Value *declare_func(Compiler *c, const sv *name, const Type *type) {
+INLINE Value *declare_func(Compiler *c, sv name, const Type *type) {
     if (find_var_near(c, name) != NULL)
         return NULL;
-    Value *func = sht_get(c->vars.store, SV_SPREAD(name));
-    *func = (Value){
-        .value_type = VALUE_TYPE_FUNC,
-        .type = type,
-        .name = *name,
-    };
+    Value *func = new_func(c);
+    func->type = type;
+    func->name = name;
+    *(Value **)sht_get(c->vars.store, SV_SPREAD(name)) = func;
     da_append(&c->funcs, func);
+    return func;
+}
+
+INLINE Value *declare_extern_func(Compiler *c, sv name, const Type *type) {
+    if (find_var_near(c, name) != NULL)
+        return NULL;
+    Value *func = new_extern_func(c);
+    func->type = type;
+    func->name = name;
+    *(Value **)sht_get(c->vars.store, SV_SPREAD(name)) = func;
+    da_append(&c->extern_funcs, func);
     return func;
 }
 
@@ -1188,7 +1210,7 @@ INLINE bool coerce_constant_type(Value *arg, const Type *t) {
 INLINE void push_scope(Compiler *c) {
     da_append(&c->vars, (String_Hash_Table){0});
     ++c->scope;
-    sht_init(c->vars.store + c->scope, sizeof(Value), 0);
+    sht_init(c->vars.store + c->scope, sizeof(const Value *), 0);
 }
 
 INLINE void pop_scope(Compiler *c) {
@@ -1218,7 +1240,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
     } break;
 
     case TOKEN_TYPE_IDENT: {
-        CHECK(val = find_var_far(c, &c->cur_token.lit));
+        CHECK(val = find_var_far(c, c->cur_token.lit));
         lval = true;
     } break;
 
@@ -1375,11 +1397,12 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
         case TOKEN_TYPE_LPAREN: {
             next_token(c);
-            if (val->value_type != VALUE_TYPE_FUNC) {
+            if (val->type->kind != TYPE_KIND_FN) {
                 compiler_error(c, &c->cur_token.loc, "Called object is not a function");
                 return NULL;
             }
 
+            const Type *func_type = val->type;
             Location loc = c->cur_token.loc;
 
             usize result = alloc_scoped_var(c, val->type->ret);
@@ -1400,23 +1423,25 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
                 }
             }
 
-            if (val->is_variadic && val->params.size > call->params.size) {
+            if (func_type->is_variadic && func_type->params.size > call->params.size) {
                 compiler_error(c, &loc, "Too few arguments to function call, require at least %zu", val->params.size);
                 return NULL;
             }
 
-            if (!val->is_variadic && val->params.size < call->params.size) {
-                compiler_error(c, &loc, "Too many arguments to function call, got %zu, expected %zu",
-                               call->params.size, val->params.size);
-                return NULL;
-            } else if (!val->is_variadic && val->params.size > call->params.size) {
-                compiler_error(c, &loc, "Too few arguments to function call, got %zu, expected %zu",
-                               call->params.size, val->params.size);
-                return NULL;
+            if (!func_type->is_variadic) {
+                if (func_type->params.size < call->params.size) {
+                    compiler_error(c, &loc, "Too many arguments to function call, got %zu, expected %zu",
+                                   call->params.size, val->params.size);
+                    return NULL;
+                } else if (func_type->params.size > call->params.size) {
+                    compiler_error(c, &loc, "Too few arguments to function call, got %zu, expected %zu",
+                                   call->params.size, val->params.size);
+                    return NULL;
+                }
             }
 
-            for (usize i = 0; i < val->params.size; ++i) {
-                const Type *expected_type = val->type->params.store[i];
+            for (usize i = 0; i < func_type->params.size; ++i) {
+                const Type *expected_type = func_type->params.store[i];
                 const Type *actual_type = call->params.store[i]->type;
 
                 if (!type_cmp(expected_type, actual_type)) {
@@ -1677,7 +1702,7 @@ bool compile_var_stmt(Compiler *c) {
             stack_index = alloc_scoped_var(c, decl_type);
         }
 
-        if (declare_var(c, &name.lit, stack_index, decl_type) == NULL) {
+        if (declare_var(c, name.lit, stack_index, decl_type) == NULL) {
             compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
             return false;
         }
@@ -1849,8 +1874,20 @@ bool compile_block(Compiler *c) {
 
 bool compile_program(Compiler *c) {
     while (!cur_tok_is(c, TOKEN_TYPE_EOF)) {
+        bool is_extern = false;
+
+        // qualifiers
         switch (c->cur_token.type) {
-        case TOKEN_TYPE_IDENT: {
+        case TOKEN_TYPE_EXTERN: {
+            is_extern = true;
+            next_token(c);
+        } break;
+        default: {
+        }
+        }
+
+        switch (c->cur_token.type) {
+        case TOKEN_TYPE_VAR: {
             CHECK(compile_var_stmt(c));
         } break;
 
@@ -1910,16 +1947,30 @@ bool compile_program(Compiler *c) {
 
             bool is_declaration = peek_tok_is(c, TOKEN_TYPE_SEMICOLON);
 
-            Value *existing_func = find_var_near(c, &name.lit);
+            if (is_extern && !is_declaration) {
+                compiler_error(c, &name.loc, "Defining externed function");
+                return false;
+            }
+
+            Value *existing_func = find_var_near(c, name.lit);
             const Type *interned_func_type = new_type(&c->ty_ctx, &func_type);
 
             bool already_declared = existing_func != NULL;
             bool already_defined = false;
 
             if (already_declared) {
+                if (is_extern) {
+                    compiler_error(c, &name.loc, "Externed function declared previously");
+                    return false;
+                }
+
                 already_defined = existing_func->ops.store == NULL;
             } else {
-                existing_func = declare_func(c, &name.lit, interned_func_type);
+                if (is_extern)
+                    existing_func = declare_extern_func(c, name.lit, interned_func_type);
+                else
+                    existing_func = declare_func(c, name.lit, interned_func_type);
+
                 existing_func->params = func->params;
             }
 
@@ -1950,7 +2001,7 @@ bool compile_program(Compiler *c) {
 
             if (is_declaration) {
                 next_token(c);
-                return true;
+                break;
             }
 
             CHECK(expect_peek(c, TOKEN_TYPE_LBRACE));
@@ -1963,7 +2014,7 @@ bool compile_program(Compiler *c) {
                 const Type *param_type = get_param_type(existing_func, i);
                 usize stack_index = alloc_scoped_var(c, get_param_type(existing_func, i));
                 param->index = stack_index;
-                assert(declare_var(c, &param->name, stack_index, param_type) != NULL);
+                assert(declare_var(c, param->name, stack_index, param_type) != NULL);
             }
 
             CHECK(compile_block(c));

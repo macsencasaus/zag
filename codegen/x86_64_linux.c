@@ -187,7 +187,8 @@ typedef struct {
 
 #define JMP 0xE9
 
-#define CALL 0xE8
+#define CALL_REL 0xE8
+#define CALL_ABS 0xFF
 
 #define LEAVE 0xC9
 #define RET 0xC3
@@ -365,6 +366,16 @@ void load_value_to_reg(const Value *v, X86_64_Register reg) {
 
     case VALUE_TYPE_VAR: {
         move_stack_to_reg(v->stack_index, v->type->size, reg);
+    } break;
+
+    case VALUE_TYPE_FUNC:
+    case VALUE_TYPE_EXTERN_FUNC: {
+        bool r = reg > 0x7;
+        push_x86_op(REX_PRE(1, r, 0, 0));
+        push_x86_op(LEA);
+        push_x86_op(MODR_M(MOD_MEM, reg, 5));
+        push_x86_rela_patch(v->name, x86_pos());
+        push_u32(0);
     } break;
 
     case VALUE_TYPE_DEREF: {
@@ -649,9 +660,15 @@ void generate_op(const Op *op) {
             load_value_to_reg(param, x86_64_linux_registers[i]);
         }
 
-        push_x86_op(CALL);
-        push_x86_rela_patch(op->func->name, x86_pos());
-        push_u32(0);
+        if (op->func->value_type == VALUE_TYPE_FUNC) {
+            push_x86_op(CALL_REL);
+            push_x86_rela_patch(op->func->name, x86_pos());
+            push_u32(0);
+        } else {
+            load_value_to_reg(op->func, RAX);
+            push_x86_op(CALL_ABS);
+            push_x86_op(MODR_M(MOD_MEM, 2, RAX));
+        }
 
         store_reg_to_stack(RAX, op->result, op->func->type->ret->size);
     } break;
@@ -690,28 +707,27 @@ void generate_program(const Compiler *c, FILE *out) {
     ELF_Builder elf_builder;
     ELF_Builder_init(&elf_builder, c->l->input_file);
 
+    for (usize i = 0; i < c->extern_funcs.size; ++i) {
+        const Value *func = c->extern_funcs.store[i];
+        usize symbol_idx = ELF_add_external_func(&elf_builder, func->name);
+        *(usize *)sht_get(&symbols, SV_SPREAD(func->name)) = symbol_idx;
+    }
+
     usize op_offset = 0;
     for (usize i = 0; i < c->funcs.size; ++i) {
         const Value *func = c->funcs.store[i];
         generate_func(func);
 
-        String_Builder func_name = {0};
-        sb_append_sv(&func_name, &func->name);
-        sb_append_null(&func_name);
-
-        usize symbol_idx = ELF_new_func(&elf_builder, func_name.store, ctx->ops.store + op_offset, ctx->ops.size - op_offset);
+        usize symbol_idx = ELF_new_func(&elf_builder, func->name, ctx->ops.store + op_offset, ctx->ops.size - op_offset);
         op_offset = ctx->ops.size;
 
-        *(usize *)sht_get(&symbols, SV_SPREAD(&func->name)) = symbol_idx;
-
-        sb_free(&func_name);
-
+        *(usize *)sht_get(&symbols, SV_SPREAD(func->name)) = symbol_idx;
         assert(ctx->patches.size == 0);
     }
 
     for (usize i = 0; i < ctx->rela_patches.size; ++i) {
         const X86_64_Relocation_Patch *rela_patch = da_at(&ctx->rela_patches, i);
-        usize *symbol_idx = sht_try_get(&symbols, SV_SPREAD(&rela_patch->symbol_name));
+        usize *symbol_idx = sht_try_get(&symbols, SV_SPREAD(rela_patch->symbol_name));
         assert(symbol_idx);
         ELF_add_relocation(&elf_builder, rela_patch->pos, *symbol_idx);
     }
