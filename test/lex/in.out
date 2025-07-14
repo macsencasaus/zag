@@ -96,8 +96,18 @@ identifier: x at 25:5 in lex/in.v3
 '>=': >= at 25:7 in lex/in.v3
 identifier: y at 25:10 in lex/in.v3
 ';': ; at 25:11 in lex/in.v3
-return: return at 26:5 in lex/in.v3
-identifier: x at 26:12 in lex/in.v3
-';': ; at 26:13 in lex/in.v3
-'}': } at 27:1 in lex/in.v3
-EOF:  at 28:1 in lex/in.v3
+char literal: 'a' at 27:5 in lex/in.v3
+char literal: '\n' at 28:5 in lex/in.v3
+char literal: '\t' at 29:5 in lex/in.v3
+char literal: '\xFF' at 30:5 in lex/in.v3
+char literal: '\b1011' at 31:5 in lex/in.v3
+var: var at 33:5 in lex/in.v3
+identifier: newline at 33:9 in lex/in.v3
+'=': = at 33:17 in lex/in.v3
+char literal: '\n' at 33:19 in lex/in.v3
+';': ; at 33:23 in lex/in.v3
+return: return at 35:5 in lex/in.v3
+identifier: x at 35:12 in lex/in.v3
+';': ; at 35:13 in lex/in.v3
+'}': } at 36:1 in lex/in.v3
+EOF:  at 37:1 in lex/in.v3

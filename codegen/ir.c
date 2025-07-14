@@ -4,7 +4,9 @@
 #endif
 
 char *get_ir_type_name(const Type *type) {
-    if (type->kind == TYPE_KIND_PTR || type->kind == TYPE_KIND_FN)
+    if (type->kind == TYPE_KIND_PTR ||
+        type->kind == TYPE_KIND_FN ||
+        type->kind == TYPE_KIND_ARRAY)
         return "ptr";
 
     switch (type->size) {
@@ -18,21 +20,26 @@ char *get_ir_type_name(const Type *type) {
 }
 
 void print_ir_val(const Value *val, FILE *out) {
-    fprintf(out, "%s ", get_ir_type_name(val->type));
+    if (val->type->kind == TYPE_KIND_ARRAY)
+        fprintf(out, "%s ", get_ir_type_name(val->type->internal));
+    else
+        fprintf(out, "%s ", get_ir_type_name(val->type));
     switch (val->value_type) {
+    case VALUE_TYPE_COUNT: UNREACHABLE();
     case VALUE_TYPE_INT_LITERAL: {
         fprintf(out, "%ld", val->int_value);
     } break;
     case VALUE_TYPE_VAR: {
         fprintf(out, "%%s[%zu]", val->stack_index);
     } break;
+    case VALUE_TYPE_EXTERN_FUNC:
     case VALUE_TYPE_FUNC: {
         fprintf(out, "%.*s", SV_FMT(val->name));
     } break;
     case VALUE_TYPE_DEREF: {
         fprintf(out, "deref %%s[%zu]", val->stack_index);
     } break;
-    default: UNIMPLEMENTED();
+    case VALUE_TYPE_INIT_LIST: UNIMPLEMENTED();
     }
 }
 
@@ -65,6 +72,7 @@ static char *binop_inst_lookup[BINOP_COUNT] = {
 
 void print_ir_op(const Op *op, FILE *out) {
     switch (op->type) {
+    case OP_TYPE_COUNT: UNREACHABLE();
     case OP_TYPE_ASSIGN: {
         fprintf(out, "    %%s[%zu] = ", op->result);
         print_ir_val(op->val, out);
@@ -131,7 +139,6 @@ void print_ir_op(const Op *op, FILE *out) {
         }
         fprintf(out, ")");
     } break;
-    default: UNIMPLEMENTED();
     }
     fprintf(out, "\n");
 }

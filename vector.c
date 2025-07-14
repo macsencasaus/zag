@@ -23,7 +23,7 @@
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 
 #define CHECK(__expr) \
-    if (!(__expr)) return NULL
+    if (!(__expr)) return 0
 
 #define SB_IMPLEMENTATION
 #include "sb.h"
@@ -53,12 +53,17 @@ typedef enum {
     TOKEN_TYPE_EOF,
     TOKEN_TYPE_INT_LITERAL,
 
+    TOKEN_TYPE_CHAR_LITERAL,
+    TOKEN_TYPE_STRING_LITERAL,
+
     TOKEN_TYPE_IDENT,
 
     TOKEN_TYPE_LPAREN,
     TOKEN_TYPE_RPAREN,
     TOKEN_TYPE_LBRACE,
     TOKEN_TYPE_RBRACE,
+    TOKEN_TYPE_LBRACKET,
+    TOKEN_TYPE_RBRACKET,
 
     TOKEN_TYPE_PLUS,
     TOKEN_TYPE_MINUS,
@@ -87,6 +92,7 @@ typedef enum {
     TOKEN_TYPE_MINUSMINUS,
 
     TOKEN_TYPE_COMMA,
+    TOKEN_TYPE_ELLIPSES,
     TOKEN_TYPE_COLON,
     TOKEN_TYPE_SEMICOLON,
 
@@ -112,11 +118,15 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_ILLEGAL] = "ILLEGAL",
     [TOKEN_TYPE_EOF] = "EOF",
     [TOKEN_TYPE_INT_LITERAL] = "int literal",
+    [TOKEN_TYPE_CHAR_LITERAL] = "char literal",
+    [TOKEN_TYPE_STRING_LITERAL] = "string literal",
     [TOKEN_TYPE_IDENT] = "identifier",
     [TOKEN_TYPE_LPAREN] = "'('",
     [TOKEN_TYPE_RPAREN] = "')'",
     [TOKEN_TYPE_LBRACE] = "'{'",
     [TOKEN_TYPE_RBRACE] = "'}'",
+    [TOKEN_TYPE_LBRACKET] = "'['",
+    [TOKEN_TYPE_RBRACKET] = "']'",
     [TOKEN_TYPE_PLUS] = "'+'",
     [TOKEN_TYPE_MINUS] = "'-'",
     [TOKEN_TYPE_ASTERISK] = "'*'",
@@ -139,6 +149,7 @@ static const char *tt_str[TOKEN_TYPE_COUNT] = {
     [TOKEN_TYPE_MINUSMINUS] = "'--'",
     [TOKEN_TYPE_COMMA] = "','",
     [TOKEN_TYPE_COLON] = "':'",
+    [TOKEN_TYPE_ELLIPSES] = "'...'",
     [TOKEN_TYPE_SEMICOLON] = "';'",
     [TOKEN_TYPE_ASSIGN] = "'='",
     [TOKEN_TYPE_FN] = "fn",
@@ -283,6 +294,12 @@ Token lexer_next_token(Lexer *l) {
     case '}': {
         tok.type = TOKEN_TYPE_RBRACE;
     } break;
+    case '[': {
+        tok.type = TOKEN_TYPE_LBRACKET;
+    } break;
+    case ']': {
+        tok.type = TOKEN_TYPE_RBRACKET;
+    } break;
     case '+': {
         if (peek_char(l) == '+') {
             read_char(l);
@@ -369,11 +386,49 @@ Token lexer_next_token(Lexer *l) {
     case ',': {
         tok.type = TOKEN_TYPE_COMMA;
     } break;
+    case '.': {
+        if (strncmp(tok.lit.store, "...", 3) == 0) {
+            read_char(l);
+            read_char(l);
+            tok.lit.len = 3;
+            tok.type = TOKEN_TYPE_ELLIPSES;
+        } else {
+            tok.type = TOKEN_TYPE_ILLEGAL;
+        }
+    } break;
     case ':': {
         tok.type = TOKEN_TYPE_COLON;
     } break;
     case ';': {
         tok.type = TOKEN_TYPE_SEMICOLON;
+    } break;
+    case '\'': {
+        tok.type = TOKEN_TYPE_CHAR_LITERAL;
+        read_char(l);
+        for (; l->ch != '\'' && l->ch != 0; read_char(l)) {
+            ++tok.lit.len;
+            if (l->ch == '\\') {
+                read_char(l);
+                ++tok.lit.len;
+            }
+        }
+        ++tok.lit.len;
+        if (l->ch == 0)
+            tok.type = TOKEN_TYPE_ILLEGAL;
+    } break;
+    case '"': {
+        tok.type = TOKEN_TYPE_STRING_LITERAL;
+        read_char(l);
+        for (; l->ch != '"' && l->ch != 0; read_char(l)) {
+            ++tok.lit.len;
+            if (l->ch == '\\') {
+                read_char(l);
+                ++tok.lit.len;
+            }
+        }
+        ++tok.lit.len;
+        if (l->ch == 0)
+            tok.type = TOKEN_TYPE_ILLEGAL;
     } break;
     case 0: {
         tok.type = TOKEN_TYPE_EOF;
@@ -428,6 +483,8 @@ typedef enum {
 
     TYPE_KIND_FN,
     TYPE_KIND_PTR,
+
+    TYPE_KIND_ARRAY,
 } Type_Kind;
 
 typedef struct Type Type;
@@ -447,8 +504,12 @@ struct Type {
             bool is_variadic;
         };
 
-        // ptr
-        const Type *internal;
+        // array
+        struct {
+            // ptr
+            const Type *internal;
+            usize len;
+        };
 
         // builtin type
         const char *name;
@@ -505,10 +566,17 @@ typedef enum {
     VALUE_TYPE_FUNC,
     VALUE_TYPE_EXTERN_FUNC,
 
+    // array literals
+    VALUE_TYPE_INIT_LIST,
+
     VALUE_TYPE_DEREF,
+
+    VALUE_TYPE_COUNT,
 } Value_Type;
 
-typedef struct {
+typedef struct Value Value;
+
+struct Value {
     Value_Type value_type;
     const Type *type;
 
@@ -526,8 +594,10 @@ typedef struct {
             Dynamic_Array(const Op *) ops;
             usize stack_size;
         };
+
+        Dynamic_Array(const Value *) elems;
     };
-} Value;
+};
 
 typedef enum {
     BINOP_ADD,
@@ -697,9 +767,6 @@ typedef struct {
     // current func compiler is working on
     Value *func;
 
-    // type hint for current expr compiler is working on
-    const Type *hint;
-
     Dynamic_Array(const Value *) funcs;
     Dynamic_Array(const Value *) extern_funcs;
 
@@ -712,7 +779,7 @@ typedef struct {
     Location err_loc;
 } Compiler;
 
-INLINE void compiler_error(Compiler *c, Location *loc, const char *fmt, ...) {
+INLINE void compiler_error(Compiler *c, const Location *loc, const char *fmt, ...) {
     va_list vargs;
     va_start(vargs, fmt);
 
@@ -722,6 +789,10 @@ INLINE void compiler_error(Compiler *c, Location *loc, const char *fmt, ...) {
 
     c->err_msg = sb.store;
     c->err_loc = *loc;
+}
+
+INLINE const Location *cur_loc(const Compiler *c) {
+    return &c->cur_token.loc;
 }
 
 INLINE void next_token(Compiler *p) {
@@ -745,6 +816,14 @@ INLINE bool expect_peek(Compiler *p, Token_Type tt) {
         return false;
     }
     next_token(p);
+    return true;
+}
+INLINE bool expect_cur(Compiler *c, Token_Type tt) {
+    if (!cur_tok_is(c, tt)) {
+        compiler_error(c, &c->peek_token.loc, "Expected token type %s, but got %s",
+                       tt_str[tt], tt_str[c->peek_token.type]);
+        return false;
+    }
     return true;
 }
 INLINE void unexpected_token(Compiler *p) {
@@ -833,6 +912,14 @@ INLINE Value *new_deref(Compiler *c, const Type *type, usize stack_index) {
         .value_type = VALUE_TYPE_DEREF,
         .type = type,
         .stack_index = stack_index,
+    };
+    return v;
+}
+
+INLINE Value *new_init_list(Compiler *c) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_INIT_LIST,
     };
     return v;
 }
@@ -930,7 +1017,7 @@ INLINE const Type *lookup_named_type(const Types_Ctx *ty_ctx, sv name) {
     return *(const Type **)sht_try_get(&ty_ctx->named_types, SV_SPREAD(name));
 }
 
-INLINE bool type_cmp(const Type *t1, const Type *t2) {
+bool type_cmp(const Type *t1, const Type *t2) {
     if (t1->kind != t2->kind ||
         t1->size != t2->size ||
         t1->alignment != t2->alignment)
@@ -944,6 +1031,9 @@ INLINE bool type_cmp(const Type *t1, const Type *t2) {
         if (t1->params.size != t2->params.size)
             return false;
 
+        if (t1->is_variadic != t2->is_variadic)
+            return false;
+
         for (usize i = 0; i < t1->params.size; ++i) {
             const Type *param1 = *da_at(&t1->params, i);
             const Type *param2 = *da_at(&t2->params, i);
@@ -952,8 +1042,13 @@ INLINE bool type_cmp(const Type *t1, const Type *t2) {
                 return false;
         }
     } break;
+
     case TYPE_KIND_PTR:
         return type_cmp(t1->internal, t2->internal);
+
+    case TYPE_KIND_ARRAY:
+        return t1->len == t2->len && type_cmp(t1->internal, t2->internal);
+
     default: {
     }
     }
@@ -1110,10 +1205,31 @@ const Type *parse_type(Compiler *c) {
 
         return new_type(ty_ctx, &ptr_type);
     } break;
-    default:
+
+    case TOKEN_TYPE_LBRACKET: {
+        CHECK(expect_peek(c, TOKEN_TYPE_INT_LITERAL));
+        usize len = atoll(c->cur_token.lit.store);
+        CHECK(expect_peek(c, TOKEN_TYPE_RBRACKET));
+
+        next_token(c);
+        const Type *internal = parse_type(c);
+
+        Type array_type = {
+            .size = len * internal->size,
+            .alignment = internal->alignment,
+            .kind = TYPE_KIND_ARRAY,
+            .internal = internal,
+            .len = len,
+        };
+
+        return new_type(ty_ctx, &array_type);
+    } break;
+
+    default: {
         compiler_error(c, &c->cur_token.loc, "Unable to parse type, expected %s, %s, or %s",
                        tt_str[TOKEN_TYPE_IDENT], tt_str[TOKEN_TYPE_FN], tt_str[TOKEN_TYPE_ASTERISK]);
         return NULL;
+    }
     }
 
     return NULL;
@@ -1183,8 +1299,13 @@ INLINE const Type *get_param_type(const Value *func, usize param_idx) {
 }
 
 INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
+    usize alignment = type->alignment;
+    assert((alignment > 0) && ((alignment & (alignment - 1)) == 0));
+
     usize size = type->size;
-    c->stack_index += (size - (c->stack_index % size)) % size;
+
+    c->stack_index = (c->stack_index + alignment - 1) & ~(alignment - 1);
+
     usize frame = c->stack_index;
     c->stack_index += size;
     c->func->stack_size = MAX(c->stack_index, c->func->stack_size);
@@ -1216,12 +1337,25 @@ INLINE void pop_scope(Compiler *c) {
     da_pop(&c->vars);
 }
 
+static u8 one_char_esc_lookup[UINT8_MAX] = {
+    ['a'] = '\a',
+    ['b'] = '\b',
+    ['f'] = '\f',
+    ['n'] = '\n',
+    ['r'] = '\r',
+    ['t'] = '\t',
+    ['v'] = '\v',
+    ['\\'] = '\\',
+    ['\''] = '\'',
+    ['"'] = '\"',
+};
+
 typedef bool Compile_Stmt_Fn(Compiler *);
 
-Value *compile_expr(Compiler *c, Prec prec, bool *is_lvalue)
+Value *compile_expr(Compiler *c, Prec prec, const Type *hint, bool *is_lvalue)
     __attribute__((warn_unused_result));
 
-Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
+Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
     Value *val;
     bool lval;
 
@@ -1229,11 +1363,113 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
     Token_Type tt;
     switch (tt = c->cur_token.type) {
     case TOKEN_TYPE_INT_LITERAL: {
-        const Type *type = c->hint && is_integer_type(c->hint)
-                               ? c->hint
+        const Type *type = hint && is_integer_type(hint)
+                               ? hint
                                : default_int_literal_type;
 
         val = new_int_literal(c, type, atoll(c->cur_token.lit.store));
+        lval = false;
+    } break;
+
+    case TOKEN_TYPE_CHAR_LITERAL: {
+        const Type *type = hint && is_integer_type(hint)
+                               ? hint
+                               : default_int_literal_type;
+
+        Token *tok = &c->cur_token;
+        usize len = tok->lit.len;
+        assert(len >= 2);
+
+        usize value;
+
+        char ch = tok->lit.store[1];
+        switch (ch) {
+        case '\'': {
+            value = 0;
+        } break;
+        case '\\': {
+            value = 0;
+            assert(len >= 4);
+            char esc = tok->lit.store[2];
+
+            if ((value = one_char_esc_lookup[(usize)esc])) {
+                if (len != 4) {
+                    printf("len: %zu\n", len);
+                    compiler_error(c, &tok->loc, "Multi-character character constant");
+                    return NULL;
+                }
+                break;
+            }
+
+            if (len < 5) {
+                compiler_error(c, &tok->loc, "Escape sequence \\%c used with no following digits", esc);
+                return NULL;
+            }
+
+            switch (esc) {
+            case 'x': {
+                for (usize i = 3; i < len - 1; ++i) {
+                    value <<= 4;
+                    char v = tok->lit.store[i];
+                    switch (v) {
+                    case 'A':
+                    case 'B':
+                    case 'C':
+                    case 'D':
+                    case 'E':
+                    case 'F': {
+                        value += v - 'A' + 10;
+                    } break;
+
+                    case 'a':
+                    case 'b':
+                    case 'c':
+                    case 'd':
+                    case 'e':
+                    case 'f': {
+                        value += v - 'a' + 10;
+                    } break;
+
+                    default: {
+                        if (is_digit(v)) {
+                            value += v - '0';
+                        } else {
+                            compiler_error(c, &tok->loc, "Invalid hex digit");
+                            return NULL;
+                        }
+                    }
+                    }
+                }
+            } break;
+
+            default: {
+                if (is_digit(esc)) {
+                    for (usize i = 2; i < len - 1; ++i) {
+                        value <<= 3;
+                        char v = tok->lit.store[i];
+                        if (!is_digit(v) || v > '7') {
+                            compiler_error(c, &tok->loc, "Invalid octal digit");
+                            return NULL;
+                        }
+                        value += v - '0';
+                    }
+                } else {
+                    compiler_error(c, &tok->loc, "Unknown escape character");
+                    return NULL;
+                }
+            }
+            }
+        } break;
+        default: {
+            value = ch;
+            if (len != 3) {
+                compiler_error(c, &tok->loc, "Multi-character character constant");
+                return NULL;
+            }
+        }
+        };
+
+        val = new_int_literal(c, type, value);
         lval = false;
     } break;
 
@@ -1242,9 +1478,85 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         lval = true;
     } break;
 
+    case TOKEN_TYPE_LBRACKET:
+    case TOKEN_TYPE_LBRACE: {
+        Location loc = c->cur_token.loc;
+
+        bool has_type = false;
+
+        bool has_len = false;
+        usize len;
+        const Type *internal;
+
+        if ((has_type = tt == TOKEN_TYPE_LBRACKET)) {
+            if ((has_len = try_peek_tok(c, TOKEN_TYPE_INT_LITERAL)))
+                len = atoll(c->cur_token.lit.store);
+            CHECK(expect_peek(c, TOKEN_TYPE_RBRACKET));
+            next_token(c);
+            internal = parse_type(c);
+            CHECK(expect_peek(c, TOKEN_TYPE_LBRACE));
+        }
+
+        if (!has_type && (!hint || hint->kind != TYPE_KIND_ARRAY)) {
+            compiler_error(c, cur_loc(c), "Insufficent context to infer type of array initializer");
+            return NULL;
+        }
+
+        if (!has_type)
+            internal = hint->internal;
+
+        val = new_init_list(c);
+
+        next_token(c);
+        while (!cur_tok_is(c, TOKEN_TYPE_RBRACE)) {
+            const Value *elem = compile_expr(c, PREC_LOWEST, internal, NULL);
+            CHECK(elem);
+
+            if (!type_cmp(internal, elem->type)) {
+                char *expected_type_name = get_type_name(internal);
+                char *actual_type_name = get_type_name(elem->type);
+
+                compiler_error(c, cur_loc(c), "Type Error: expected internal type to be %s, got %s",
+                               expected_type_name, actual_type_name);
+
+                free(actual_type_name);
+                free(expected_type_name);
+                return NULL;
+            }
+
+            da_append(&val->elems, elem);
+
+            if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
+                next_token(c);
+                next_token(c);
+            } else if (!expect_peek(c, TOKEN_TYPE_RBRACE)) {
+                return NULL;
+            }
+        }
+
+        if (has_len && val->elems.size > len) {
+            compiler_error(c, &loc, "Initializer list longer than specified array type");
+            return NULL;
+        }
+
+        if (!has_len)
+            len = val->elems.size;
+
+        Type local_type = {
+            .size = len * internal->size,
+            .alignment = internal->alignment,
+            .kind = TYPE_KIND_ARRAY,
+            .internal = internal,
+            .len = len,
+        };
+
+        val->type = new_type(&c->ty_ctx, &local_type);
+        lval = false;
+    } break;
+
     case TOKEN_TYPE_LPAREN: {
         next_token(c);
-        CHECK(val = compile_expr(c, PREC_LOWEST, &lval));
+        CHECK(val = compile_expr(c, PREC_LOWEST, hint, &lval));
         CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
     } break;
 
@@ -1253,7 +1565,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         next_token(c);
 
         bool val_is_lval;
-        CHECK(val = compile_expr(c, PREC_PREFIX, &val_is_lval));
+        CHECK(val = compile_expr(c, PREC_PREFIX, hint, &val_is_lval));
         if (!val_is_lval) {
             compiler_error(c, &loc, "Cannot increment an rvalue");
             return NULL;
@@ -1272,7 +1584,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         next_token(c);
 
         bool val_is_lval;
-        CHECK(val = compile_expr(c, PREC_PREFIX, &val_is_lval));
+        CHECK(val = compile_expr(c, PREC_PREFIX, hint, &val_is_lval));
         if (!val_is_lval) {
             compiler_error(c, &loc, "Cannot decrement an rvalue");
             return NULL;
@@ -1291,14 +1603,18 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         next_token(c);
         Value *arg;
         bool arg_lval;
-        CHECK(arg = compile_expr(c, PREC_PREFIX, &arg_lval));
+        CHECK(arg = compile_expr(c, PREC_PREFIX, NULL, &arg_lval));
 
         if (!arg_lval) {
             compiler_error(c, &loc, "Cannot take the address of an rvalue");
             return NULL;
         }
 
-        const Type *ptr_type = get_ptr_type(&c->ty_ctx, arg->type);
+        const Type *internal = arg->type->kind == TYPE_KIND_ARRAY
+                                   ? arg->type->internal
+                                   : arg->type;
+
+        const Type *ptr_type = get_ptr_type(&c->ty_ctx, internal);
 
         usize result = alloc_scoped_var(c, ptr_type);
         push_op(c, new_prefix_op(c, OP_TYPE_REF, result, arg));
@@ -1312,7 +1628,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
         Location loc = c->cur_token.loc;
         Value *arg;
-        CHECK(arg = compile_expr(c, PREC_PREFIX, NULL));
+        CHECK(arg = compile_expr(c, PREC_PREFIX, NULL, NULL));
 
         if (arg->type->kind == TYPE_KIND_FN) {
             compiler_error(c, &loc, "Cannot dereference function pointer");
@@ -1340,7 +1656,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         next_token(c);
 
         Value *arg;
-        CHECK(arg = compile_expr(c, PREC_PREFIX, NULL));
+        CHECK(arg = compile_expr(c, PREC_PREFIX, hint, NULL));
         usize result = alloc_scoped_var(c, arg->type);
 
         push_op(c, new_prefix_op(c, op_type, result, arg));
@@ -1396,7 +1712,7 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
         case TOKEN_TYPE_LPAREN: {
             next_token(c);
             if (val->type->kind != TYPE_KIND_FN) {
-                compiler_error(c, &c->cur_token.loc, "Called object is not a function");
+                compiler_error(c, &c->cur_token.loc, "Called value is not a function");
                 return NULL;
             }
 
@@ -1409,8 +1725,41 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
 
             next_token(c);
 
-            while (!cur_tok_is(c, TOKEN_TYPE_RPAREN)) {
-                const Value *val = compile_expr(c, PREC_LOWEST, NULL);
+            for (usize i = 0; !cur_tok_is(c, TOKEN_TYPE_RPAREN); ++i) {
+                const Type *hint;
+                bool variadic_param = i >= func_type->params.size;
+                if (variadic_param) {
+                    if (!func_type->is_variadic) {
+                        compiler_error(c, &loc,
+                                       "Too many arguments to function call"
+                                       ", expected %zu",
+                                       func_type->params.size);
+                        return NULL;
+                    }
+                    hint = NULL;
+                } else {
+                    hint = *da_at(&func_type->params, i);
+                }
+
+                const Value *val = compile_expr(c, PREC_LOWEST, hint, NULL);
+
+                if (!variadic_param) {
+                    const Type *expected_type = *da_at(&func_type->params, i);
+                    if (!type_cmp(expected_type, val->type)) {
+                        char *expected_type_name = get_type_name(expected_type);
+                        char *actual_type_name = get_type_name(val->type);
+
+                        compiler_error(c, &loc,
+                                       "Type Error: expected argument %zu of "
+                                       "function call to be %s, got %s",
+                                       i + 1, expected_type_name, actual_type_name);
+
+                        free(actual_type_name);
+                        free(expected_type_name);
+                        return NULL;
+                    }
+                }
+
                 da_append(&call->params, val);
 
                 if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
@@ -1421,44 +1770,74 @@ Value *compile_primary_expr(Compiler *c, bool *is_lvalue) {
                 }
             }
 
-            if (func_type->is_variadic && func_type->params.size > call->params.size) {
-                compiler_error(c, &loc, "Too few arguments to function call, require at least %zu", val->params.size);
+            if (call->params.size < func_type->params.size) {
+                if (func_type->is_variadic) {
+                    compiler_error(c, &loc,
+                                   "Too few arguments to function call"
+                                   ", requires at least %zu",
+                                   val->params.size);
+                } else {
+                    compiler_error(c, &loc,
+                                   "Too few arguments to function call"
+                                   ", expected %zu",
+                                   val->params.size);
+                }
                 return NULL;
-            }
-
-            if (!func_type->is_variadic) {
-                if (func_type->params.size < call->params.size) {
-                    compiler_error(c, &loc, "Too many arguments to function call, got %zu, expected %zu",
-                                   call->params.size, val->params.size);
-                    return NULL;
-                } else if (func_type->params.size > call->params.size) {
-                    compiler_error(c, &loc, "Too few arguments to function call, got %zu, expected %zu",
-                                   call->params.size, val->params.size);
-                    return NULL;
-                }
-            }
-
-            for (usize i = 0; i < func_type->params.size; ++i) {
-                const Type *expected_type = func_type->params.store[i];
-                const Type *actual_type = call->params.store[i]->type;
-
-                if (!type_cmp(expected_type, actual_type)) {
-                    char *expected_type_name = get_type_name(expected_type);
-                    char *actual_type_name = get_type_name(actual_type);
-
-                    compiler_error(c, &loc, "Type Error: expected argument %zu of functional call to be %s, got %s",
-                                   i + 1, expected_type_name, actual_type_name);
-
-                    free(actual_type_name);
-                    free(expected_type_name);
-                    return NULL;
-                }
             }
 
             push_op(c, call);
 
             val = new_var(c, val->type->ret, result);
             lval = false;
+        } break;
+
+        case TOKEN_TYPE_LBRACKET: {
+            const Type *u64_type = lookup_named_type(&c->ty_ctx, sv_from_cstr("u64"));
+            Location loc = c->cur_token.loc;
+
+            next_token(c);
+            next_token(c);
+            if (val->type->kind != TYPE_KIND_PTR && val->type->kind != TYPE_KIND_ARRAY) {
+                compiler_error(c, &c->cur_token.loc, "Indexed value is not a pointer nor an array");
+                return NULL;
+            }
+
+            Value *index = compile_expr(c, PREC_LOWEST, u64_type, NULL);
+            CHECK(index);
+
+            CHECK(expect_peek(c, TOKEN_TYPE_RBRACKET));
+
+            if (!is_integer_type(index->type)) {
+                compiler_error(c, &loc, "Type Error: invalid index type, expected an integer type");
+                return NULL;
+            }
+
+            const Type *result_type = val->type->internal;
+
+            if (val->type->kind == TYPE_KIND_ARRAY) {
+                if (!lval) {
+                    compiler_error(c, &loc, "Cannot a rvalue");
+                    return NULL;
+                }
+                usize temp = alloc_scoped_var(c, get_ptr_type(&c->ty_ctx, result_type));
+                push_op(c, new_prefix_op(c, OP_TYPE_REF, temp, val));
+                val = new_var(c, get_ptr_type(&c->ty_ctx, result_type), temp);
+            }
+
+            usize add = alloc_scoped_var(c, val->type);
+
+            if (index->value_type == VALUE_TYPE_INT_LITERAL) {
+                index->int_value *= result_type->size;
+                push_op(c, new_binop(c, BINOP_ADD, add, val, index));
+            } else {
+                usize temp = alloc_scoped_var(c, val->type);
+                push_op(c, new_binop(c, BINOP_MUL, temp, index,
+                                     new_int_literal(c, index->type, result_type->size)));
+                push_op(c, new_binop(c, BINOP_ADD, add, val, new_var(c, index->type, temp)));
+            }
+
+            val = new_deref(c, result_type, add);
+            lval = true;
         } break;
 
         default: goto compile_primary_expr_end_loop;
@@ -1479,11 +1858,6 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
     Token op = c->cur_token;
     next_token(c);
 
-    const Type *old_hint = c->hint;
-    c->hint = left->type;
-
-    c->hint = old_hint;
-
     switch (op.type) {
     case TOKEN_TYPE_ASSIGN: {
         if (!left_is_lval) {
@@ -1491,13 +1865,8 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
             return NULL;
         }
 
-        const Type *old_hint = c->hint;
-        c->hint = left->type;
-
         // - 1 on precedence to make assign right associative
-        CHECK(val = compile_expr(c, PREC_ASSIGN - 1, NULL));
-
-        c->hint = old_hint;
+        CHECK(val = compile_expr(c, PREC_ASSIGN - 1, left->type, NULL));
 
         if (!type_cmp(left->type, val->type)) {
             char *left_type_name = get_type_name(left->type),
@@ -1522,13 +1891,8 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
         if (left->type->kind == TYPE_KIND_PTR) {
             const Type *u64_type = lookup_named_type(&c->ty_ctx, sv_from_cstr("u64"));
 
-            const Type *old_hint = c->hint;
-            c->hint = u64_type;
-
             Value *right;
-            CHECK(right = compile_expr(c, prec_lookup[op.type], NULL));
-
-            c->hint = old_hint;
+            CHECK(right = compile_expr(c, prec_lookup[op.type], u64_type, NULL));
 
             usize ptr_internal_type_size = left->type->internal->size;
 
@@ -1584,13 +1948,8 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
         }
     }
     default: {
-        const Type *old_hint = c->hint;
-        c->hint = left->type;
-
         Value *right;
-        CHECK(right = compile_expr(c, prec_lookup[op.type], NULL));
-
-        c->hint = old_hint;
+        CHECK(right = compile_expr(c, prec_lookup[op.type], left->type, NULL));
 
         if (!type_cmp(left->type, right->type)) {
             compiler_error(c, &op.loc, "Type Error: invalid binary operation");
@@ -1608,10 +1967,10 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
     return val;
 }
 
-Value *compile_expr(Compiler *c, Prec prec, bool *is_lvalue) {
+Value *compile_expr(Compiler *c, Prec prec, const Type *hint, bool *is_lvalue) {
     Value *val;
     bool left_is_lval;
-    CHECK(val = compile_primary_expr(c, &left_is_lval));
+    CHECK(val = compile_primary_expr(c, hint, &left_is_lval));
 
     if (is_lvalue)
         *is_lvalue = left_is_lval;
@@ -1628,9 +1987,9 @@ Value *compile_expr(Compiler *c, Prec prec, bool *is_lvalue) {
     return val;
 }
 
-Value *compile_expr_save_stack(Compiler *c, Prec prec, bool *is_value) {
+Value *compile_expr_save_stack(Compiler *c, Prec prec, const Type *hint, bool *is_value) {
     usize saved_stack = c->stack_index;
-    Value *res = compile_expr(c, prec, is_value);
+    Value *res = compile_expr(c, prec, hint, is_value);
     c->stack_index = saved_stack;
     return res;
 }
@@ -1663,10 +2022,8 @@ bool compile_var_stmt(Compiler *c) {
             next_token(c);
             next_token(c);
 
-            c->hint = decl_type;
             Value *arg;
-            CHECK(arg = compile_expr_save_stack(c, PREC_LOWEST, NULL));
-            c->hint = NULL;
+            CHECK(arg = compile_expr_save_stack(c, PREC_LOWEST, decl_type, NULL));
 
             if (is_constant(arg) && !coerce_constant_type(arg, decl_type)) {
                 char *decl_type_name = get_type_name(decl_type);
@@ -1676,7 +2033,7 @@ bool compile_var_stmt(Compiler *c) {
                 return false;
             }
 
-            if (decl_type && !type_cmp(arg->type, decl_type)) {
+            if (decl_type && !type_cmp(decl_type, arg->type)) {
                 char *arg_type_name = get_type_name(arg->type),
                      *decl_type_name = get_type_name(decl_type);
 
@@ -1691,7 +2048,15 @@ bool compile_var_stmt(Compiler *c) {
             }
 
             stack_index = alloc_scoped_var(c, decl_type);
-            push_op(c, new_assign_op(c, stack_index, arg));
+            if (decl_type->kind != TYPE_KIND_ARRAY) {
+                push_op(c, new_assign_op(c, stack_index, arg));
+            } else {
+                const Type *internal = decl_type->internal;
+                for (usize i = 0; i < decl_type->len; ++i) {
+                    usize s = stack_index + (decl_type->len - i - 1) * internal->size;
+                    push_op(c, new_assign_op(c, s, *da_at(&arg->elems, i)));
+                }
+            }
         } else {
             if (!decl_type) {
                 compiler_error(c, &c->cur_token.loc, "Variable declaration must have type");
@@ -1715,9 +2080,7 @@ bool compile_return_stmt(Compiler *c) {
     Value *val;
     const Type *ret_type = c->func->type->ret;
 
-    c->hint = ret_type;
-    CHECK(val = compile_expr_save_stack(c, PREC_LOWEST, NULL));
-    c->hint = NULL;
+    CHECK(val = compile_expr_save_stack(c, PREC_LOWEST, ret_type, NULL));
 
     if (is_constant(val) && !coerce_constant_type(val, ret_type)) {
         char *ret_type_name = get_type_name(ret_type);
@@ -1730,7 +2093,7 @@ bool compile_return_stmt(Compiler *c) {
     }
 
     const Type *expr_type = val->type;
-    if (!type_cmp(expr_type, ret_type)) {
+    if (!type_cmp(ret_type, expr_type)) {
         char *expr_type_name = get_type_name(expr_type),
              *ret_type_name = get_type_name(ret_type);
 
@@ -1752,7 +2115,7 @@ bool compile_return_stmt(Compiler *c) {
 
 bool compile_if_stmt(Compiler *c) {
     next_token(c);
-    Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL);
+    Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL, NULL);
     CHECK(cond);
 
     Op *else_label = new_label(c);
@@ -1790,7 +2153,7 @@ bool compile_while_stmt(Compiler *c) {
 
     const Op *leave = new_label(c);
 
-    Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL);
+    Value *cond = compile_expr_save_stack(c, PREC_LOWEST, NULL, NULL);
     CHECK(cond);
 
     push_op(c, new_jmpz(c, leave->label_id, cond));
@@ -1835,7 +2198,7 @@ bool compile_continue_stmt(Compiler *c) {
 }
 
 bool compile_expr_stmt(Compiler *c) {
-    CHECK(compile_expr_save_stack(c, PREC_LOWEST, NULL));
+    CHECK(compile_expr_save_stack(c, PREC_LOWEST, NULL, NULL));
     CHECK(expect_peek(c, TOKEN_TYPE_SEMICOLON));
     return true;
 }
@@ -1902,36 +2265,46 @@ bool compile_program(Compiler *c) {
             Token name = c->cur_token;
 
             CHECK(expect_peek(c, TOKEN_TYPE_LPAREN));
-
-            if (peek_tok_is(c, TOKEN_TYPE_RPAREN)) {
-                next_token(c);
-            } else {
-                do {
-                    CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
-                    Token param_token = c->cur_token;
-
-                    CHECK(expect_peek(c, TOKEN_TYPE_COLON));
-
-                    next_token(c);
-                    const Type *param_type = parse_type(c);
-                    if (!param_type) {
+            next_token(c);
+            while (!cur_tok_is(c, TOKEN_TYPE_RPAREN)) {
+                if (cur_tok_is(c, TOKEN_TYPE_ELLIPSES)) {
+                    if (!is_extern) {
+                        compiler_error(c, cur_loc(c), "Variadic function parameters not allowed for non extern declarations");
                         return false;
                     }
+                    func_type.is_variadic = true;
+                    try_peek_tok(c, TOKEN_TYPE_COMMA);
+                    CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
+                    break;
+                }
 
-                    da_append(&func_type.params, param_type);
+                CHECK(expect_cur(c, TOKEN_TYPE_IDENT));
+                Token param_token = c->cur_token;
 
-                    for (usize i = 0; i < func->params.size; ++i) {
-                        const Func_Param *param = func->params.store + i;
-                        if (sveq(param->name, param_token.lit)) {
-                            compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(&param_token));
-                            return false;
-                        }
+                CHECK(expect_peek(c, TOKEN_TYPE_COLON));
+
+                next_token(c);
+                const Type *param_type = parse_type(c);
+                if (!param_type) {
+                    return false;
+                }
+
+                da_append(&func_type.params, param_type);
+
+                for (usize i = 0; i < func->params.size; ++i) {
+                    const Func_Param *param = func->params.store + i;
+                    if (sveq(param->name, param_token.lit)) {
+                        compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(&param_token));
+                        return false;
                     }
+                }
 
-                    da_append(&func->params, ((Func_Param){.name = param_token.lit}));
-                } while (try_peek_tok(c, TOKEN_TYPE_COMMA));
+                da_append(&func->params, ((Func_Param){.name = param_token.lit}));
 
-                CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
+                if (try_peek_tok(c, TOKEN_TYPE_COMMA))
+                    next_token(c);
+                else
+                    CHECK(expect_peek(c, TOKEN_TYPE_RPAREN));
             }
 
             next_token(c);

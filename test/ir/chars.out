@@ -1,0 +1,14 @@
+; V3 Readable Intermediate Representation
+; Function header formatted as:
+; @func[<max-stack-size>](<param-type>,...)
+
+
+@main[48]() i32:
+    %s[0] = i64 97
+    %s[8] = i64 10
+    %s[16] = i64 171
+    %s[24] = i64 255
+    %s[32] = i64 255
+    %s[40] = i64 10
+    ret i32 0
+

@@ -360,6 +360,8 @@ void load_effective_address(usize stack_index, usize size, X86_64_Register reg) 
 
 void load_value_to_reg(const Value *v, X86_64_Register reg) {
     switch (v->value_type) {
+    case VALUE_TYPE_COUNT: UNREACHABLE();
+
     case VALUE_TYPE_INT_LITERAL: {
         move_imm_to_reg(v->int_value, reg);
     } break;
@@ -383,7 +385,7 @@ void load_value_to_reg(const Value *v, X86_64_Register reg) {
         load_reg_addr_to_reg(RAX, reg, v->type->size);
     } break;
 
-    default: UNIMPLEMENTED();
+    case VALUE_TYPE_INIT_LIST: UNIMPLEMENTED();
     }
 }
 void alloc_rsp(usize stack_size) {
@@ -438,6 +440,8 @@ void generate_binop(const Op *binop) {
         push_x86_op(REX_PRE(1, 0, 0, 0));
 
     switch (binop->op) {
+    case BINOP_COUNT: UNREACHABLE();
+
     case BINOP_ADD: {
         push_x86_op(is8 ? ADD_BYTE : ADD);
         push_x86_op(MODR_M(MOD_REG, RCX, RAX));
@@ -538,7 +542,6 @@ void generate_binop(const Op *binop) {
         push_x86_op(MODR_M(MOD_REG, reg, RAX));
     } break;
 
-    default: UNREACHABLE();
     }
 
     store_reg_to_stack(RAX, binop->result, size);
@@ -549,6 +552,8 @@ void generate_op(const Op *op) {
     const Value *val = op->val;
 
     switch (op->type) {
+    case OP_TYPE_COUNT: UNREACHABLE();
+
     case OP_TYPE_ASSIGN: {
         load_value_to_reg(val, RAX);
         store_reg_to_stack(RAX, op->result, val->type->size);
@@ -660,7 +665,8 @@ void generate_op(const Op *op) {
             load_value_to_reg(param, x86_64_linux_registers[i]);
         }
 
-        if (op->func->value_type == VALUE_TYPE_FUNC) {
+        if (op->func->value_type == VALUE_TYPE_FUNC ||
+            op->func->value_type == VALUE_TYPE_EXTERN_FUNC) {
             push_x86_op(CALL_REL);
             push_x86_rela_patch(op->func->name, x86_pos());
             push_u32(0);
@@ -672,8 +678,6 @@ void generate_op(const Op *op) {
 
         store_reg_to_stack(RAX, op->result, op->func->type->ret->size);
     } break;
-
-    default: UNREACHABLE();
     }
 }
 
