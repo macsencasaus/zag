@@ -150,10 +150,10 @@ void print_ir_op(const Op *op, FILE *out) {
 
 void print_ir_func(const Value *func, FILE *out) {
     fprintf(out, "@%.*s[%zu](", SV_FMT(func->name), func->stack_size);
-    for (usize i = 0; i < func->params.size; ++i) {
+    for (usize i = 0; i < func->params->len; ++i) {
         fprintf(out, "%s", get_ir_type_name(get_param_type(func, i)));
 
-        if (i < func->params.size - 1)
+        if (i < func->params->len - 1)
             fprintf(out, ", ");
     }
     fprintf(out, ") %s:\n", get_ir_type_name(func->type->ret));
@@ -176,10 +176,10 @@ void print_ir_external_funcs(const Compiler *c, FILE *out) {
     for (usize i = 0; i < c->extern_funcs.size; ++i) {
         const Value *func = c->extern_funcs.store[i];
         fprintf(out, "extern @%.*s(", SV_FMT(func->name));
-        for (usize i = 0; i < func->params.size; ++i) {
+        for (usize i = 0; i < func->params->len; ++i) {
             fprintf(out, "%s", get_ir_type_name(get_param_type(func, i)));
 
-            if (i < func->params.size - 1)
+            if (i < func->params->len - 1)
                 fprintf(out, ", ");
         }
         fprintf(out, ") %s\n", get_ir_type_name(func->type->ret));

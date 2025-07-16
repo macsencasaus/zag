@@ -461,6 +461,8 @@ Token lexer_next_token(Lexer *l) {
     return tok;
 }
 
+#define MAX_PARAM_COUNT 16
+
 typedef usize Type_Id;
 
 typedef enum {
@@ -495,6 +497,8 @@ typedef enum {
 
 typedef struct Type Type;
 
+Array_Template(const Type *, MAX_PARAM_COUNT, Param_Type_Array);
+
 struct Type {
     Type_Id id;
 
@@ -505,7 +509,7 @@ struct Type {
     union {
         // function
         struct {
-            Dynamic_Array(const Type *) params;
+            Param_Type_Array *params;
             const Type *ret;
             bool is_variadic;
         };
@@ -521,9 +525,6 @@ struct Type {
         const char *name;
     };
 };
-
-#define INIT_FN_TYPE() ((Type){.size = 8, .alignment = 8, .kind = TYPE_KIND_FN})
-#define INIT_PTR_TYPE() ((Type){.size = 8, .alignment = 8, .kind = TYPE_KIND_PTR})
 
 static const Type *default_int_literal_type;
 
@@ -572,7 +573,6 @@ typedef enum {
     VALUE_TYPE_FUNC,
     VALUE_TYPE_EXTERN_FUNC,
 
-    // array literals
     VALUE_TYPE_INIT_LIST,
 
     VALUE_TYPE_DEREF,
@@ -581,6 +581,8 @@ typedef enum {
 
     VALUE_TYPE_COUNT,
 } Value_Type;
+
+Array_Template(Func_Param, MAX_PARAM_COUNT, Param_Array);
 
 typedef struct Value Value;
 
@@ -595,14 +597,15 @@ struct Value {
         // variable, deref
         usize stack_index;
 
-        // function, extern function (no ops, stack_size)
+        // function, extern function
         struct {
             sv name;
-            Dynamic_Array(Func_Param) params;
+            Param_Array *params;
             Dynamic_Array(const Op *) ops;
             usize stack_size;
         };
 
+        // initializer list
         Dynamic_Array(const Value *) elems;
 
         // data offset
@@ -749,6 +752,7 @@ static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
 };
 
 typedef struct {
+    // TODO: replace with bump alloc
     Dynamic_Array(Type) types;
     String_Hash_Table named_types;
     usize next_id;
@@ -784,6 +788,9 @@ typedef struct {
 
     Bump_Alloc value_alloc;
     Bump_Alloc op_alloc;
+
+    // fixed arrays not kept in Value and Type
+    Bump_Alloc arrays;
 
     usize next_label_id;
 
@@ -844,6 +851,11 @@ INLINE void unexpected_token(Compiler *p) {
 INLINE void unknown_type(Compiler *c) {
     compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", SV_SPREAD(c->cur_token.lit));
 }
+INLINE void max_param_count_exceeded(Compiler *c) {
+    compiler_error(c, cur_loc(c),
+                   "Function may only have up to %d parameters",
+                   MAX_PARAM_COUNT);
+}
 
 void compiler_init(Compiler *c, Lexer *l) {
     *c = (Compiler){
@@ -855,9 +867,7 @@ void compiler_init(Compiler *c, Lexer *l) {
     Types_Ctx *ty_ctx = &c->ty_ctx;
     sht_init(&ty_ctx->named_types, sizeof(const Type *), 0);
 
-    usize builtin_types_size = sizeof(builtin_types) / sizeof(*builtin_types);
-
-    for (usize i = 0; i < builtin_types_size; ++i) {
+    for (usize i = 0; i < ARRAY_SIZE(builtin_types); ++i) {
         const Builtin_Type *builtin = builtin_types + i;
 
         da_append(&ty_ctx->types, builtin->type);
@@ -878,8 +888,49 @@ void compiler_init(Compiler *c, Lexer *l) {
     sht_init(&c->vars.store[0], sizeof(const Value *), 0);
 }
 
+void compiler_destroy(Compiler *c) {
+    da_delete(&c->ty_ctx.types);
+
+    for (usize i = 0; i < c->vars.size; ++i) {
+        String_Hash_Table *sht = da_at(&c->vars, i);
+        sht_free(sht);
+    }
+    da_delete(&c->vars);
+
+    for (usize i = 0; i < c->funcs.size; ++i) {
+        Value *f = *(Value **)da_at(&c->funcs, i);
+        assert(f->value_type == VALUE_TYPE_FUNC);
+        da_delete(&f->ops);
+    }
+    da_delete(&c->funcs);
+
+    da_delete(&c->extern_funcs);
+
+    ba_free(&c->value_alloc);
+    ba_free(&c->op_alloc);
+    ba_free(&c->arrays);
+}
+
 INLINE void push_op(Compiler *c, const Op *op) {
     da_append(&c->func->ops, op);
+}
+
+INLINE Type init_fn_type(Compiler *c) {
+    Param_Type_Array *params = ba_alloc_aligned(&c->arrays, sizeof(Param_Type_Array), _Alignof(Param_Type_Array));
+    return (Type){
+        .size = 8,
+        .alignment = 8,
+        .kind = TYPE_KIND_FN,
+        .params = params,
+    };
+}
+
+INLINE Type init_ptr_type(void) {
+    return (Type){
+        .size = 8,
+        .alignment = 8,
+        .kind = TYPE_KIND_PTR,
+    };
 }
 
 INLINE Value *new_int_literal(Compiler *c, const Type *type, u64 value) {
@@ -906,6 +957,7 @@ INLINE Value *new_func(Compiler *c) {
     Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
     *v = (Value){
         .value_type = VALUE_TYPE_FUNC,
+        .params = ba_alloc_aligned(&c->arrays, sizeof(Param_Array), _Alignof(Param_Array)),
     };
     return v;
 }
@@ -1050,15 +1102,15 @@ bool type_cmp(const Type *t1, const Type *t2) {
         if (!type_cmp(t1->ret, t2->ret))
             return false;
 
-        if (t1->params.size != t2->params.size)
+        if (t1->params->len != t2->params->len)
             return false;
 
         if (t1->is_variadic != t2->is_variadic)
             return false;
 
-        for (usize i = 0; i < t1->params.size; ++i) {
-            const Type *param1 = *da_at(&t1->params, i);
-            const Type *param2 = *da_at(&t2->params, i);
+        for (usize i = 0; i < t1->params->len; ++i) {
+            const Type *param1 = *at(t1->params, i);
+            const Type *param2 = *at(t2->params, i);
 
             if (!type_cmp(param1, param2))
                 return false;
@@ -1104,7 +1156,7 @@ INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
 }
 
 INLINE const Type *get_ptr_type(Types_Ctx *ty_ctx, const Type *internal) {
-    Type local = INIT_PTR_TYPE();
+    Type local = init_ptr_type();
     local.internal = internal;
     return new_type(ty_ctx, &local);
 }
@@ -1138,16 +1190,16 @@ char *get_type_name(const Type *t) {
     else if (t->kind == TYPE_KIND_FN) {
         sb_append_cstr(&type_name, "fn(");
 
-        for (usize i = 0; i + 1 < t->params.size; ++i) {
-            const Type *param = *da_at(&t->params, i);
+        for (usize i = 0; i + 1 < t->params->len; ++i) {
+            const Type *param = *at(t->params, i);
             char *param_type_name = get_type_name(param);
             sb_append_cstr(&type_name, param_type_name);
             sb_append_cstr(&type_name, ", ");
             free(param_type_name);
         }
 
-        if (t->params.size) {
-            const Type *param = *da_last(&t->params);
+        if (t->params->len) {
+            const Type *param = *last(t->params);
             char *param_type_name = get_type_name(param);
             sb_append_cstr(&type_name, param_type_name);
             free(param_type_name);
@@ -1178,7 +1230,7 @@ const Type *parse_type(Compiler *c) {
     } break;
 
     case TOKEN_TYPE_FN: {
-        Type fn_type = INIT_FN_TYPE();
+        Type fn_type = init_fn_type(c);
 
         if (!expect_peek(c, TOKEN_TYPE_LPAREN))
             return NULL;
@@ -1196,7 +1248,11 @@ const Type *parse_type(Compiler *c) {
                     goto parse_type_fn_cleanup;
             }
 
-            da_append(&fn_type.params, param);
+            if (!can_append(fn_type.params)) {
+                max_param_count_exceeded(c);
+                return NULL;
+            }
+            append(fn_type.params, param);
 
             if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
                 next_token(c);
@@ -1217,19 +1273,16 @@ const Type *parse_type(Compiler *c) {
         const Type *t;
         if (!(t = lookup_interned_type(ty_ctx, &fn_type)))
             t = new_type(ty_ctx, &fn_type);
-        else
-            da_delete(&fn_type.params);
 
         return t;
 
     parse_type_fn_cleanup:
-        da_delete(&fn_type.params);
 
         return NULL;
     } break;
 
     case TOKEN_TYPE_ASTERISK: {
-        Type ptr_type = INIT_PTR_TYPE();
+        Type ptr_type = init_ptr_type();
 
         next_token(c);
         const Type *internal = parse_type(c);
@@ -1323,12 +1376,16 @@ INLINE Value *declare_extern_func(Compiler *c, sv name, const Type *type) {
     return func;
 }
 
-INLINE Func_Param *get_param(const Value *func, usize param_idx) {
-    return func->params.store + param_idx;
+INLINE const Func_Param *get_param_const(const Value *func, usize param_idx) {
+    return at(func->params, param_idx);
+}
+
+INLINE Func_Param *get_param(Value *func, usize param_idx) {
+    return at(func->params, param_idx);
 }
 
 INLINE const Type *get_param_type(const Value *func, usize param_idx) {
-    return func->type->params.store[param_idx];
+    return func->type->params->store[param_idx];
 }
 
 INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
@@ -1776,24 +1833,24 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
 
             for (usize i = 0; !cur_tok_is(c, TOKEN_TYPE_RPAREN); ++i) {
                 const Type *hint;
-                bool variadic_param = i >= func_type->params.size;
+                bool variadic_param = i >= func_type->params->len;
                 if (variadic_param) {
                     if (!func_type->is_variadic) {
                         compiler_error(c, &loc,
                                        "Too many arguments to function call"
                                        ", expected %zu",
-                                       func_type->params.size);
+                                       func_type->params->len);
                         return NULL;
                     }
                     hint = NULL;
                 } else {
-                    hint = *da_at(&func_type->params, i);
+                    hint = *da_at(func_type->params, i);
                 }
 
                 const Value *val = compile_expr(c, PREC_LOWEST, hint, NULL);
 
                 if (!variadic_param) {
-                    const Type *expected_type = *da_at(&func_type->params, i);
+                    const Type *expected_type = *da_at(func_type->params, i);
                     if (!type_cmp(expected_type, val->type)) {
                         char *expected_type_name = get_type_name(expected_type);
                         char *actual_type_name = get_type_name(val->type);
@@ -1819,17 +1876,17 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                 }
             }
 
-            if (call->params.size < func_type->params.size) {
+            if (call->params.size < func_type->params->len) {
                 if (func_type->is_variadic) {
                     compiler_error(c, &loc,
                                    "Too few arguments to function call"
                                    ", requires at least %zu",
-                                   val->params.size);
+                                   val->params->len);
                 } else {
                     compiler_error(c, &loc,
                                    "Too few arguments to function call"
                                    ", expected %zu",
-                                   val->params.size);
+                                   val->params->len);
                 }
                 return NULL;
             }
@@ -2303,11 +2360,7 @@ bool compile_program(Compiler *c) {
 
         case TOKEN_TYPE_FN: {
             Value *func = new_func(c);
-            Type func_type = {
-                .size = 8,
-                .alignment = 8,
-                .kind = TYPE_KIND_FN,
-            };
+            Type func_type = init_fn_type(c);
 
             CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
 
@@ -2338,17 +2391,21 @@ bool compile_program(Compiler *c) {
                     return false;
                 }
 
-                da_append(&func_type.params, param_type);
+                if (!can_append(func_type.params)) {
+                    max_param_count_exceeded(c);
+                    return NULL;
+                }
+                append(func_type.params, param_type);
 
-                for (usize i = 0; i < func->params.size; ++i) {
-                    const Func_Param *param = func->params.store + i;
+                for (usize i = 0; i < func->params->len; ++i) {
+                    const Func_Param *param = func->params->store + i;
                     if (sveq(param->name, param_token.lit)) {
                         compiler_error(c, &param_token.loc, "Redefinition of %.*s", TOKEN_FMT(&param_token));
                         return false;
                     }
                 }
 
-                da_append(&func->params, ((Func_Param){.name = param_token.lit}));
+                append(func->params, ((Func_Param){.name = param_token.lit}));
 
                 if (try_peek_tok(c, TOKEN_TYPE_COMMA))
                     next_token(c);
@@ -2404,14 +2461,14 @@ bool compile_program(Compiler *c) {
                     return false;
                 }
 
-                if (func->params.size != existing_func->params.size) {
+                if (func->params->len != existing_func->params->len) {
                     compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                     return false;
                 }
 
-                usize n = func->params.size;
+                usize n = func->params->len;
                 for (usize i = 0; i < n; ++i) {
-                    if (!type_cmp(func_type.params.store[i], existing_func->type->params.store[i])) {
+                    if (!type_cmp(*at(func_type.params, i), *at(existing_func->type->params, i))) {
                         compiler_error(c, &name.loc, "Conflicting types for %.*s", TOKEN_FMT(&name));
                         return false;
                     }
@@ -2428,7 +2485,7 @@ bool compile_program(Compiler *c) {
             push_scope(c);
             c->func = existing_func;
 
-            for (usize i = 0; i < existing_func->params.size; ++i) {
+            for (usize i = 0; i < existing_func->params->len; ++i) {
                 Func_Param *param = get_param(existing_func, i);
                 const Type *param_type = get_param_type(existing_func, i);
                 usize stack_index = alloc_scoped_var(c, get_param_type(existing_func, i));
@@ -2551,12 +2608,12 @@ int main(int argc, char *argv[]) {
     if (!flag_parse(argc, argv)) {
         usage(stderr);
         flag_print_error(stderr);
-        exit(1);
+        return 1;
     }
 
     if (*help) {
         usage(stdout);
-        exit(0);
+        return 0;
     }
 
     argc = flag_rest_argc();
@@ -2584,7 +2641,6 @@ int main(int argc, char *argv[]) {
 
     if (*lex) {
         Token t;
-
         do {
             t = lexer_next_token(&l);
             printf("%s: %.*s at %u:%u in %s\n", tt_str[t.type], TOKEN_FMT(&t),
@@ -2624,6 +2680,7 @@ int main(int argc, char *argv[]) {
         free(out_file);
     }
 
+    compiler_destroy(&c);
     fclose(out);
     free(input);
 

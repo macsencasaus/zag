@@ -98,4 +98,29 @@
 #define da_delete(da) \
     DA_FREE((da)->store);
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(*arr))
+
+#define Array(__T, __Cap) \
+    struct {              \
+        __T store[__Cap]; \
+        size_t len;       \
+    }
+
+#define Array_Template(__T, __Cap, __Name) \
+    typedef Array(__T, __Cap) __Name
+
+#define append(fa, v)                                   \
+    do {                                                \
+        DA_ASSERT((fa)->len < ARRAY_SIZE((fa)->store)); \
+        (fa)->store[(fa)->len++] = v;                   \
+    } while (0)
+
+#define can_append(fa) ((fa)->len < ARRAY_SIZE((fa)->store))
+
+#define at(fa, idx) ((fa)->store + (idx))
+
+#define last(fa) ((fa)->store + (fa)->len - 1)
+
+#define remove(fa, idx) ((fa)->store[(idx)] = (fa)->store[--(fa)->len])
+
 #endif

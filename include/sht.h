@@ -59,7 +59,7 @@ void *sht_try_get(const String_Hash_Table *sht,
                   const char *key,
                   size_t key_t_size);
 
-void ht_free(String_Hash_Table *);
+void sht_free(String_Hash_Table *);
 
 #endif  // SHT_H
 
