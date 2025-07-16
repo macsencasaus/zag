@@ -1,0 +1,7 @@
+// TEST: lex, ir, x86_64-linux
+
+extern fn add(x: i32, y: i32) i32;
+
+fn call_add(x: i32, y: i32) i32 {
+    return add(x, y);
+}

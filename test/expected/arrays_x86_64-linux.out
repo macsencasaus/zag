@@ -1,0 +1,51 @@
+
+/tmp/tmp.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:	55                   	push   rbp
+   1:	48 89 e5             	mov    rbp,rsp
+   4:	48 83 ec 20          	sub    rsp,0x20
+   8:	48 8d 45 f4          	lea    rax,[rbp-0xc]
+   c:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  10:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+  14:	b9 00 00 00 00       	mov    ecx,0x0
+  19:	48 01 c8             	add    rax,rcx
+  1c:	48 89 45 e0          	mov    QWORD PTR [rbp-0x20],rax
+  20:	b8 01 00 00 00       	mov    eax,0x1
+  25:	48 8b 4d e0          	mov    rcx,QWORD PTR [rbp-0x20]
+  29:	89 01                	mov    DWORD PTR [rcx],eax
+  2b:	48 8d 45 f4          	lea    rax,[rbp-0xc]
+  2f:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  33:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+  37:	b9 04 00 00 00       	mov    ecx,0x4
+  3c:	48 01 c8             	add    rax,rcx
+  3f:	48 89 45 e0          	mov    QWORD PTR [rbp-0x20],rax
+  43:	b8 02 00 00 00       	mov    eax,0x2
+  48:	48 8b 4d e0          	mov    rcx,QWORD PTR [rbp-0x20]
+  4c:	89 01                	mov    DWORD PTR [rcx],eax
+  4e:	48 8d 45 f4          	lea    rax,[rbp-0xc]
+  52:	48 89 45 e8          	mov    QWORD PTR [rbp-0x18],rax
+  56:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]
+  5a:	b9 08 00 00 00       	mov    ecx,0x8
+  5f:	48 01 c8             	add    rax,rcx
+  62:	48 89 45 e0          	mov    QWORD PTR [rbp-0x20],rax
+  66:	b8 03 00 00 00       	mov    eax,0x3
+  6b:	48 8b 4d e0          	mov    rcx,QWORD PTR [rbp-0x20]
+  6f:	89 01                	mov    DWORD PTR [rcx],eax
+  71:	b8 00 00 00 00       	mov    eax,0x0
+  76:	c9                   	leave
+  77:	c3                   	ret
+
+0000000000000078 <init>:
+  78:	55                   	push   rbp
+  79:	48 89 e5             	mov    rbp,rsp
+  7c:	48 83 ec 10          	sub    rsp,0x10
+  80:	b8 01 00 00 00       	mov    eax,0x1
+  85:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+  88:	b8 02 00 00 00       	mov    eax,0x2
+  8d:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  90:	b8 03 00 00 00       	mov    eax,0x3
+  95:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax

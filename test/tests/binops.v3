@@ -1,0 +1,13 @@
+// TEST: lex, ir, x86_64-linux
+
+fn add(x: i32, y: i32) i32 {
+    return x + y;
+}
+
+fn sub(x: i32, y: i32) i32 {
+    return x - y;
+}
+
+fn add_then_mult(x: i64, y: i64, z: i64) i64 {
+    return x + y * z;
+}

@@ -1,0 +1,9 @@
+// TEST: lex, ir, x86_64-linux
+
+extern fn puts(str: *u8) i32;
+
+fn main() i32 {
+    puts(&"Hello, world!");
+    puts(&"Bruh moment");
+    return 0;
+}

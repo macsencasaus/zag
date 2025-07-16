@@ -1,0 +1,27 @@
+
+/tmp/tmp.o:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000000000 <main>:
+   0:	55                   	push   rbp
+   1:	48 89 e5             	mov    rbp,rsp
+   4:	48 83 ec 10          	sub    rsp,0x10
+   8:	b8 02 00 00 00       	mov    eax,0x2
+   d:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  10:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  13:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  16:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+  19:	f7 d8                	neg    eax
+  1b:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+  1e:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+  21:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+  24:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+  27:	f7 d8                	neg    eax
+  29:	89 45 f0             	mov    DWORD PTR [rbp-0x10],eax
+  2c:	8b 45 f0             	mov    eax,DWORD PTR [rbp-0x10]
+  2f:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
+  32:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
+  35:	c9                   	leave
+  36:	c3                   	ret

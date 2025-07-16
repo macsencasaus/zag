@@ -1,0 +1,18 @@
+// TEST: lex, ir, x86_64-linux
+
+fn ifs(cond: i32) i32 {
+    var x: i32;
+    if cond
+        x = 1;
+    else
+        x = 2;
+    return x;
+}
+
+fn more_ifs(cond: i32) i32 {
+    if cond {
+        return cond;
+    } else {
+        return 0;
+    }
+}

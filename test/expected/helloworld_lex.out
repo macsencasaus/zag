@@ -1,0 +1,34 @@
+extern: extern at 3:1 in tests/helloworld.v3
+fn: fn at 3:8 in tests/helloworld.v3
+identifier: puts at 3:11 in tests/helloworld.v3
+'(': ( at 3:15 in tests/helloworld.v3
+identifier: str at 3:16 in tests/helloworld.v3
+':': : at 3:19 in tests/helloworld.v3
+'*': * at 3:21 in tests/helloworld.v3
+identifier: u8 at 3:22 in tests/helloworld.v3
+')': ) at 3:24 in tests/helloworld.v3
+identifier: i32 at 3:26 in tests/helloworld.v3
+';': ; at 3:29 in tests/helloworld.v3
+fn: fn at 5:1 in tests/helloworld.v3
+identifier: main at 5:4 in tests/helloworld.v3
+'(': ( at 5:8 in tests/helloworld.v3
+')': ) at 5:9 in tests/helloworld.v3
+identifier: i32 at 5:11 in tests/helloworld.v3
+'{': { at 5:15 in tests/helloworld.v3
+identifier: puts at 6:5 in tests/helloworld.v3
+'(': ( at 6:9 in tests/helloworld.v3
+'&': & at 6:10 in tests/helloworld.v3
+string literal: "Hello, world!" at 6:11 in tests/helloworld.v3
+')': ) at 6:26 in tests/helloworld.v3
+';': ; at 6:27 in tests/helloworld.v3
+identifier: puts at 7:5 in tests/helloworld.v3
+'(': ( at 7:9 in tests/helloworld.v3
+'&': & at 7:10 in tests/helloworld.v3
+string literal: "Bruh moment" at 7:11 in tests/helloworld.v3
+')': ) at 7:24 in tests/helloworld.v3
+';': ; at 7:25 in tests/helloworld.v3
+return: return at 8:5 in tests/helloworld.v3
+int literal: 0 at 8:12 in tests/helloworld.v3
+';': ; at 8:13 in tests/helloworld.v3
+'}': } at 9:1 in tests/helloworld.v3
+EOF:  at 10:1 in tests/helloworld.v3

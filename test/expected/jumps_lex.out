@@ -1,0 +1,53 @@
+fn: fn at 3:1 in tests/jumps.v3
+identifier: ifs at 3:4 in tests/jumps.v3
+'(': ( at 3:7 in tests/jumps.v3
+identifier: cond at 3:8 in tests/jumps.v3
+':': : at 3:12 in tests/jumps.v3
+identifier: i32 at 3:14 in tests/jumps.v3
+')': ) at 3:17 in tests/jumps.v3
+identifier: i32 at 3:19 in tests/jumps.v3
+'{': { at 3:23 in tests/jumps.v3
+var: var at 4:5 in tests/jumps.v3
+identifier: x at 4:9 in tests/jumps.v3
+':': : at 4:10 in tests/jumps.v3
+identifier: i32 at 4:12 in tests/jumps.v3
+';': ; at 4:15 in tests/jumps.v3
+if: if at 5:5 in tests/jumps.v3
+identifier: cond at 5:8 in tests/jumps.v3
+identifier: x at 6:9 in tests/jumps.v3
+'=': = at 6:11 in tests/jumps.v3
+int literal: 1 at 6:13 in tests/jumps.v3
+';': ; at 6:14 in tests/jumps.v3
+else: else at 7:5 in tests/jumps.v3
+identifier: x at 8:9 in tests/jumps.v3
+'=': = at 8:11 in tests/jumps.v3
+int literal: 2 at 8:13 in tests/jumps.v3
+';': ; at 8:14 in tests/jumps.v3
+return: return at 9:5 in tests/jumps.v3
+identifier: x at 9:12 in tests/jumps.v3
+';': ; at 9:13 in tests/jumps.v3
+'}': } at 10:1 in tests/jumps.v3
+fn: fn at 12:1 in tests/jumps.v3
+identifier: more_ifs at 12:4 in tests/jumps.v3
+'(': ( at 12:12 in tests/jumps.v3
+identifier: cond at 12:13 in tests/jumps.v3
+':': : at 12:17 in tests/jumps.v3
+identifier: i32 at 12:19 in tests/jumps.v3
+')': ) at 12:22 in tests/jumps.v3
+identifier: i32 at 12:24 in tests/jumps.v3
+'{': { at 12:28 in tests/jumps.v3
+if: if at 13:5 in tests/jumps.v3
+identifier: cond at 13:8 in tests/jumps.v3
+'{': { at 13:13 in tests/jumps.v3
+return: return at 14:9 in tests/jumps.v3
+identifier: cond at 14:16 in tests/jumps.v3
+';': ; at 14:20 in tests/jumps.v3
+'}': } at 15:5 in tests/jumps.v3
+else: else at 15:7 in tests/jumps.v3
+'{': { at 15:12 in tests/jumps.v3
+return: return at 16:9 in tests/jumps.v3
+int literal: 0 at 16:16 in tests/jumps.v3
+';': ; at 16:17 in tests/jumps.v3
+'}': } at 17:5 in tests/jumps.v3
+'}': } at 18:1 in tests/jumps.v3
+EOF:  at 19:1 in tests/jumps.v3

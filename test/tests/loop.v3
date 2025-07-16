@@ -1,0 +1,36 @@
+// TEST: lex, ir, x86_64-linux
+
+fn loop() i64 {
+    var x = 0;
+
+    while (x < 1000) {
+        ++x;
+    }
+
+    return x;
+}
+
+fn loop_break() i64 {
+    var x = 0;
+
+    while (x < 1000) {
+        ++x;
+        if (x == 500)
+            break;
+    }
+
+    return x;
+}
+
+fn loop_continue() i64{
+    var x = 0;
+
+    while (x < 1000) {
+        ++x;
+        if (x > 500)
+            continue;
+        ++x;
+    }
+
+    return x;
+}

@@ -1,0 +1,12 @@
+// TEST: lex, ir, x86_64-linux
+
+fn main() i32 {
+    var a = 'a';
+    var b = '\xA';
+    var bb = '\xab';
+    var bbb = '\xFF';
+    var c = '\377';
+    var newline = '\n';
+
+    return '';
+}

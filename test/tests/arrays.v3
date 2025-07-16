@@ -1,0 +1,13 @@
+// TEST: lex, ir, x86_64-linux
+
+fn main() i32 {
+    var array: [3]u32;
+    array[0] = 1;
+    array[1] = 2;
+    array[2] = 3;
+    return 0;
+}
+
+fn init() i32 {
+    var array = []u32{1, 2, 3};
+}

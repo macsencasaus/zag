@@ -1,0 +1,25 @@
+// TEST: lex, ir, x86_64-linux
+
+fn id(x: i32) i32 {
+    return x;
+}
+
+fn call_id(x: i32) i32 {
+    return id(x);
+}
+
+fn factorial(n: u32) u32 {
+    if (n == 0)
+        return 1;
+    return n * factorial(n - 1);
+}
+
+fn factorial_tail(n: u32, res: u32) u32 {
+    if (n == 0)
+        return res;
+    return factorial_tail(n - 1, n * res);
+}
+
+fn func_ptrs(func: fn(i32) i32) i32 {
+    return func(2);
+}
