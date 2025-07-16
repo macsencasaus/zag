@@ -3,7 +3,7 @@
 #include "../vector.c"
 #endif
 
-#include "elf.c"
+#include "elfbuilder.c"
 
 typedef struct {
     usize label_id;

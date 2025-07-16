@@ -1,11 +1,11 @@
 #!/bin/bash
 
 clang \
-    -Iinclude -Icodegen -Ias \
+    -Isrc/thirdparty -Isrc/codegen \
     -Werror -Wpedantic -Wall -Wextra \
     -Wno-gnu-folding-constant \
     -Wno-error=unused-function \
     -std=c11 \
     -ggdb \
-    vector.c \
+    src/vector.c \
     -o vector

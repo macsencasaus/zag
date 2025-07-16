@@ -1,6 +1,5 @@
--Iinclude
--Icodegen
--Ias
+-Isrc/thirdparty
+-Isrc/codegen
 -Werror
 -Wpedantic
 -Wall
