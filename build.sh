@@ -1,10 +1,9 @@
 #!/bin/bash
 
-clang \
+cc \
     -Isrc/thirdparty -Isrc/codegen \
     -Werror -Wpedantic -Wall -Wextra \
-    -Wno-gnu-folding-constant \
-    -Wno-error=unused-function \
+    -Wno-implicit-fallthrough \
     -std=c11 \
     -ggdb \
     src/vector.c \

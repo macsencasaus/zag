@@ -28,7 +28,6 @@
 #ifndef SHT_LOAD_FACTOR
 #define SHT_LOAD_FACTOR 0.7
 #endif
-static_assert(SHT_LOAD_FACTOR >= 0 && SHT_LOAD_FACTOR <= 1, "Expected Load Factor between 0 and 1");
 
 #ifndef SHT_INIT_B_CAP  // in bytes
 #define SHT_INIT_B_CAP 1024 * 1024

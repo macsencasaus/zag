@@ -534,7 +534,7 @@ typedef struct {
 } Builtin_Type;
 
 #define BUILTIN_TYPE(__name, __id, __size, __alignment, __kind) \
-    (Builtin_Type) {                                            \
+    {                                                           \
         .name = (__name), .type = {.id = (__id),                \
                                    .size = (__size),            \
                                    .alignment = (__alignment),  \
