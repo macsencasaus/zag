@@ -8,13 +8,16 @@
 
 #include <elf.h>
 
-#define NULL_SECTION_IDX 0
-#define TEXT_SECTION_IDX 1
-#define RELA_TEXT_SECTION_IDX 2
-#define NOTE_GNU_STACK_SECTION_IDX 3
-#define SYMTAB_SECTION_IDX 4
-#define STRTAB_SECTION_IDX 5
-#define SHSTRTAB_SECTION_IDX 6
+enum {
+    NULL_SECTION_IDX,
+    TEXT_SECTION_IDX,
+    RELA_TEXT_SECTION_IDX,
+    DATA_SECTION_IDX,
+    NOTE_GNU_STACK_SECTION_IDX,
+    SYMTAB_SECTION_IDX,
+    STRTAB_SECTION_IDX,
+    SHSTRTAB_SECTION_IDX,
+};
 
 INLINE usize st_append(String_Builder *st, const char *section_name) {
     usize off = st->size;
@@ -37,12 +40,16 @@ typedef struct {
 
     Dynamic_Array(Elf64_Rela) relocations;
 
+    String_View data;
+
     Dynamic_Array(Elf64_Sym) symbols;
 
     String_Builder strtab;
     String_Builder shstrtab;
 
     Dynamic_Array(Elf64_Shdr) section_headers;
+
+    usize data_section_symtab_idx;
 } ELF_Builder;
 
 INLINE Elf64_Rela *new_relocation(ELF_Builder *ctx) {
@@ -78,15 +85,17 @@ void ELF_Builder_init(ELF_Builder *ctx, const char *filename) {
         .st_size = 0,
     };
 
-    Elf64_Sym *text_section_symbol = new_symbol(ctx);
-    *text_section_symbol = (Elf64_Sym){
+    Elf64_Sym *data_section_symbol = new_symbol(ctx);
+    *data_section_symbol = (Elf64_Sym){
         .st_name = 0,
         .st_info = ELF64_ST_INFO(STB_LOCAL, STT_SECTION),
         .st_other = STV_DEFAULT,
-        .st_shndx = TEXT_SECTION_IDX,
+        .st_shndx = DATA_SECTION_IDX,
         .st_value = 0,
         .st_size = 0,
     };
+
+    ctx->data_section_symtab_idx = ctx->symbols.size - 1;
 }
 
 void ELF_Builder_delete(ELF_Builder *ctx) {
@@ -127,6 +136,7 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
 
     offset += text_section_header->sh_size;
 
+    // rela.text
     usize rela_text_name_off = st_append(&ctx->shstrtab, ".rela.text");
     assert(RELA_TEXT_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *rela_text_section_header = new_section_header(ctx);
@@ -144,6 +154,25 @@ void ELF_Builder_compile(ELF_Builder *ctx) {
     };
 
     offset += rela_text_section_header->sh_size;
+
+    // data
+    usize data_text_name_off = st_append(&ctx->shstrtab, ".data");
+    assert(DATA_SECTION_IDX == ctx->section_headers.size);
+    Elf64_Shdr *data_section_header = new_section_header(ctx);
+    *data_section_header = (Elf64_Shdr) {
+        .sh_name = data_text_name_off,
+        .sh_type = SHT_PROGBITS,
+        .sh_flags = SHF_WRITE | SHF_ALLOC,
+        .sh_addr = 0,
+        .sh_offset = offset,
+        .sh_size = ctx->data.len,
+        .sh_link = 0,
+        .sh_info = 0,
+        .sh_addralign = 1,
+        .sh_entsize = 0,
+    };
+
+    offset += data_section_header->sh_size;
 
     // note.gnu-stack
     usize note_gnu_stack_name_off = st_append(&ctx->shstrtab, ".note.GNU-stack");
@@ -248,6 +277,7 @@ void ELF_write_o_file(const ELF_Builder *ctx, FILE *out) {
     sb_append_buf(&o, (char *)&ctx->header, sizeof(Elf64_Ehdr));
     sb_append_buf(&o, ctx->text.store, ctx->text.size);
     sb_append_buf(&o, (char *)ctx->relocations.store, ctx->relocations.size * sizeof(Elf64_Rela));
+    sb_append_buf(&o, ctx->data.store, ctx->data.len);
     sb_append_buf(&o, (char *)ctx->symbols.store, ctx->symbols.size * sizeof(Elf64_Sym));
     sb_append_buf(&o, ctx->strtab.store, ctx->strtab.size);
     sb_append_buf(&o, ctx->shstrtab.store, ctx->shstrtab.size);
@@ -256,6 +286,10 @@ void ELF_write_o_file(const ELF_Builder *ctx, FILE *out) {
     assert(fwrite(o.store, 1, o.size, out) == o.size);
 
     sb_free(&o);
+}
+
+void ELF_add_data(ELF_Builder *ctx, const char *v, usize n) {
+    ctx->data = (sv){.store = v, .len = n};
 }
 
 usize ELF_new_func(ELF_Builder *ctx, sv name,
@@ -277,11 +311,19 @@ usize ELF_new_func(ELF_Builder *ctx, sv name,
     return ctx->symbols.size - 1;
 }
 
-void ELF_add_relocation(ELF_Builder *ctx, u64 offset, usize symbol) {
+void ELF_add_relocation(ELF_Builder *ctx, u64 code_offset, usize symbol) {
     *new_relocation(ctx) = (Elf64_Rela){
-        .r_offset = offset,
+        .r_offset = code_offset,
         .r_info = ELF64_R_INFO(symbol, R_X86_64_PLT32),
         .r_addend = -0x4,
+    };
+}
+
+void ELF_add_data_reloc(ELF_Builder *ctx, u64 code_offset, u64 data_offset) {
+    *new_relocation(ctx) = (Elf64_Rela){
+        .r_offset = code_offset,
+        .r_info = ELF64_R_INFO(ctx->data_section_symtab_idx, R_X86_64_PC32),
+        .r_addend = -0x4 + data_offset,
     };
 }
 

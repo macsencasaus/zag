@@ -18,16 +18,23 @@ typedef struct {
 
 typedef struct {
     sv symbol_name;
-    u64 pos;
+    i32 pos;
 } X86_64_Relocation_Patch;
+
+typedef struct {
+    usize data_offset;
+    i32 pos;
+} X86_64_Data_Patch;
 
 typedef struct {
     String_Builder ops;
 
     Dynamic_Array(X86_64_Label) labels;
-    Dynamic_Array(X86_64_Label_Patches) patches;
+    Dynamic_Array(X86_64_Label_Patches) label_patches;
 
     Dynamic_Array(X86_64_Relocation_Patch) rela_patches;
+
+    Dynamic_Array(X86_64_Data_Patch) data_patches;
 } X86_64_Ctx;
 
 static X86_64_Ctx x86_64_global_ctx;
@@ -43,19 +50,19 @@ void push_x86_patch(usize label_id, i32 *disp, i32 pos) {
         }
     }
 
-    da_append(&ctx->patches, ((X86_64_Label_Patches){label_id, disp, pos}));
+    da_append(&ctx->label_patches, ((X86_64_Label_Patches){label_id, disp, pos}));
 }
 
 void push_x86_label(usize label_id, i32 pos) {
     X86_64_Ctx *ctx = &x86_64_global_ctx;
     da_append(&ctx->labels, ((X86_64_Label){label_id, pos}));
 
-    for (usize i = 0; i < ctx->patches.size; ++i) {
-        X86_64_Label_Patches *patch = ctx->patches.store + i;
+    for (usize i = 0; i < ctx->label_patches.size; ++i) {
+        X86_64_Label_Patches *patch = ctx->label_patches.store + i;
 
         if (patch->label_id == label_id) {
             *patch->disp = pos - patch->pos;
-            da_remove(&ctx->patches, i);
+            da_remove(&ctx->label_patches, i);
             --i;
         }
     }
@@ -64,6 +71,11 @@ void push_x86_label(usize label_id, i32 pos) {
 INLINE void push_x86_rela_patch(sv symbol_name, i32 pos) {
     X86_64_Ctx *ctx = &x86_64_global_ctx;
     da_append(&ctx->rela_patches, ((X86_64_Relocation_Patch){symbol_name, pos}));
+}
+
+INLINE void push_x86_data_patch(usize data_offset, i32 pos) {
+    X86_64_Ctx *ctx = &x86_64_global_ctx;
+    da_append(&ctx->data_patches, ((X86_64_Data_Patch){data_offset, pos}));
 }
 
 INLINE i32 x86_pos(void) {
@@ -385,6 +397,7 @@ void load_value_to_reg(const Value *v, X86_64_Register reg) {
         load_reg_addr_to_reg(RAX, reg, v->type->size);
     } break;
 
+    case VALUE_TYPE_DATA_OFFSET: UNIMPLEMENTED();
     case VALUE_TYPE_INIT_LIST: UNIMPLEMENTED();
     }
 }
@@ -541,7 +554,6 @@ void generate_binop(const Op *binop) {
         // clang-format on
         push_x86_op(MODR_M(MOD_REG, reg, RAX));
     } break;
-
     }
 
     store_reg_to_stack(RAX, binop->result, size);
@@ -619,7 +631,15 @@ void generate_op(const Op *op) {
     } break;
 
     case OP_TYPE_REF: {
-        load_effective_address(val->stack_index, val->type->size, RAX);
+        if (val->value_type == VALUE_TYPE_DATA_OFFSET) {
+            push_x86_op(REX_PRE(1, 0, 0, 0));
+            push_x86_op(LEA);
+            push_x86_op(MODR_M(MOD_MEM, RAX, 5));
+            push_x86_data_patch(val->offset, x86_pos());
+            push_u32(0);
+        } else {
+            load_effective_address(val->stack_index, val->type->size, RAX);
+        }
         store_reg_to_stack(RAX, op->result, 8);
     } break;
 
@@ -711,6 +731,8 @@ void generate_program(const Compiler *c, FILE *out) {
     ELF_Builder elf_builder;
     ELF_Builder_init(&elf_builder, c->l->input_file);
 
+    ELF_add_data(&elf_builder, c->data.store, c->data.size);
+
     for (usize i = 0; i < c->extern_funcs.size; ++i) {
         const Value *func = c->extern_funcs.store[i];
         usize symbol_idx = ELF_add_external_func(&elf_builder, func->name);
@@ -726,7 +748,12 @@ void generate_program(const Compiler *c, FILE *out) {
         op_offset = ctx->ops.size;
 
         *(usize *)sht_get(&symbols, SV_SPREAD(func->name)) = symbol_idx;
-        assert(ctx->patches.size == 0);
+        assert(ctx->label_patches.size == 0);
+    }
+
+    for (usize i = 0; i < ctx->data_patches.size; ++i) {
+        X86_64_Data_Patch *patch = da_at(&ctx->data_patches, i);
+        ELF_add_data_reloc(&elf_builder, patch->pos, patch->data_offset);
     }
 
     for (usize i = 0; i < ctx->rela_patches.size; ++i) {
@@ -745,5 +772,5 @@ void generate_program(const Compiler *c, FILE *out) {
 
     sb_free(&ctx->ops);
     da_delete(&ctx->labels);
-    da_delete(&ctx->patches);
+    da_delete(&ctx->label_patches);
 }

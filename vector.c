@@ -571,6 +571,8 @@ typedef enum {
 
     VALUE_TYPE_DEREF,
 
+    VALUE_TYPE_DATA_OFFSET,
+
     VALUE_TYPE_COUNT,
 } Value_Type;
 
@@ -596,6 +598,9 @@ struct Value {
         };
 
         Dynamic_Array(const Value *) elems;
+
+        // data offset
+        usize offset;
     };
 };
 
@@ -769,6 +774,7 @@ typedef struct {
 
     Dynamic_Array(const Value *) funcs;
     Dynamic_Array(const Value *) extern_funcs;
+    String_Builder data;
 
     Bump_Alloc value_alloc;
     Bump_Alloc op_alloc;
@@ -920,6 +926,16 @@ INLINE Value *new_init_list(Compiler *c) {
     Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
     *v = (Value){
         .value_type = VALUE_TYPE_INIT_LIST,
+    };
+    return v;
+}
+
+INLINE Value *new_data_offset(Compiler *c, const Type *type, usize offset) {
+    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    *v = (Value){
+        .value_type = VALUE_TYPE_DATA_OFFSET,
+        .type = type,
+        .offset = offset,
     };
     return v;
 }
@@ -1084,6 +1100,17 @@ INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
 INLINE const Type *get_ptr_type(Types_Ctx *ty_ctx, const Type *internal) {
     Type local = INIT_PTR_TYPE();
     local.internal = internal;
+    return new_type(ty_ctx, &local);
+}
+
+INLINE const Type *make_array_type_with(Types_Ctx *ty_ctx, const Type *internal, usize len) {
+    Type local = {
+        .kind = TYPE_KIND_ARRAY,
+        .size = internal->size * len,
+        .alignment = internal->alignment,
+        .internal = internal,
+        .len = len,
+    };
     return new_type(ty_ctx, &local);
 }
 
@@ -1471,6 +1498,22 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
 
         val = new_int_literal(c, type, value);
         lval = false;
+    } break;
+
+    case TOKEN_TYPE_STRING_LITERAL: {
+        usize offset = c->data.size;
+        for (usize i = 1; i < c->cur_token.lit.len - 1; ++i) {
+            u8 ch = *da_at(&c->cur_token.lit, i);
+            sb_append(&c->data, ch);
+        }
+        sb_append_null(&c->data);
+        usize size = c->data.size - offset;
+
+        const Type *u8_type = lookup_named_type(&c->ty_ctx, sv_from_cstr("u8"));
+        const Type *array_type = make_array_type_with(&c->ty_ctx, u8_type, size);
+        val = new_data_offset(c, array_type, offset);
+
+        lval = true;
     } break;
 
     case TOKEN_TYPE_IDENT: {

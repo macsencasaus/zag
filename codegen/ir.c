@@ -3,6 +3,8 @@
 #include "../vector.c"
 #endif
 
+#include <ctype.h>
+
 char *get_ir_type_name(const Type *type) {
     if (type->kind == TYPE_KIND_PTR ||
         type->kind == TYPE_KIND_FN ||
@@ -38,6 +40,9 @@ void print_ir_val(const Value *val, FILE *out) {
     } break;
     case VALUE_TYPE_DEREF: {
         fprintf(out, "deref %%s[%zu]", val->stack_index);
+    } break;
+    case VALUE_TYPE_DATA_OFFSET: {
+        fprintf(out, "%%data[%zu]", val->offset);
     } break;
     case VALUE_TYPE_INIT_LIST: UNIMPLEMENTED();
     }
@@ -182,6 +187,48 @@ void print_ir_external_funcs(const Compiler *c, FILE *out) {
     fprintf(out, "\n");
 }
 
+void print_readable_char(FILE *out, const char *buf, u32 idx) {
+    char ch = buf[idx];
+    if (isprint(ch) && !isspace(ch))
+        fprintf(out, "%c", ch);
+    else
+        fprintf(out, ".");
+}
+
+void print_ir_data(const Compiler *c, FILE *out) {
+    const u32 data_line_length = 12;
+    const u32 target_readable_col = 50;
+
+    fprintf(out, "\nData:\n");
+
+    u32 col = 0;
+    u32 n = c->data.size;
+    for (u32 i = 0; i < n; ++i) {
+        if (i % data_line_length == 0) {
+            if (i != 0) {
+                for (u32 j = 0; j < target_readable_col - col; ++j)
+                    fprintf(out, " ");
+                col = 0;
+
+                for (u32 j = i - data_line_length; j < i; ++j)
+                    print_readable_char(out, c->data.store, j);
+
+                fprintf(out, "\n");
+            }
+            col += fprintf(out, "%3x: ", i);
+        }
+        col += fprintf(out, "%2X ", c->data.store[i]);
+    }
+
+    for (u32 j = 0; j < target_readable_col - col; ++j)
+        fprintf(out, " ");
+    u32 s = (n / data_line_length) * data_line_length;
+    for (u32 j = s; j < n; ++j) {
+        print_readable_char(out, c->data.store, j);
+    }
+    fprintf(out, "\n");
+}
+
 void print_description(FILE *out) {
     fprintf(out,
             "; V3 Readable Intermediate Representation\n"
@@ -194,4 +241,6 @@ void print_ir_program(const Compiler *c, FILE *out) {
     print_description(out);
     print_ir_external_funcs(c, out);
     print_ir_funcs(c, out);
+    if (c->data.size > 0)
+        print_ir_data(c, out);
 }
