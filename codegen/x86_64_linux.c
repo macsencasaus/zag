@@ -12,7 +12,7 @@ typedef struct {
 
 typedef struct {
     usize label_id;
-    i32 *disp;
+    usize disp_idx;
     i32 pos;
 } X86_64_Label_Patches;
 
@@ -39,18 +39,18 @@ typedef struct {
 
 static X86_64_Ctx x86_64_global_ctx;
 
-void push_x86_patch(usize label_id, i32 *disp, i32 pos) {
+void push_x86_patch(usize label_id, usize disp_idx, i32 pos) {
     X86_64_Ctx *ctx = &x86_64_global_ctx;
     for (usize i = 0; i < ctx->labels.size; ++i) {
         X86_64_Label *label = ctx->labels.store + i;
 
         if (label->label_id == label_id) {
-            *disp = label->pos - pos;
+            *(i32 *)(ctx->ops.store + disp_idx) = label->pos - pos;
             return;
         }
     }
 
-    da_append(&ctx->label_patches, ((X86_64_Label_Patches){label_id, disp, pos}));
+    da_append(&ctx->label_patches, ((X86_64_Label_Patches){label_id, disp_idx, pos}));
 }
 
 void push_x86_label(usize label_id, i32 pos) {
@@ -61,7 +61,7 @@ void push_x86_label(usize label_id, i32 pos) {
         X86_64_Label_Patches *patch = ctx->label_patches.store + i;
 
         if (patch->label_id == label_id) {
-            *patch->disp = pos - patch->pos;
+            *(i32 *)(ctx->ops.store + patch->disp_idx) = pos - patch->pos;
             da_remove(&ctx->label_patches, i);
             --i;
         }
@@ -560,7 +560,6 @@ void generate_binop(const Op *binop) {
 }
 
 void generate_op(const Op *op) {
-    X86_64_Ctx *ctx = &x86_64_global_ctx;
     const Value *val = op->val;
 
     switch (op->type) {
@@ -650,9 +649,9 @@ void generate_op(const Op *op) {
 
     case OP_TYPE_JMP: {
         push_x86_op(JMP);
-        i32 *disp = (i32 *)(ctx->ops.store + ctx->ops.size);
+        usize pos = x86_pos();
         push_u32(0);
-        push_x86_patch(op->label_id, disp, x86_pos());
+        push_x86_patch(op->label_id, pos, x86_pos());
     } break;
 
     case OP_TYPE_JMPZ: {
@@ -661,9 +660,9 @@ void generate_op(const Op *op) {
 
         push_x86_op(TWO_BYTE_ESC);
         push_x86_op(JE);
-        i32 *disp = (i32 *)(ctx->ops.store + ctx->ops.size);
+        usize pos = x86_pos();
         push_u32(0);
-        push_x86_patch(op->label_id, disp, x86_pos());
+        push_x86_patch(op->label_id, pos, x86_pos());
     } break;
 
     case OP_TYPE_BINOP: {
@@ -702,15 +701,15 @@ void generate_op(const Op *op) {
 }
 
 void generate_func(const Value *func) {
-    if (func->params.size > 6) UNIMPLEMENTED();
+    if (func->params->len > 6) UNIMPLEMENTED();
     push_x86_op(PUSH_REG(RBP));
     move_reg_to_reg(RSP, RBP);
 
     if (func->stack_size > 0)
         alloc_rsp(func->stack_size);
 
-    for (usize i = 0; i < func->params.size; ++i) {
-        const Func_Param *param = get_param(func, i);
+    for (usize i = 0; i < func->params->len; ++i) {
+        const Func_Param *param = get_param_const(func, i);
         const Type *param_type = get_param_type(func, i);
         store_reg_to_stack(x86_64_linux_registers[i], param->index, param_type->size);
     }

@@ -9,7 +9,7 @@
 #include <string.h>
 
 #ifndef SB_INIT_CAP
-#define SB_INIT_CAP 512
+#define SB_INIT_CAP 64
 #endif
 
 #ifndef SB_REALLOC

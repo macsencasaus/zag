@@ -2,6 +2,9 @@
 
 #include <stdio.h>
 
+#ifndef NDEBUG
+#define DA_INIT_CAPACITY 1
+#endif
 #include "da.h"
 #include "types.h"
 
@@ -25,13 +28,14 @@
 #define CHECK(__expr) \
     if (!(__expr)) return 0
 
+#ifndef NDEBUG
+#define SB_INIT_CAPACITY 1
+#endif
 #define SB_IMPLEMENTATION
 #include "sb.h"
 
 #define BUMPALLOC_IMPLEMENTATION
 #include "bumpalloc.h"
-
-typedef String_View sv;
 
 #define SV_SPREAD(__sv) (__sv).store, (__sv).len
 #define SV_FMT(__sv) (int)((__sv).len), (__sv).store
@@ -41,6 +45,8 @@ typedef String_View sv;
 
 #define FLAG_IMPLEMENTATION
 #include "flag.h"
+
+typedef String_View sv;
 
 typedef struct {
     u32 line;
