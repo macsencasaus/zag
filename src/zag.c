@@ -1,4 +1,4 @@
-#define VECTOR_C
+#define ZAG_C
 
 #include <stdio.h>
 
@@ -7,6 +7,13 @@
 #endif
 #include "da.h"
 #include "types.h"
+
+#ifdef NDEBUG
+#define ZAG_ASSERT(expr) ((void)(expr))
+#else
+#include <assert.h>
+#define ZAG_ASSERT(expr) assert(expr)
+#endif
 
 #define UNIMPLEMENTED()                                                                  \
     do {                                                                                 \
@@ -878,7 +885,7 @@ void compiler_init(Compiler *c, Lexer *l) {
         type->name = builtin->name;
 
         const Type **t = sht_get(&ty_ctx->named_types, builtin->name, strlen(builtin->name));
-        assert(t != NULL);
+        ZAG_ASSERT(t != NULL);
 
         *t = type;
     }
@@ -899,7 +906,7 @@ void compiler_destroy(Compiler *c) {
 
     for (usize i = 0; i < c->funcs.size; ++i) {
         Value *f = *(Value **)da_at(&c->funcs, i);
-        assert(f->value_type == VALUE_TYPE_FUNC);
+        ZAG_ASSERT(f->value_type == VALUE_TYPE_FUNC);
         da_delete(&f->ops);
     }
     da_delete(&c->funcs);
@@ -1390,7 +1397,7 @@ INLINE const Type *get_param_type(const Value *func, usize param_idx) {
 
 INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
     usize alignment = type->alignment;
-    assert((alignment > 0) && ((alignment & (alignment - 1)) == 0));
+    ZAG_ASSERT((alignment > 0) && ((alignment & (alignment - 1)) == 0));
 
     usize size = type->size;
 
@@ -1468,7 +1475,7 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
 
         Token *tok = &c->cur_token;
         usize len = tok->lit.len;
-        assert(len >= 2);
+        ZAG_ASSERT(len >= 2);
 
         usize value;
 
@@ -1479,7 +1486,7 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
         } break;
         case '\\': {
             value = 0;
-            assert(len >= 4);
+            ZAG_ASSERT(len >= 4);
             char esc = tok->lit.store[2];
 
             if ((value = one_char_esc_lookup[(usize)esc])) {
@@ -1573,7 +1580,7 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                 u8 esc = *da_at(&c->cur_token.lit, i);
                 u8 value = one_char_esc_lookup[(usize)esc];
                 if (value) {
-                    sb_append(&c->data, value); 
+                    sb_append(&c->data, value);
                 } else {
                     compiler_error(c, cur_loc(c), "Unkown escape character");
                     return NULL;
@@ -2501,9 +2508,9 @@ bool compile_program(Compiler *c) {
             for (usize i = 0; i < existing_func->params->len; ++i) {
                 Func_Param *param = get_param(existing_func, i);
                 const Type *param_type = get_param_type(existing_func, i);
-                usize stack_index = alloc_scoped_var(c, get_param_type(existing_func, i));
+                usize stack_index = alloc_scoped_var(c, param_type);
                 param->index = stack_index;
-                assert(declare_var(c, param->name, stack_index, param_type) != NULL);
+                ZAG_ASSERT(declare_var(c, param->name, stack_index, param_type) != NULL);
             }
 
             CHECK(compile_block(c));
@@ -2533,11 +2540,11 @@ bool compile_program(Compiler *c) {
 #include "x86_64_linux.c"
 #endif
 
-char *generate_out_file(const char *v3_file) {
+char *generate_out_file(const char *zag_file) {
     String_Builder sb = {0};
-    sb_append_cstr(&sb, v3_file);
+    sb_append_cstr(&sb, zag_file);
     if (sb.size > 3 &&
-        strncmp(sb.store + sb.size - 3, ".v3", 3) == 0) {
+        strncmp(sb.store + sb.size - 4, ".zag", 4) == 0) {
         sb_pop(&sb, 3);
     }
     sb_append_cstr(&sb, ".o");
@@ -2676,14 +2683,14 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    char *out_file;
+    char *out_file = NULL;
     FILE *out;
     if (*to_stdout) {
         out = stdout;
     } else {
         out_file = generate_out_file(c.l->input_file);
         out = fopen(out_file, "w");
-        assert(out);
+        ZAG_ASSERT(out);
     }
 
     x86_64_generate_program(&c, out);

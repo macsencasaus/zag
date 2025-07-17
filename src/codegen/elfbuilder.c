@@ -1,9 +1,9 @@
 #ifndef ELF_C
 #define ELF_C
 
-#ifndef VECTOR_C
+#ifndef ZAG_C
 #define X86_64_LINUX_C
-#include "../vector.c"
+#include "../zag.c"
 #endif
 
 #include <elf.h>
@@ -71,7 +71,7 @@ void Elf_Builder_init(Elf_Builder *ctx, const char *filename) {
     *ctx = (Elf_Builder){0};
 
     usize null_name_off_strtab = st_append(&ctx->strtab, "");
-    assert(null_name_off_strtab == 0);
+    ZAG_ASSERT(null_name_off_strtab == 0);
     da_append(&ctx->symbols, (Elf64_Sym){0});
 
     usize filename_off = st_append(&ctx->strtab, filename);
@@ -113,13 +113,13 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
 
     // null
     usize null_name_off = st_append(&ctx->shstrtab, "");
-    assert(null_name_off == 0);
+    ZAG_ASSERT(null_name_off == 0);
     assert(NULL_SECTION_IDX == ctx->section_headers.size);
     da_append(&ctx->section_headers, (Elf64_Shdr){0});
 
     // text
     usize text_name_off = st_append(&ctx->shstrtab, ".text");
-    assert(TEXT_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(TEXT_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *text_section_header = new_section_header(ctx);
     *text_section_header = (Elf64_Shdr){
         .sh_name = text_name_off,
@@ -138,7 +138,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
 
     // rela.text
     usize rela_text_name_off = st_append(&ctx->shstrtab, ".rela.text");
-    assert(RELA_TEXT_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(RELA_TEXT_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *rela_text_section_header = new_section_header(ctx);
     *rela_text_section_header = (Elf64_Shdr){
         .sh_name = rela_text_name_off,
@@ -157,7 +157,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
 
     // data
     usize data_text_name_off = st_append(&ctx->shstrtab, ".data");
-    assert(DATA_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(DATA_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *data_section_header = new_section_header(ctx);
     *data_section_header = (Elf64_Shdr) {
         .sh_name = data_text_name_off,
@@ -176,7 +176,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
 
     // note.gnu-stack
     usize note_gnu_stack_name_off = st_append(&ctx->shstrtab, ".note.GNU-stack");
-    assert(NOTE_GNU_STACK_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(NOTE_GNU_STACK_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *note_gnu_stack_section_header = new_section_header(ctx);
     *note_gnu_stack_section_header = (Elf64_Shdr){
         .sh_name = note_gnu_stack_name_off,
@@ -187,7 +187,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
 
     // symtab
     usize symtab_name_off = st_append(&ctx->shstrtab, ".symtab");
-    assert(SYMTAB_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(SYMTAB_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *symtab_section_header = new_section_header(ctx);
     *symtab_section_header = (Elf64_Shdr){
         .sh_name = symtab_name_off,
@@ -205,7 +205,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
     offset += symtab_section_header->sh_size;
 
     // strtab
-    assert(STRTAB_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(STRTAB_SECTION_IDX == ctx->section_headers.size);
     usize strtab_name_off = st_append(&ctx->shstrtab, ".strtab");
     Elf64_Shdr *strtab_section_header = new_section_header(ctx);
     *strtab_section_header = (Elf64_Shdr){
@@ -225,7 +225,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
 
     // shstrtab
     usize shstrtab_name_off = st_append(&ctx->shstrtab, ".shstrtab");
-    assert(SHSTRTAB_SECTION_IDX == ctx->section_headers.size);
+    ZAG_ASSERT(SHSTRTAB_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *shstrtab_section_header = new_section_header(ctx);
     *shstrtab_section_header = (Elf64_Shdr){
         .sh_name = shstrtab_name_off,
@@ -283,7 +283,7 @@ void Elf_write_o_file(const Elf_Builder *ctx, FILE *out) {
     sb_append_buf(&o, ctx->shstrtab.store, ctx->shstrtab.size);
     sb_append_buf(&o, (char *)ctx->section_headers.store, ctx->section_headers.size * sizeof(Elf64_Shdr));
 
-    assert(fwrite(o.store, 1, o.size, out) == o.size);
+    ZAG_ASSERT(fwrite(o.store, 1, o.size, out) == o.size);
 
     sb_free(&o);
 }

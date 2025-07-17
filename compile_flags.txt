@@ -5,6 +5,3 @@
 -Wall
 -Wextra
 -std=c11
-
--Wno-gnu-folding-constant
--Wno-error=unused-functions

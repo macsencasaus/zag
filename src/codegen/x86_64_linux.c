@@ -1,6 +1,6 @@
-#ifndef VECTOR_C
+#ifndef ZAG_C
 #define X86_64_LINUX_C
-#include "../vector.c"
+#include "../zag.c"
 #endif
 
 #include "elfbuilder.c"
@@ -411,7 +411,7 @@ void x86_64_alloc_rsp(usize stack_size) {
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 5, X86_64_RSP));
         x86_64_push_op(imm);
     } else {
-        assert(stack_size < (usize)(u32)-1);
+        ZAG_ASSERT(stack_size < (usize)(u32)-1);
         u32 imm = (u32)stack_size;
         x86_64_push_op(X86_64_SUB_IMM);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 5, X86_64_RSP));
@@ -512,7 +512,7 @@ void x86_64_generate_binop(const Op *binop) {
 
         x86_64_push_op(TWO_BYTE_ESC);
         u8 op = x86_64_lookup_cmp_op[binop->op];
-        assert(op);
+        ZAG_ASSERT(op);
         x86_64_push_op(op);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 0, X86_64_RAX));
 
@@ -747,7 +747,7 @@ void x86_64_generate_program(const Compiler *c, FILE *out) {
         op_offset = ctx->ops.size;
 
         *(usize *)sht_get(&symbols, SV_SPREAD(func->name)) = symbol_idx;
-        assert(ctx->label_patches.size == 0);
+        ZAG_ASSERT(ctx->label_patches.size == 0);
     }
 
     for (usize i = 0; i < ctx->data_patches.size; ++i) {
@@ -758,7 +758,7 @@ void x86_64_generate_program(const Compiler *c, FILE *out) {
     for (usize i = 0; i < ctx->rela_patches.size; ++i) {
         const X86_64_Relocation_Patch *rela_patch = da_at(&ctx->rela_patches, i);
         usize *symbol_idx = sht_try_get(&symbols, SV_SPREAD(rela_patch->symbol_name));
-        assert(symbol_idx);
+        ZAG_ASSERT(symbol_idx);
         Elf_add_relocation(&elf_builder, rela_patch->pos, *symbol_idx);
     }
 

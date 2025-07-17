@@ -1,4 +1,4 @@
-; V3 Readable Intermediate Representation
+; Zag Readable Intermediate Representation
 ; Function header formatted as:
 ; @func[<max-stack-size>](<param-type>,...)
 

@@ -16,6 +16,9 @@ class Test_State(Enum):
     Skipped = 4
 
 
+default_debug_zag_build = "../build/debug/zag"
+default_release_zag_build = "../build/release/zag"
+
 parser = argparse.ArgumentParser(description="Regression tester")
 parser.add_argument(
     "tests",
@@ -23,10 +26,10 @@ parser.add_argument(
     help="Path to test",
 )
 parser.add_argument(
-    "--vector-binary",
-    dest="vector_binary",
+    "--zag-binary",
+    dest="zag_binary",
     type=str,
-    help="path to vector binary, default: '../build/debug/vector'",
+    help=f"path to zag binary, defaults to '{default_release_zag_build}' then '{default_debug_zag_build}",
 )
 parser.add_argument(
     "-v", "--verbose", action="store_true", help="diff print out on fail"
@@ -68,9 +71,9 @@ tests = [
 ]
 
 test_cmds = {
-    "lex": "%vector -lex %s",
-    "ir": "%vector -emit-ir %s",
-    "x86_64-linux": "%vector -stdout %s > /tmp/tmp.o && objdump -M intel -d /tmp/tmp.o",
+    "lex": "%zag -lex %s",
+    "ir": "%zag -emit-ir %s",
+    "x86_64-linux": "%zag -stdout %s > /tmp/tmp.o && objdump -M intel -d /tmp/tmp.o",
 }
 
 if args.monochrome:
@@ -89,19 +92,24 @@ else:
         Test_State.Skipped: f"\033[90mx{RESET}",
     }
 
-if args.vector_binary is None:
-    default_vector_binary = "vector"
-    one_back = os.path.join("..", default_vector_binary)
-    if os.path.exists(default_vector_binary):
-        vector_binary = default_vector_binary
-    elif os.path.exists(one_back):
-        vector_binary = one_back
+print("Looking for zag binary... ", end="");
+if args.zag_binary is not None:
+    if os.path.exists(args.zag_binary):
+        print(f"using {args.zag_binary}")
+        zag_binary = args.zag_binary
     else:
-        parser.print_usage(file=sys.stderr)
-        print("ERROR: vector binary not found", file=sys.stderr)
+        print(f"\nERROR: zag binary not found at {args.zag_binary}", file=sys.stderr)
         exit(1)
 else:
-    vector_binary = args.test_path
+    if os.path.exists(default_release_zag_build):
+        zag_binary = default_release_zag_build
+        print(f"using {default_release_zag_build}")
+    elif os.path.exists(default_debug_zag_build):
+        zag_binary = default_debug_zag_build
+        print(f"using {default_debug_zag_build}")
+    else:
+        print("\nERROR: zag binary not found", file=sys.stderr)
+        exit(1)
 
 valgrind_path = args.valgrind_path
 if not valgrind_path:
@@ -114,7 +122,7 @@ test_files = []
 
 while args.tests:
     test = args.tests.pop()
-    if os.path.isfile(test) and test.endswith(".v3"):
+    if os.path.isfile(test) and test.endswith(".zag"):
         test_files.append(test)
     elif os.path.isdir(test):
         args.tests.extend([os.path.join(test, p) for p in os.listdir(test)])
@@ -158,7 +166,7 @@ for test_file in test_files:
 
         cmd = test_cmds[test]
 
-        cmd = cmd.replace("%vector", os.path.relpath(vector_binary))
+        cmd = cmd.replace("%zag", os.path.relpath(zag_binary))
         cmd = cmd.replace("%s", os.path.relpath(test_file))
 
         out = os.path.join(args.expected_path, f"{case_name}_{test}.out")
@@ -187,7 +195,6 @@ for test_file in test_files:
             continue
 
         actual = proc.stdout
-
 
         if not os.path.exists(out):
             case_result[test] = Test_State.Skipped

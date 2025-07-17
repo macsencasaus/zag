@@ -134,15 +134,17 @@ void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
 
     if (ht->b_size == ht->arena_b_capacity) {
         void *old_arena = ht->arena;
+        size_t offset = VOID_DIF(last_offset, old_arena);
         ht->arena_b_capacity <<= 1;
         ht->arena = SHT_REALLOC(ht->arena, ht->arena_b_capacity);
 
         if (ht->arena == NULL) {
             SHT_FREE(old_arena);
             SHT_ASSERT(ht->arena != NULL && "HT_REALLOC failed");
+            return NULL;
         }
 
-        last_offset = (int64_t *)VOID_OFFSET(ht->arena, VOID_DIF(last_offset, old_arena));
+        last_offset = (int64_t *)VOID_OFFSET(ht->arena, offset);
     }
 
     // TODO: ensure load factor

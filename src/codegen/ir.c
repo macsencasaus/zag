@@ -1,6 +1,6 @@
-#ifndef VECTOR_C
+#ifndef ZAG_C
 #define IR_C
-#include "../vector.c"
+#include "../zag.c"
 #endif
 
 #include <ctype.h>
@@ -231,7 +231,7 @@ void print_ir_data(const Compiler *c, FILE *out) {
 
 void print_description(FILE *out) {
     fprintf(out,
-            "; V3 Readable Intermediate Representation\n"
+            "; Zag Readable Intermediate Representation\n"
             "; Function header formatted as:\n"
             "; @func[<max-stack-size>](<param-type>,...)\n"
             "\n");

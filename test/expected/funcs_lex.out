@@ -1,208 +1,208 @@
-fn: fn at 3:1 in tests/funcs.v3
-identifier: main at 3:4 in tests/funcs.v3
-'(': ( at 3:8 in tests/funcs.v3
-')': ) at 3:9 in tests/funcs.v3
-identifier: i32 at 3:11 in tests/funcs.v3
-'{': { at 3:15 in tests/funcs.v3
-var: var at 4:5 in tests/funcs.v3
-identifier: x at 4:9 in tests/funcs.v3
-':': : at 4:10 in tests/funcs.v3
-identifier: i32 at 4:12 in tests/funcs.v3
-'=': = at 4:16 in tests/funcs.v3
-int literal: 2 at 4:18 in tests/funcs.v3
-';': ; at 4:19 in tests/funcs.v3
-var: var at 5:5 in tests/funcs.v3
-identifier: y at 5:9 in tests/funcs.v3
-':': : at 5:10 in tests/funcs.v3
-identifier: i32 at 5:12 in tests/funcs.v3
-'=': = at 5:16 in tests/funcs.v3
-int literal: 1 at 5:18 in tests/funcs.v3
-',': , at 5:19 in tests/funcs.v3
-identifier: z at 5:21 in tests/funcs.v3
-':': : at 5:22 in tests/funcs.v3
-identifier: i32 at 5:24 in tests/funcs.v3
-'=': = at 5:28 in tests/funcs.v3
-int literal: 3 at 5:30 in tests/funcs.v3
-';': ; at 5:31 in tests/funcs.v3
-var: var at 6:5 in tests/funcs.v3
-identifier: aa at 6:9 in tests/funcs.v3
-'=': = at 6:12 in tests/funcs.v3
-int literal: 3 at 6:14 in tests/funcs.v3
-';': ; at 6:15 in tests/funcs.v3
-var: var at 7:5 in tests/funcs.v3
-identifier: bb at 7:9 in tests/funcs.v3
-'=': = at 7:12 in tests/funcs.v3
-int literal: 0 at 7:14 in tests/funcs.v3
-';': ; at 7:15 in tests/funcs.v3
-var: var at 8:5 in tests/funcs.v3
-identifier: zz at 8:9 in tests/funcs.v3
-'=': = at 8:12 in tests/funcs.v3
-int literal: 1 at 8:14 in tests/funcs.v3
-',': , at 8:15 in tests/funcs.v3
-identifier: yy at 8:17 in tests/funcs.v3
-'=': = at 8:20 in tests/funcs.v3
-int literal: 10 at 8:22 in tests/funcs.v3
-';': ; at 8:24 in tests/funcs.v3
-return: return at 9:5 in tests/funcs.v3
-int literal: 0 at 9:12 in tests/funcs.v3
-';': ; at 9:13 in tests/funcs.v3
-'}': } at 10:1 in tests/funcs.v3
-fn: fn at 12:1 in tests/funcs.v3
-identifier: id at 12:4 in tests/funcs.v3
-'(': ( at 12:6 in tests/funcs.v3
-identifier: x at 12:7 in tests/funcs.v3
-':': : at 12:8 in tests/funcs.v3
-identifier: i64 at 12:10 in tests/funcs.v3
-')': ) at 12:13 in tests/funcs.v3
-identifier: i64 at 12:15 in tests/funcs.v3
-'{': { at 12:19 in tests/funcs.v3
-return: return at 13:5 in tests/funcs.v3
-identifier: x at 13:12 in tests/funcs.v3
-';': ; at 13:13 in tests/funcs.v3
-'}': } at 14:1 in tests/funcs.v3
-fn: fn at 16:1 in tests/funcs.v3
-identifier: three at 16:4 in tests/funcs.v3
-'(': ( at 16:9 in tests/funcs.v3
-')': ) at 16:10 in tests/funcs.v3
-identifier: i64 at 16:12 in tests/funcs.v3
-'{': { at 16:16 in tests/funcs.v3
-return: return at 17:5 in tests/funcs.v3
-int literal: 3 at 17:12 in tests/funcs.v3
-';': ; at 17:13 in tests/funcs.v3
-'}': } at 18:1 in tests/funcs.v3
-fn: fn at 20:1 in tests/funcs.v3
-identifier: stack_alignment at 20:4 in tests/funcs.v3
-'(': ( at 20:19 in tests/funcs.v3
-')': ) at 20:20 in tests/funcs.v3
-identifier: i32 at 20:22 in tests/funcs.v3
-'{': { at 20:26 in tests/funcs.v3
-var: var at 21:5 in tests/funcs.v3
-identifier: a at 21:9 in tests/funcs.v3
-':': : at 21:10 in tests/funcs.v3
-identifier: i8 at 21:12 in tests/funcs.v3
-'=': = at 21:15 in tests/funcs.v3
-int literal: 0 at 21:17 in tests/funcs.v3
-';': ; at 21:18 in tests/funcs.v3
-var: var at 22:5 in tests/funcs.v3
-identifier: b at 22:9 in tests/funcs.v3
-':': : at 22:10 in tests/funcs.v3
-identifier: i8 at 22:12 in tests/funcs.v3
-'=': = at 22:15 in tests/funcs.v3
-int literal: 1 at 22:17 in tests/funcs.v3
-';': ; at 22:18 in tests/funcs.v3
-var: var at 23:5 in tests/funcs.v3
-identifier: c at 23:9 in tests/funcs.v3
-':': : at 23:10 in tests/funcs.v3
-identifier: i16 at 23:12 in tests/funcs.v3
-'=': = at 23:16 in tests/funcs.v3
-int literal: 2 at 23:18 in tests/funcs.v3
-';': ; at 23:19 in tests/funcs.v3
-var: var at 24:5 in tests/funcs.v3
-identifier: d at 24:9 in tests/funcs.v3
-':': : at 24:10 in tests/funcs.v3
-identifier: i16 at 24:12 in tests/funcs.v3
-'=': = at 24:16 in tests/funcs.v3
-int literal: 3 at 24:18 in tests/funcs.v3
-';': ; at 24:19 in tests/funcs.v3
-var: var at 25:5 in tests/funcs.v3
-identifier: aa at 25:9 in tests/funcs.v3
-':': : at 25:11 in tests/funcs.v3
-identifier: i8 at 25:13 in tests/funcs.v3
-'=': = at 25:16 in tests/funcs.v3
-int literal: 0 at 25:18 in tests/funcs.v3
-';': ; at 25:19 in tests/funcs.v3
-var: var at 26:5 in tests/funcs.v3
-identifier: e at 26:9 in tests/funcs.v3
-':': : at 26:10 in tests/funcs.v3
-identifier: i32 at 26:12 in tests/funcs.v3
-'=': = at 26:16 in tests/funcs.v3
-int literal: 4 at 26:18 in tests/funcs.v3
-';': ; at 26:19 in tests/funcs.v3
-var: var at 27:5 in tests/funcs.v3
-identifier: f at 27:9 in tests/funcs.v3
-':': : at 27:10 in tests/funcs.v3
-identifier: i32 at 27:12 in tests/funcs.v3
-'=': = at 27:16 in tests/funcs.v3
-int literal: 5 at 27:18 in tests/funcs.v3
-';': ; at 27:19 in tests/funcs.v3
-var: var at 28:5 in tests/funcs.v3
-identifier: bb at 28:9 in tests/funcs.v3
-':': : at 28:11 in tests/funcs.v3
-identifier: i8 at 28:13 in tests/funcs.v3
-'=': = at 28:16 in tests/funcs.v3
-int literal: 0 at 28:18 in tests/funcs.v3
-';': ; at 28:19 in tests/funcs.v3
-var: var at 29:5 in tests/funcs.v3
-identifier: g at 29:9 in tests/funcs.v3
-':': : at 29:10 in tests/funcs.v3
-identifier: i64 at 29:12 in tests/funcs.v3
-'=': = at 29:16 in tests/funcs.v3
-int literal: 6 at 29:18 in tests/funcs.v3
-';': ; at 29:19 in tests/funcs.v3
-var: var at 30:5 in tests/funcs.v3
-identifier: h at 30:9 in tests/funcs.v3
-':': : at 30:10 in tests/funcs.v3
-identifier: i64 at 30:12 in tests/funcs.v3
-'=': = at 30:16 in tests/funcs.v3
-int literal: 7 at 30:18 in tests/funcs.v3
-';': ; at 30:19 in tests/funcs.v3
-return: return at 31:5 in tests/funcs.v3
-int literal: 0 at 31:12 in tests/funcs.v3
-';': ; at 31:13 in tests/funcs.v3
-'}': } at 32:1 in tests/funcs.v3
-fn: fn at 34:1 in tests/funcs.v3
-identifier: func_ptrs at 34:4 in tests/funcs.v3
-'(': ( at 34:13 in tests/funcs.v3
-')': ) at 34:14 in tests/funcs.v3
-identifier: i32 at 34:16 in tests/funcs.v3
-'{': { at 34:20 in tests/funcs.v3
-var: var at 35:5 in tests/funcs.v3
-identifier: this_fn at 35:9 in tests/funcs.v3
-':': : at 35:16 in tests/funcs.v3
-fn: fn at 35:18 in tests/funcs.v3
-'(': ( at 35:20 in tests/funcs.v3
-')': ) at 35:21 in tests/funcs.v3
-identifier: i32 at 35:23 in tests/funcs.v3
-'=': = at 35:27 in tests/funcs.v3
-identifier: func_ptrs at 35:29 in tests/funcs.v3
-';': ; at 35:38 in tests/funcs.v3
-return: return at 36:5 in tests/funcs.v3
-int literal: 0 at 36:12 in tests/funcs.v3
-';': ; at 36:13 in tests/funcs.v3
-'}': } at 37:1 in tests/funcs.v3
-fn: fn at 39:1 in tests/funcs.v3
-identifier: ptrs at 39:4 in tests/funcs.v3
-'(': ( at 39:8 in tests/funcs.v3
-')': ) at 39:9 in tests/funcs.v3
-identifier: i32 at 39:11 in tests/funcs.v3
-'{': { at 39:15 in tests/funcs.v3
-var: var at 40:5 in tests/funcs.v3
-identifier: x at 40:9 in tests/funcs.v3
-'=': = at 40:11 in tests/funcs.v3
-int literal: 3 at 40:13 in tests/funcs.v3
-';': ; at 40:14 in tests/funcs.v3
-var: var at 41:5 in tests/funcs.v3
-identifier: p at 41:9 in tests/funcs.v3
-':': : at 41:10 in tests/funcs.v3
-'*': * at 41:12 in tests/funcs.v3
-identifier: i64 at 41:13 in tests/funcs.v3
-'=': = at 41:17 in tests/funcs.v3
-'&': & at 41:19 in tests/funcs.v3
-identifier: x at 41:20 in tests/funcs.v3
-';': ; at 41:21 in tests/funcs.v3
-var: var at 42:5 in tests/funcs.v3
-identifier: y at 42:9 in tests/funcs.v3
-'=': = at 42:11 in tests/funcs.v3
-'*': * at 42:13 in tests/funcs.v3
-identifier: p at 42:14 in tests/funcs.v3
-';': ; at 42:15 in tests/funcs.v3
-'*': * at 43:5 in tests/funcs.v3
-identifier: p at 43:6 in tests/funcs.v3
-'=': = at 43:8 in tests/funcs.v3
-int literal: 2 at 43:10 in tests/funcs.v3
-';': ; at 43:11 in tests/funcs.v3
-return: return at 45:5 in tests/funcs.v3
-int literal: 0 at 45:12 in tests/funcs.v3
-';': ; at 45:13 in tests/funcs.v3
-'}': } at 46:1 in tests/funcs.v3
-EOF:  at 47:1 in tests/funcs.v3
+fn: fn at 3:1 in tests/funcs.zag
+identifier: main at 3:4 in tests/funcs.zag
+'(': ( at 3:8 in tests/funcs.zag
+')': ) at 3:9 in tests/funcs.zag
+identifier: i32 at 3:11 in tests/funcs.zag
+'{': { at 3:15 in tests/funcs.zag
+var: var at 4:5 in tests/funcs.zag
+identifier: x at 4:9 in tests/funcs.zag
+':': : at 4:10 in tests/funcs.zag
+identifier: i32 at 4:12 in tests/funcs.zag
+'=': = at 4:16 in tests/funcs.zag
+int literal: 2 at 4:18 in tests/funcs.zag
+';': ; at 4:19 in tests/funcs.zag
+var: var at 5:5 in tests/funcs.zag
+identifier: y at 5:9 in tests/funcs.zag
+':': : at 5:10 in tests/funcs.zag
+identifier: i32 at 5:12 in tests/funcs.zag
+'=': = at 5:16 in tests/funcs.zag
+int literal: 1 at 5:18 in tests/funcs.zag
+',': , at 5:19 in tests/funcs.zag
+identifier: z at 5:21 in tests/funcs.zag
+':': : at 5:22 in tests/funcs.zag
+identifier: i32 at 5:24 in tests/funcs.zag
+'=': = at 5:28 in tests/funcs.zag
+int literal: 3 at 5:30 in tests/funcs.zag
+';': ; at 5:31 in tests/funcs.zag
+var: var at 6:5 in tests/funcs.zag
+identifier: aa at 6:9 in tests/funcs.zag
+'=': = at 6:12 in tests/funcs.zag
+int literal: 3 at 6:14 in tests/funcs.zag
+';': ; at 6:15 in tests/funcs.zag
+var: var at 7:5 in tests/funcs.zag
+identifier: bb at 7:9 in tests/funcs.zag
+'=': = at 7:12 in tests/funcs.zag
+int literal: 0 at 7:14 in tests/funcs.zag
+';': ; at 7:15 in tests/funcs.zag
+var: var at 8:5 in tests/funcs.zag
+identifier: zz at 8:9 in tests/funcs.zag
+'=': = at 8:12 in tests/funcs.zag
+int literal: 1 at 8:14 in tests/funcs.zag
+',': , at 8:15 in tests/funcs.zag
+identifier: yy at 8:17 in tests/funcs.zag
+'=': = at 8:20 in tests/funcs.zag
+int literal: 10 at 8:22 in tests/funcs.zag
+';': ; at 8:24 in tests/funcs.zag
+return: return at 9:5 in tests/funcs.zag
+int literal: 0 at 9:12 in tests/funcs.zag
+';': ; at 9:13 in tests/funcs.zag
+'}': } at 10:1 in tests/funcs.zag
+fn: fn at 12:1 in tests/funcs.zag
+identifier: id at 12:4 in tests/funcs.zag
+'(': ( at 12:6 in tests/funcs.zag
+identifier: x at 12:7 in tests/funcs.zag
+':': : at 12:8 in tests/funcs.zag
+identifier: i64 at 12:10 in tests/funcs.zag
+')': ) at 12:13 in tests/funcs.zag
+identifier: i64 at 12:15 in tests/funcs.zag
+'{': { at 12:19 in tests/funcs.zag
+return: return at 13:5 in tests/funcs.zag
+identifier: x at 13:12 in tests/funcs.zag
+';': ; at 13:13 in tests/funcs.zag
+'}': } at 14:1 in tests/funcs.zag
+fn: fn at 16:1 in tests/funcs.zag
+identifier: three at 16:4 in tests/funcs.zag
+'(': ( at 16:9 in tests/funcs.zag
+')': ) at 16:10 in tests/funcs.zag
+identifier: i64 at 16:12 in tests/funcs.zag
+'{': { at 16:16 in tests/funcs.zag
+return: return at 17:5 in tests/funcs.zag
+int literal: 3 at 17:12 in tests/funcs.zag
+';': ; at 17:13 in tests/funcs.zag
+'}': } at 18:1 in tests/funcs.zag
+fn: fn at 20:1 in tests/funcs.zag
+identifier: stack_alignment at 20:4 in tests/funcs.zag
+'(': ( at 20:19 in tests/funcs.zag
+')': ) at 20:20 in tests/funcs.zag
+identifier: i32 at 20:22 in tests/funcs.zag
+'{': { at 20:26 in tests/funcs.zag
+var: var at 21:5 in tests/funcs.zag
+identifier: a at 21:9 in tests/funcs.zag
+':': : at 21:10 in tests/funcs.zag
+identifier: i8 at 21:12 in tests/funcs.zag
+'=': = at 21:15 in tests/funcs.zag
+int literal: 0 at 21:17 in tests/funcs.zag
+';': ; at 21:18 in tests/funcs.zag
+var: var at 22:5 in tests/funcs.zag
+identifier: b at 22:9 in tests/funcs.zag
+':': : at 22:10 in tests/funcs.zag
+identifier: i8 at 22:12 in tests/funcs.zag
+'=': = at 22:15 in tests/funcs.zag
+int literal: 1 at 22:17 in tests/funcs.zag
+';': ; at 22:18 in tests/funcs.zag
+var: var at 23:5 in tests/funcs.zag
+identifier: c at 23:9 in tests/funcs.zag
+':': : at 23:10 in tests/funcs.zag
+identifier: i16 at 23:12 in tests/funcs.zag
+'=': = at 23:16 in tests/funcs.zag
+int literal: 2 at 23:18 in tests/funcs.zag
+';': ; at 23:19 in tests/funcs.zag
+var: var at 24:5 in tests/funcs.zag
+identifier: d at 24:9 in tests/funcs.zag
+':': : at 24:10 in tests/funcs.zag
+identifier: i16 at 24:12 in tests/funcs.zag
+'=': = at 24:16 in tests/funcs.zag
+int literal: 3 at 24:18 in tests/funcs.zag
+';': ; at 24:19 in tests/funcs.zag
+var: var at 25:5 in tests/funcs.zag
+identifier: aa at 25:9 in tests/funcs.zag
+':': : at 25:11 in tests/funcs.zag
+identifier: i8 at 25:13 in tests/funcs.zag
+'=': = at 25:16 in tests/funcs.zag
+int literal: 0 at 25:18 in tests/funcs.zag
+';': ; at 25:19 in tests/funcs.zag
+var: var at 26:5 in tests/funcs.zag
+identifier: e at 26:9 in tests/funcs.zag
+':': : at 26:10 in tests/funcs.zag
+identifier: i32 at 26:12 in tests/funcs.zag
+'=': = at 26:16 in tests/funcs.zag
+int literal: 4 at 26:18 in tests/funcs.zag
+';': ; at 26:19 in tests/funcs.zag
+var: var at 27:5 in tests/funcs.zag
+identifier: f at 27:9 in tests/funcs.zag
+':': : at 27:10 in tests/funcs.zag
+identifier: i32 at 27:12 in tests/funcs.zag
+'=': = at 27:16 in tests/funcs.zag
+int literal: 5 at 27:18 in tests/funcs.zag
+';': ; at 27:19 in tests/funcs.zag
+var: var at 28:5 in tests/funcs.zag
+identifier: bb at 28:9 in tests/funcs.zag
+':': : at 28:11 in tests/funcs.zag
+identifier: i8 at 28:13 in tests/funcs.zag
+'=': = at 28:16 in tests/funcs.zag
+int literal: 0 at 28:18 in tests/funcs.zag
+';': ; at 28:19 in tests/funcs.zag
+var: var at 29:5 in tests/funcs.zag
+identifier: g at 29:9 in tests/funcs.zag
+':': : at 29:10 in tests/funcs.zag
+identifier: i64 at 29:12 in tests/funcs.zag
+'=': = at 29:16 in tests/funcs.zag
+int literal: 6 at 29:18 in tests/funcs.zag
+';': ; at 29:19 in tests/funcs.zag
+var: var at 30:5 in tests/funcs.zag
+identifier: h at 30:9 in tests/funcs.zag
+':': : at 30:10 in tests/funcs.zag
+identifier: i64 at 30:12 in tests/funcs.zag
+'=': = at 30:16 in tests/funcs.zag
+int literal: 7 at 30:18 in tests/funcs.zag
+';': ; at 30:19 in tests/funcs.zag
+return: return at 31:5 in tests/funcs.zag
+int literal: 0 at 31:12 in tests/funcs.zag
+';': ; at 31:13 in tests/funcs.zag
+'}': } at 32:1 in tests/funcs.zag
+fn: fn at 34:1 in tests/funcs.zag
+identifier: func_ptrs at 34:4 in tests/funcs.zag
+'(': ( at 34:13 in tests/funcs.zag
+')': ) at 34:14 in tests/funcs.zag
+identifier: i32 at 34:16 in tests/funcs.zag
+'{': { at 34:20 in tests/funcs.zag
+var: var at 35:5 in tests/funcs.zag
+identifier: this_fn at 35:9 in tests/funcs.zag
+':': : at 35:16 in tests/funcs.zag
+fn: fn at 35:18 in tests/funcs.zag
+'(': ( at 35:20 in tests/funcs.zag
+')': ) at 35:21 in tests/funcs.zag
+identifier: i32 at 35:23 in tests/funcs.zag
+'=': = at 35:27 in tests/funcs.zag
+identifier: func_ptrs at 35:29 in tests/funcs.zag
+';': ; at 35:38 in tests/funcs.zag
+return: return at 36:5 in tests/funcs.zag
+int literal: 0 at 36:12 in tests/funcs.zag
+';': ; at 36:13 in tests/funcs.zag
+'}': } at 37:1 in tests/funcs.zag
+fn: fn at 39:1 in tests/funcs.zag
+identifier: ptrs at 39:4 in tests/funcs.zag
+'(': ( at 39:8 in tests/funcs.zag
+')': ) at 39:9 in tests/funcs.zag
+identifier: i32 at 39:11 in tests/funcs.zag
+'{': { at 39:15 in tests/funcs.zag
+var: var at 40:5 in tests/funcs.zag
+identifier: x at 40:9 in tests/funcs.zag
+'=': = at 40:11 in tests/funcs.zag
+int literal: 3 at 40:13 in tests/funcs.zag
+';': ; at 40:14 in tests/funcs.zag
+var: var at 41:5 in tests/funcs.zag
+identifier: p at 41:9 in tests/funcs.zag
+':': : at 41:10 in tests/funcs.zag
+'*': * at 41:12 in tests/funcs.zag
+identifier: i64 at 41:13 in tests/funcs.zag
+'=': = at 41:17 in tests/funcs.zag
+'&': & at 41:19 in tests/funcs.zag
+identifier: x at 41:20 in tests/funcs.zag
+';': ; at 41:21 in tests/funcs.zag
+var: var at 42:5 in tests/funcs.zag
+identifier: y at 42:9 in tests/funcs.zag
+'=': = at 42:11 in tests/funcs.zag
+'*': * at 42:13 in tests/funcs.zag
+identifier: p at 42:14 in tests/funcs.zag
+';': ; at 42:15 in tests/funcs.zag
+'*': * at 43:5 in tests/funcs.zag
+identifier: p at 43:6 in tests/funcs.zag
+'=': = at 43:8 in tests/funcs.zag
+int literal: 2 at 43:10 in tests/funcs.zag
+';': ; at 43:11 in tests/funcs.zag
+return: return at 45:5 in tests/funcs.zag
+int literal: 0 at 45:12 in tests/funcs.zag
+';': ; at 45:13 in tests/funcs.zag
+'}': } at 46:1 in tests/funcs.zag
+EOF:  at 47:1 in tests/funcs.zag
