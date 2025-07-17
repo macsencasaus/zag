@@ -2540,14 +2540,14 @@ bool compile_program(Compiler *c) {
 #include "x86_64_linux.c"
 #endif
 
-char *generate_out_file(const char *zag_file) {
+char *generate_out_file(const char *zag_file, const char *file_suffix) {
     String_Builder sb = {0};
     sb_append_cstr(&sb, zag_file);
     if (sb.size > 4 &&
         strncmp(sb.store + sb.size - 4, ".zag", 4) == 0) {
         sb_pop(&sb, 4);
     }
-    sb_append_cstr(&sb, ".o");
+    sb_append_cstr(&sb, file_suffix);
     sb_append_null(&sb);
     return sb.store;
 }
@@ -2622,6 +2622,11 @@ const char *target_options[TARGET_COUNT] = {
     [TARGET_NATIVE_X86_64_LINUX] = "x86_64-linux",
 };
 
+const char *target_file_suffix[TARGET_COUNT] = {
+    [TARGET_ZAG_IR] = ".s",
+    [TARGET_NATIVE_X86_64_LINUX] = ".o",
+};
+
 int main(int argc, char *argv[]) {
     program_name = argv[0];
 
@@ -2632,6 +2637,7 @@ int main(int argc, char *argv[]) {
                                               TARGET_COUNT, TARGET_NATIVE_X86_64_LINUX,
                                               "target platform");
     bool *to_stdout = argp_flag_bool(NULL, "stdout", "write to stdout");
+    char **output_file = argp_flag_str("o", "output", "OUTPUT_FILE", NULL, "output file path");
     char **file = argp_pos_str("file", NULL, false, "input file, use '-' for stdin");
 
     if (!argp_parse_args()) {
@@ -2679,27 +2685,29 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (*target == TARGET_ZAG_IR) {
-        print_ir_program(&c, stdout);
-        return 0;
-    }
-
     char *out_file = NULL;
     FILE *out;
     if (*to_stdout) {
         out = stdout;
     } else {
-        out_file = generate_out_file(c.l->input_file);
+        if (*output_file) {
+            out_file = *output_file;
+        } else {
+            out_file = generate_out_file(c.l->input_file, target_file_suffix[*target]);
+        }
         out = fopen(out_file, "w");
         ZAG_ASSERT(out);
     }
 
+    if (*target == TARGET_ZAG_IR) {
+        print_ir_program(&c, out);
+        return 0;
+    }
+
     x86_64_generate_program(&c, out);
 
-    if (!*to_stdout) {
-        printf("Wrote relocatable object file to %s\n", out_file);
+    if (!*to_stdout && !*output_file)
         free(out_file);
-    }
 
     compiler_destroy(&c);
     fclose(out);
