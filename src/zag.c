@@ -1,5 +1,6 @@
 #define ZAG_C
 
+#include <libgen.h>
 #include <stdio.h>
 
 #ifndef NDEBUG
@@ -2628,6 +2629,7 @@ const char *target_file_suffix[TARGET_COUNT] = {
 };
 
 int main(int argc, char *argv[]) {
+    int err = 0;
     program_name = argv[0];
 
     argp_init(argc, argv, "Zag compiler", /* default_help */ true);
@@ -2646,25 +2648,36 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    static char temp[1024];
+
     char *input;
     char *input_file_path;
+    char *input_basename;
     usize input_len;
     if (strcmp(*file, "-") == 0) {
         input_file_path = STDIN_FILE_NAME;
+        input_basename = STDIN_FILE_NAME;
         input = read_stdin(&input_len);
     } else {
         input_file_path = *file;
+        strcpy(temp, *file);
+        input_basename = basename(temp);
         input = read_file(input_file_path, &input_len);
     }
 
     if (!input) {
         argp_print_usage(stderr);
         fprintf(stderr, "Error: failed to read from %s\n", input_file_path);
-        return 0;
+        return 1;
     }
 
     Lexer l = {0};
     lexer_init(&l, input_file_path, input, input_len);
+
+    Compiler c = {0};
+
+    char *out_file = NULL;
+    FILE *out = NULL;
 
     if (*lex) {
         Token t;
@@ -2673,45 +2686,48 @@ int main(int argc, char *argv[]) {
             printf("%s: %.*s at %u:%u in %s\n", tt_str[t.type], TOKEN_FMT(&t),
                    t.loc.line, t.loc.col, t.loc.input_file_path);
         } while (t.type != TOKEN_TYPE_EOF);
-        return 0;
+        goto cleanup;
     }
 
-    Compiler c = {0};
     compiler_init(&c, &l);
 
     if (!compile_program(&c)) {
         const Location *loc = &c.err_loc;
         fprintf(stderr, "%s:%u:%u: error: %s\n", loc->input_file_path, loc->line, loc->col, c.err_msg);
-        return 1;
+        err = 1;
+        goto cleanup;
     }
 
-    char *out_file = NULL;
-    FILE *out;
     if (*to_stdout) {
         out = stdout;
     } else {
         if (*output_file) {
             out_file = *output_file;
         } else {
-            out_file = generate_out_file(c.l->input_file, target_file_suffix[*target]);
+            out_file = generate_out_file(input_basename, target_file_suffix[*target]);
         }
         out = fopen(out_file, "w");
-        ZAG_ASSERT(out);
+        if (!out) {
+            fprintf(stderr, "Error opening %s\n", out_file);
+            err = 1;
+            goto cleanup;
+        }
     }
 
     if (*target == TARGET_ZAG_IR) {
         print_ir_program(&c, out);
-        return 0;
+        goto cleanup;
     }
 
     x86_64_generate_program(&c, out);
 
+cleanup:
     if (!*to_stdout && !*output_file)
         free(out_file);
 
     compiler_destroy(&c);
-    fclose(out);
+    if (out) fclose(out);
     free(input);
 
-    return 0;
+    return err;
 }
