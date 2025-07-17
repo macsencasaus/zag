@@ -50,8 +50,8 @@
 #define SHT_IMPLEMENTATION
 #include "sht.h"
 
-#define FLAG_IMPLEMENTATION
-#include "flag.h"
+#define ARGPARSE_IMPLEMENTATION
+#include "argparse.h"
 
 typedef String_View sv;
 
@@ -2543,9 +2543,9 @@ bool compile_program(Compiler *c) {
 char *generate_out_file(const char *zag_file) {
     String_Builder sb = {0};
     sb_append_cstr(&sb, zag_file);
-    if (sb.size > 3 &&
+    if (sb.size > 4 &&
         strncmp(sb.store + sb.size - 4, ".zag", 4) == 0) {
-        sb_pop(&sb, 3);
+        sb_pop(&sb, 4);
     }
     sb_append_cstr(&sb, ".o");
     sb_append_null(&sb);
@@ -2553,12 +2553,6 @@ char *generate_out_file(const char *zag_file) {
 }
 
 static char *program_name;
-
-void usage(FILE *stream) {
-    fprintf(stream, "Usage: %s [OPTIONS] [FILE]\n", program_name);
-    fprintf(stream, "OPTIONS:\n");
-    flag_print_options(stream);
-}
 
 char *read_file(const char *file_name, usize *n) {
     FILE *file = fopen(file_name, "r");
@@ -2617,42 +2611,49 @@ char *read_stdin(usize *n) {
 
 #define STDIN_FILE_NAME "stdin"
 
+typedef enum {
+    TARGET_ZAG_IR,
+    TARGET_NATIVE_X86_64_LINUX,
+    TARGET_COUNT,
+} Target;
+
+const char *target_options[TARGET_COUNT] = {
+    [TARGET_ZAG_IR] = "zag-ir",
+    [TARGET_NATIVE_X86_64_LINUX] = "x86_64-linux",
+};
+
 int main(int argc, char *argv[]) {
     program_name = argv[0];
 
-    bool *help = flag_bool("help", false, "Print this help then exit.");
-    bool *lex = flag_bool("lex", false, "Print lexer output then exit.");
-    bool *emit_ir = flag_bool("emit-ir", false, "Emit IR then exit.");
-    bool *to_stdout = flag_bool("stdout", false, "Write on standard output.");
+    argp_init(argc, argv, "Zag compiler", /* default_help */ true);
 
-    if (!flag_parse(argc, argv)) {
-        usage(stderr);
-        flag_print_error(stderr);
+    bool *lex = argp_flag_bool("l", "lex", "print lexer output then exit");
+    Target *target = (Target *)argp_flag_enum("t", "target", target_options,
+                                              TARGET_COUNT, TARGET_NATIVE_X86_64_LINUX,
+                                              "target platform");
+    bool *to_stdout = argp_flag_bool(NULL, "stdout", "write to stdout");
+    char **file = argp_pos_str("file", NULL, false, "input file, use '-' for stdin");
+
+    if (!argp_parse_args()) {
+        argp_print_usage(stderr);
+        argp_print_error(stderr);
         return 1;
     }
-
-    if (*help) {
-        usage(stdout);
-        return 0;
-    }
-
-    argc = flag_rest_argc();
-    argv = flag_rest_argv();
 
     char *input;
     char *input_file_path;
     usize input_len;
-    if (argc == 0 || (strlen(argv[0]) == 1 && argv[0][0] == '-')) {
+    if (strcmp(*file, "-") == 0) {
         input_file_path = STDIN_FILE_NAME;
         input = read_stdin(&input_len);
     } else {
-        input_file_path = argv[0];
+        input_file_path = *file;
         input = read_file(input_file_path, &input_len);
     }
 
     if (!input) {
-        usage(stderr);
-        fprintf(stderr, "ERROR: failed to read from %s\n", input_file_path);
+        argp_print_usage(stderr);
+        fprintf(stderr, "Error: failed to read from %s\n", input_file_path);
         return 0;
     }
 
@@ -2678,7 +2679,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (*emit_ir) {
+    if (*target == TARGET_ZAG_IR) {
         print_ir_program(&c, stdout);
         return 0;
     }

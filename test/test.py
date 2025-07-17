@@ -71,9 +71,9 @@ tests = [
 ]
 
 test_cmds = {
-    "lex": "%zag -lex %s",
-    "ir": "%zag -emit-ir %s",
-    "x86_64-linux": "%zag -stdout %s > /tmp/tmp.o && objdump -M intel -d /tmp/tmp.o",
+    "lex": "%zag -l %s",
+    "ir": "%zag -t zag-ir %s",
+    "x86_64-linux": "%zag --stdout %s > /tmp/tmp.o && objdump -M intel -d /tmp/tmp.o",
 }
 
 if args.monochrome:
