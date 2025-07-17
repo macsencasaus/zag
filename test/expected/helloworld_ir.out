@@ -3,16 +3,21 @@
 ; @func[<max-stack-size>](<param-type>,...)
 
 extern @puts(ptr) i32
+extern @printf(ptr) i32
 
 @main[16]() i32:
     %s[8] = ref i8 %data[0]
     %s[0] = i32 call @puts(ptr %s[8])
     %s[8] = ref i8 %data[14]
     %s[0] = i32 call @puts(ptr %s[8])
+    %s[8] = ref i8 %data[26]
+    %s[0] = i32 call @printf(ptr %s[8])
     ret i32 0
 
 
 Data:
   0: 48 65 6C 6C 6F 2C 20 77 6F 72 6C 64          Hello,.world
   c: 21  0 42 72 75 68 20 6D 6F 6D 65 6E          !.Bruh.momen
- 18: 74  0                                        t.
+ 18: 74  0 48 65 6C 6C 6F 2C 20 77 6F 72          t.Hello,.wor
+ 24: 6C 64 21  A 20 77 69 74 68 20 61 20          ld!..with.a.
+ 30: 6E 65 77 6C 69 6E 65  A  0                   newline..

@@ -1567,7 +1567,20 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
         usize offset = c->data.size;
         for (usize i = 1; i < c->cur_token.lit.len - 1; ++i) {
             u8 ch = *da_at(&c->cur_token.lit, i);
-            sb_append(&c->data, ch);
+
+            if (ch == '\\') {
+                ++i;
+                u8 esc = *da_at(&c->cur_token.lit, i);
+                u8 value = one_char_esc_lookup[(usize)esc];
+                if (value) {
+                    sb_append(&c->data, value); 
+                } else {
+                    compiler_error(c, cur_loc(c), "Unkown escape character");
+                    return NULL;
+                }
+            } else {
+                sb_append(&c->data, ch);
+            }
         }
         sb_append_null(&c->data);
         usize size = c->data.size - offset;

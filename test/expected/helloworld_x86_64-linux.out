@@ -18,6 +18,11 @@ Disassembly of section .text:
   2a:	48 8b 7d f0          	mov    rdi,QWORD PTR [rbp-0x10]
   2e:	e8 00 00 00 00       	call   33 <main+0x33>
   33:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
-  36:	b8 00 00 00 00       	mov    eax,0x0
-  3b:	c9                   	leave
-  3c:	c3                   	ret
+  36:	48 8d 05 00 00 00 00 	lea    rax,[rip+0x0]        # 3d <main+0x3d>
+  3d:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  41:	48 8b 7d f0          	mov    rdi,QWORD PTR [rbp-0x10]
+  45:	e8 00 00 00 00       	call   4a <main+0x4a>
+  4a:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  4d:	b8 00 00 00 00       	mov    eax,0x0
+  52:	c9                   	leave
+  53:	c3                   	ret
