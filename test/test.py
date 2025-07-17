@@ -71,9 +71,9 @@ tests = [
 ]
 
 test_cmds = {
-    "lex": "%zag -l %s",
-    "ir": "%zag -t zag-ir --stdout %s",
-    "x86_64-linux": "%zag -o /tmp/tmp.o %s && objdump -M intel -d /tmp/tmp.o",
+    "lex": "%zag --lex %s",
+    "ir": "%zag --emit-zag-ir %s",
+    "x86_64-linux": "%zag -c -o /tmp/tmp.o %s && objdump -M intel -d /tmp/tmp.o",
 }
 
 if args.monochrome:
@@ -92,21 +92,20 @@ else:
         Test_State.Skipped: f"\033[90mx{RESET}",
     }
 
-print("Looking for zag binary... ", end="");
 if args.zag_binary is not None:
     if os.path.exists(args.zag_binary):
-        print(f"using {args.zag_binary}")
         zag_binary = args.zag_binary
     else:
         print(f"\nERROR: zag binary not found at {args.zag_binary}", file=sys.stderr)
         exit(1)
 else:
+    print("Looking for zag binary... ", end="");
     if os.path.exists(default_release_zag_build):
         zag_binary = default_release_zag_build
-        print(f"using {default_release_zag_build}")
+        print(f"found {default_release_zag_build}")
     elif os.path.exists(default_debug_zag_build):
         zag_binary = default_debug_zag_build
-        print(f"using {default_debug_zag_build}")
+        print(f"found {default_debug_zag_build}")
     else:
         print("\nERROR: zag binary not found", file=sys.stderr)
         exit(1)

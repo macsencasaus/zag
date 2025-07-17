@@ -2,6 +2,9 @@
 
 #include <libgen.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <wait.h>
 
 #ifndef NDEBUG
 #define DA_INIT_CAPACITY 1
@@ -2541,21 +2544,9 @@ bool compile_program(Compiler *c) {
 #include "x86_64_linux.c"
 #endif
 
-char *generate_out_file(const char *zag_file, const char *file_suffix) {
-    String_Builder sb = {0};
-    sb_append_cstr(&sb, zag_file);
-    if (sb.size > 4 &&
-        strncmp(sb.store + sb.size - 4, ".zag", 4) == 0) {
-        sb_pop(&sb, 4);
-    }
-    sb_append_cstr(&sb, file_suffix);
-    sb_append_null(&sb);
-    return sb.store;
-}
-
 static char *program_name;
 
-char *read_file(const char *file_name, usize *n) {
+static char *read_file(const char *file_name, usize *n) {
     FILE *file = fopen(file_name, "r");
     if (file == NULL) {
         return NULL;
@@ -2580,7 +2571,7 @@ char *read_file(const char *file_name, usize *n) {
     return buffer;
 }
 
-char *read_stdin(usize *n) {
+static char *read_stdin(usize *n) {
     int c;
     usize cap = 1024;
     usize len = 0;
@@ -2610,22 +2601,20 @@ char *read_stdin(usize *n) {
     return buffer;
 }
 
+INLINE char *stpcpy_fallback(char *dest, const char *src) {
+    while ((*dest++ = *src++));
+    return dest - 1;
+}
+
 #define STDIN_FILE_NAME "stdin"
 
 typedef enum {
-    TARGET_ZAG_IR,
     TARGET_NATIVE_X86_64_LINUX,
     TARGET_COUNT,
 } Target;
 
 const char *target_options[TARGET_COUNT] = {
-    [TARGET_ZAG_IR] = "zag-ir",
     [TARGET_NATIVE_X86_64_LINUX] = "x86_64-linux",
-};
-
-const char *target_file_suffix[TARGET_COUNT] = {
-    [TARGET_ZAG_IR] = ".s",
-    [TARGET_NATIVE_X86_64_LINUX] = ".o",
 };
 
 int main(int argc, char *argv[]) {
@@ -2634,12 +2623,16 @@ int main(int argc, char *argv[]) {
 
     argp_init(argc, argv, "Zag compiler", /* default_help */ true);
 
-    bool *lex = argp_flag_bool("l", "lex", "print lexer output then exit");
     Target *target = (Target *)argp_flag_enum("t", "target", target_options,
                                               TARGET_COUNT, TARGET_NATIVE_X86_64_LINUX,
                                               "target platform");
-    bool *to_stdout = argp_flag_bool(NULL, "stdout", "write to stdout");
     char **output_file = argp_flag_str("o", "output", "OUTPUT_FILE", NULL, "output file path");
+    bool *compile_assemble_only = argp_flag_bool("c", NULL, "compile and assemble but do not link");
+    char **cc_binary_arg = argp_flag_str(NULL, "cc-binary", "CC_BINARY", NULL,
+                                         "path to C compiler binary, defaults to `CC` environment variable then to cc");
+    bool *lex = argp_flag_bool(NULL, "lex", "print lexer output then exit");
+    bool *emit_ir = argp_flag_bool(NULL, "emit-zag-ir", "print zag intermediate representation then exit");
+
     char **file = argp_pos_str("file", NULL, false, "input file, use '-' for stdin");
 
     if (!argp_parse_args()) {
@@ -2651,9 +2644,9 @@ int main(int argc, char *argv[]) {
     static char temp[1024];
 
     char *input;
+    usize input_len;
     char *input_file_path;
     char *input_basename;
-    usize input_len;
     if (strcmp(*file, "-") == 0) {
         input_file_path = STDIN_FILE_NAME;
         input_basename = STDIN_FILE_NAME;
@@ -2676,8 +2669,10 @@ int main(int argc, char *argv[]) {
 
     Compiler c = {0};
 
-    char *out_file = NULL;
-    FILE *out = NULL;
+    String_Builder obj_filename = {0};
+    String_Builder exe_name = {0};
+
+    FILE *obj_file = NULL;
 
     if (*lex) {
         Token t;
@@ -2698,35 +2693,89 @@ int main(int argc, char *argv[]) {
         goto cleanup;
     }
 
-    if (*to_stdout) {
-        out = stdout;
-    } else {
-        if (*output_file) {
-            out_file = *output_file;
-        } else {
-            out_file = generate_out_file(input_basename, target_file_suffix[*target]);
-        }
-        out = fopen(out_file, "w");
-        if (!out) {
-            fprintf(stderr, "Error opening %s\n", out_file);
-            err = 1;
-            goto cleanup;
-        }
-    }
-
-    if (*target == TARGET_ZAG_IR) {
-        print_ir_program(&c, out);
+    if (*emit_ir) {
+        print_ir_program(&c, stdout);
         goto cleanup;
     }
 
-    x86_64_generate_program(&c, out);
+    if (*output_file) {
+        sb_append_cstr(&obj_filename, *output_file);
+        if (!*compile_assemble_only) {
+            sb_append_cstr(&obj_filename, ".o");
+        }
+    } else {
+        sb_append_cstr(&obj_filename, input_basename);
+        if (obj_filename.size > 4 &&
+            strncmp(obj_filename.store + obj_filename.size - 4, ".zag", 4) == 0) {
+            sb_pop(&obj_filename, 4);
+        }
+        sb_append_cstr(&obj_filename, ".o");
+    }
+    sb_append_null(&obj_filename);
+
+    obj_file = fopen(obj_filename.store, "w");
+    if (!obj_file) {
+        fprintf(stderr, "Error opening %s\n", obj_filename.store);
+        err = 1;
+        goto cleanup;
+    }
+
+    if (*target == TARGET_NATIVE_X86_64_LINUX)
+        x86_64_generate_program(&c, obj_file);
+
+    fclose(obj_file);
+    obj_file = NULL;
+
+    if (*compile_assemble_only)
+        goto cleanup;
+
+    char *cc_binary = "cc";
+    if (*cc_binary_arg) {
+        cc_binary = *cc_binary_arg;
+    } else {
+        char *cc_env = getenv("CC");
+        if (cc_env)
+            cc_binary = cc_env;
+    }
+
+    if (*output_file) {
+        sb_append_cstr(&exe_name, *output_file);
+    } else {
+        sb_append_cstr(&exe_name, input_basename);
+        if (exe_name.size > 4 &&
+            strncmp(exe_name.store + exe_name.size - 4, ".zag", 4) == 0) {
+            sb_pop(&exe_name, 4);
+        }
+    }
+    sb_append_null(&exe_name);
+
+    char *args[] = {cc_binary, "-o", exe_name.store, obj_filename.store, NULL};
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        execvp(cc_binary, args);
+        perror("Error: failed to start linker");
+        exit(1);
+    } else if (pid > 0) {
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            err = status;
+        } else {
+            fprintf(stderr, "Error: linker failed\n");
+            err = 1;
+        }
+    } else {
+        perror("Error: linker fork failed");
+        err = 1;
+    }
 
 cleanup:
-    if (!*to_stdout && !*output_file)
-        free(out_file);
+    sb_free(&exe_name);
+    sb_free(&obj_filename);
+    if (obj_file) fclose(obj_file);
 
     compiler_destroy(&c);
-    if (out) fclose(out);
     free(input);
 
     return err;

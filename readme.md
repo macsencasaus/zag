@@ -18,13 +18,12 @@ Once built, you can compile a Zag source file with
 ```bash
 zag my_program.zag
 ```
-This produces a relocatable object file. 
-In this case, `my_program.o`.
-Then link with the C runtime with a C compiler:
-```bash
-cc my_program.o -o my_program
-```
-for the final executable.
+This produces a relocatable object file and an executable.
+
+Since the compiler depends on the C runtime, it requires a C compiler.
+It defaults to the `cc` executable if the `CC` environment variable or `--cc-binary` flag are not set.
+
+Use the `-h` flag for more options.
 
 ## The language
 
