@@ -2673,7 +2673,7 @@ int main(int argc, char *argv[]) {
         assert(out);
     }
 
-    generate_program(&c, out);
+    x86_64_generate_program(&c, out);
 
     if (!*to_stdout) {
         printf("Wrote relocatable object file to %s\n", out_file);
