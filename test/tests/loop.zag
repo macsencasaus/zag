@@ -1,6 +1,6 @@
 // TEST: lex, ir, x86_64-linux
 
-fn loop() i64 {
+fn loop() i32 {
     var x = 0;
 
     while (x < 1000) {
@@ -10,7 +10,7 @@ fn loop() i64 {
     return x;
 }
 
-fn loop_break() i64 {
+fn loop_break() i32 {
     var x = 0;
 
     while (x < 1000) {
@@ -23,7 +23,7 @@ fn loop_break() i64 {
 }
 
 fn loop_continue() i64{
-    var x = 0;
+    var x: i64 = 0;
 
     while (x < 1000) {
         ++x;

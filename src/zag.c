@@ -488,7 +488,7 @@ typedef enum {
     BUILTIN_TYPE_ID_COUNT,
 } Builtin_Type_Id;
 
-#define DEFAULT_INT_LITERAL_TYPE_ID TYPE_I64
+#define DEFAULT_INT_LITERAL_TYPE_ID TYPE_I32
 
 typedef enum {
     TYPE_KIND_INT_SIGNED,

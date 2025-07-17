@@ -9,93 +9,93 @@ Disassembly of section .text:
    1:	48 89 e5             	mov    rbp,rsp
    4:	48 83 ec 10          	sub    rsp,0x10
    8:	b8 00 00 00 00       	mov    eax,0x0
-   d:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
-  11:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  15:	b9 e8 03 00 00       	mov    ecx,0x3e8
-  1a:	48 39 c8             	cmp    rax,rcx
-  1d:	0f 9c c0             	setl   al
-  20:	48 0f b6 c0          	movzx  rax,al
-  24:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
-  28:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
-  2c:	48 85 c0             	test   rax,rax
-  2f:	0f 84 15 00 00 00    	je     4a <loop+0x4a>
-  35:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  39:	b9 01 00 00 00       	mov    ecx,0x1
-  3e:	48 01 c8             	add    rax,rcx
-  41:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
-  45:	e9 c7 ff ff ff       	jmp    11 <loop+0x11>
-  4a:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  4e:	c9                   	leave
-  4f:	c3                   	ret
+   d:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  10:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  13:	b9 e8 03 00 00       	mov    ecx,0x3e8
+  18:	39 c8                	cmp    eax,ecx
+  1a:	0f 9c c0             	setl   al
+  1d:	0f b6 c0             	movzx  eax,al
+  20:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  23:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+  26:	85 c0                	test   eax,eax
+  28:	0f 84 12 00 00 00    	je     40 <loop+0x40>
+  2e:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  31:	b9 01 00 00 00       	mov    ecx,0x1
+  36:	01 c8                	add    eax,ecx
+  38:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  3b:	e9 d0 ff ff ff       	jmp    10 <loop+0x10>
+  40:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  43:	c9                   	leave
+  44:	c3                   	ret
 
-0000000000000050 <loop_break>:
-  50:	55                   	push   rbp
-  51:	48 89 e5             	mov    rbp,rsp
-  54:	48 83 ec 10          	sub    rsp,0x10
-  58:	b8 00 00 00 00       	mov    eax,0x0
-  5d:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
-  61:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  65:	b9 e8 03 00 00       	mov    ecx,0x3e8
-  6a:	48 39 c8             	cmp    rax,rcx
-  6d:	0f 9c c0             	setl   al
-  70:	48 0f b6 c0          	movzx  rax,al
-  74:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
-  78:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
-  7c:	48 85 c0             	test   rax,rax
-  7f:	0f 84 3e 00 00 00    	je     c3 <loop_break+0x73>
-  85:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  89:	b9 01 00 00 00       	mov    ecx,0x1
-  8e:	48 01 c8             	add    rax,rcx
-  91:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
-  95:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  99:	b9 f4 01 00 00       	mov    ecx,0x1f4
-  9e:	48 39 c8             	cmp    rax,rcx
-  a1:	0f 94 c0             	sete   al
-  a4:	48 0f b6 c0          	movzx  rax,al
-  a8:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
-  ac:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
-  b0:	48 85 c0             	test   rax,rax
-  b3:	0f 84 05 00 00 00    	je     be <loop_break+0x6e>
-  b9:	e9 05 00 00 00       	jmp    c3 <loop_break+0x73>
-  be:	e9 9e ff ff ff       	jmp    61 <loop_break+0x11>
-  c3:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  c7:	c9                   	leave
-  c8:	c3                   	ret
+0000000000000045 <loop_break>:
+  45:	55                   	push   rbp
+  46:	48 89 e5             	mov    rbp,rsp
+  49:	48 83 ec 10          	sub    rsp,0x10
+  4d:	b8 00 00 00 00       	mov    eax,0x0
+  52:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  55:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  58:	b9 e8 03 00 00       	mov    ecx,0x3e8
+  5d:	39 c8                	cmp    eax,ecx
+  5f:	0f 9c c0             	setl   al
+  62:	0f b6 c0             	movzx  eax,al
+  65:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  68:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+  6b:	85 c0                	test   eax,eax
+  6d:	0f 84 35 00 00 00    	je     a8 <loop_break+0x63>
+  73:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  76:	b9 01 00 00 00       	mov    ecx,0x1
+  7b:	01 c8                	add    eax,ecx
+  7d:	89 45 fc             	mov    DWORD PTR [rbp-0x4],eax
+  80:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  83:	b9 f4 01 00 00       	mov    ecx,0x1f4
+  88:	39 c8                	cmp    eax,ecx
+  8a:	0f 94 c0             	sete   al
+  8d:	0f b6 c0             	movzx  eax,al
+  90:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
+  93:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
+  96:	85 c0                	test   eax,eax
+  98:	0f 84 05 00 00 00    	je     a3 <loop_break+0x5e>
+  9e:	e9 05 00 00 00       	jmp    a8 <loop_break+0x63>
+  a3:	e9 ad ff ff ff       	jmp    55 <loop_break+0x10>
+  a8:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
+  ab:	c9                   	leave
+  ac:	c3                   	ret
 
-00000000000000c9 <loop_continue>:
-  c9:	55                   	push   rbp
-  ca:	48 89 e5             	mov    rbp,rsp
-  cd:	48 83 ec 10          	sub    rsp,0x10
-  d1:	b8 00 00 00 00       	mov    eax,0x0
-  d6:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
-  da:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  de:	b9 e8 03 00 00       	mov    ecx,0x3e8
-  e3:	48 39 c8             	cmp    rax,rcx
-  e6:	0f 9c c0             	setl   al
-  e9:	48 0f b6 c0          	movzx  rax,al
-  ed:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
-  f1:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
-  f5:	48 85 c0             	test   rax,rax
-  f8:	0f 84 4e 00 00 00    	je     14c <loop_continue+0x83>
-  fe:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
- 102:	b9 01 00 00 00       	mov    ecx,0x1
- 107:	48 01 c8             	add    rax,rcx
- 10a:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
- 10e:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
- 112:	b9 f4 01 00 00       	mov    ecx,0x1f4
- 117:	48 39 c8             	cmp    rax,rcx
- 11a:	0f 9f c0             	setg   al
- 11d:	48 0f b6 c0          	movzx  rax,al
- 121:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
- 125:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
- 129:	48 85 c0             	test   rax,rax
- 12c:	0f 84 05 00 00 00    	je     137 <loop_continue+0x6e>
- 132:	e9 a3 ff ff ff       	jmp    da <loop_continue+0x11>
- 137:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
- 13b:	b9 01 00 00 00       	mov    ecx,0x1
- 140:	48 01 c8             	add    rax,rcx
- 143:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
- 147:	e9 8e ff ff ff       	jmp    da <loop_continue+0x11>
- 14c:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
- 150:	c9                   	leave
- 151:	c3                   	ret
+00000000000000ad <loop_continue>:
+  ad:	55                   	push   rbp
+  ae:	48 89 e5             	mov    rbp,rsp
+  b1:	48 83 ec 10          	sub    rsp,0x10
+  b5:	b8 00 00 00 00       	mov    eax,0x0
+  ba:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  be:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  c2:	b9 e8 03 00 00       	mov    ecx,0x3e8
+  c7:	48 39 c8             	cmp    rax,rcx
+  ca:	0f 9c c0             	setl   al
+  cd:	48 0f b6 c0          	movzx  rax,al
+  d1:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+  d5:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+  d9:	48 85 c0             	test   rax,rax
+  dc:	0f 84 4e 00 00 00    	je     130 <loop_continue+0x83>
+  e2:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  e6:	b9 01 00 00 00       	mov    ecx,0x1
+  eb:	48 01 c8             	add    rax,rcx
+  ee:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+  f2:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+  f6:	b9 f4 01 00 00       	mov    ecx,0x1f4
+  fb:	48 39 c8             	cmp    rax,rcx
+  fe:	0f 9f c0             	setg   al
+ 101:	48 0f b6 c0          	movzx  rax,al
+ 105:	48 89 45 f0          	mov    QWORD PTR [rbp-0x10],rax
+ 109:	48 8b 45 f0          	mov    rax,QWORD PTR [rbp-0x10]
+ 10d:	48 85 c0             	test   rax,rax
+ 110:	0f 84 05 00 00 00    	je     11b <loop_continue+0x6e>
+ 116:	e9 a3 ff ff ff       	jmp    be <loop_continue+0x11>
+ 11b:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+ 11f:	b9 01 00 00 00       	mov    ecx,0x1
+ 124:	48 01 c8             	add    rax,rcx
+ 127:	48 89 45 f8          	mov    QWORD PTR [rbp-0x8],rax
+ 12b:	e9 8e ff ff ff       	jmp    be <loop_continue+0x11>
+ 130:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
+ 134:	c9                   	leave
+ 135:	c3                   	ret

@@ -26,23 +26,31 @@ int literal: 3 at 5:30 in tests/funcs.zag
 ';': ; at 5:31 in tests/funcs.zag
 var: var at 6:5 in tests/funcs.zag
 identifier: aa at 6:9 in tests/funcs.zag
-'=': = at 6:12 in tests/funcs.zag
-int literal: 3 at 6:14 in tests/funcs.zag
-';': ; at 6:15 in tests/funcs.zag
+':': : at 6:11 in tests/funcs.zag
+identifier: i64 at 6:13 in tests/funcs.zag
+'=': = at 6:17 in tests/funcs.zag
+int literal: 3 at 6:19 in tests/funcs.zag
+';': ; at 6:20 in tests/funcs.zag
 var: var at 7:5 in tests/funcs.zag
 identifier: bb at 7:9 in tests/funcs.zag
-'=': = at 7:12 in tests/funcs.zag
-int literal: 0 at 7:14 in tests/funcs.zag
-';': ; at 7:15 in tests/funcs.zag
+':': : at 7:11 in tests/funcs.zag
+identifier: i64 at 7:13 in tests/funcs.zag
+'=': = at 7:17 in tests/funcs.zag
+int literal: 0 at 7:19 in tests/funcs.zag
+';': ; at 7:20 in tests/funcs.zag
 var: var at 8:5 in tests/funcs.zag
 identifier: zz at 8:9 in tests/funcs.zag
-'=': = at 8:12 in tests/funcs.zag
-int literal: 1 at 8:14 in tests/funcs.zag
-',': , at 8:15 in tests/funcs.zag
-identifier: yy at 8:17 in tests/funcs.zag
-'=': = at 8:20 in tests/funcs.zag
-int literal: 10 at 8:22 in tests/funcs.zag
-';': ; at 8:24 in tests/funcs.zag
+':': : at 8:11 in tests/funcs.zag
+identifier: i64 at 8:13 in tests/funcs.zag
+'=': = at 8:17 in tests/funcs.zag
+int literal: 1 at 8:19 in tests/funcs.zag
+',': , at 8:20 in tests/funcs.zag
+identifier: yy at 8:22 in tests/funcs.zag
+':': : at 8:24 in tests/funcs.zag
+identifier: i64 at 8:26 in tests/funcs.zag
+'=': = at 8:30 in tests/funcs.zag
+int literal: 10 at 8:32 in tests/funcs.zag
+';': ; at 8:34 in tests/funcs.zag
 return: return at 9:5 in tests/funcs.zag
 int literal: 0 at 9:12 in tests/funcs.zag
 ';': ; at 9:13 in tests/funcs.zag
@@ -178,9 +186,11 @@ identifier: i32 at 39:11 in tests/funcs.zag
 '{': { at 39:15 in tests/funcs.zag
 var: var at 40:5 in tests/funcs.zag
 identifier: x at 40:9 in tests/funcs.zag
-'=': = at 40:11 in tests/funcs.zag
-int literal: 3 at 40:13 in tests/funcs.zag
-';': ; at 40:14 in tests/funcs.zag
+':': : at 40:10 in tests/funcs.zag
+identifier: i64 at 40:12 in tests/funcs.zag
+'=': = at 40:16 in tests/funcs.zag
+int literal: 3 at 40:18 in tests/funcs.zag
+';': ; at 40:19 in tests/funcs.zag
 var: var at 41:5 in tests/funcs.zag
 identifier: p at 41:9 in tests/funcs.zag
 ':': : at 41:10 in tests/funcs.zag

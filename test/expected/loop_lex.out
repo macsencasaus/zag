@@ -2,7 +2,7 @@ fn: fn at 3:1 in tests/loop.zag
 identifier: loop at 3:4 in tests/loop.zag
 '(': ( at 3:8 in tests/loop.zag
 ')': ) at 3:9 in tests/loop.zag
-identifier: i64 at 3:11 in tests/loop.zag
+identifier: i32 at 3:11 in tests/loop.zag
 '{': { at 3:15 in tests/loop.zag
 var: var at 4:5 in tests/loop.zag
 identifier: x at 4:9 in tests/loop.zag
@@ -28,7 +28,7 @@ fn: fn at 13:1 in tests/loop.zag
 identifier: loop_break at 13:4 in tests/loop.zag
 '(': ( at 13:14 in tests/loop.zag
 ')': ) at 13:15 in tests/loop.zag
-identifier: i64 at 13:17 in tests/loop.zag
+identifier: i32 at 13:17 in tests/loop.zag
 '{': { at 13:21 in tests/loop.zag
 var: var at 14:5 in tests/loop.zag
 identifier: x at 14:9 in tests/loop.zag
@@ -66,9 +66,11 @@ identifier: i64 at 25:20 in tests/loop.zag
 '{': { at 25:23 in tests/loop.zag
 var: var at 26:5 in tests/loop.zag
 identifier: x at 26:9 in tests/loop.zag
-'=': = at 26:11 in tests/loop.zag
-int literal: 0 at 26:13 in tests/loop.zag
-';': ; at 26:14 in tests/loop.zag
+':': : at 26:10 in tests/loop.zag
+identifier: i64 at 26:12 in tests/loop.zag
+'=': = at 26:16 in tests/loop.zag
+int literal: 0 at 26:18 in tests/loop.zag
+';': ; at 26:19 in tests/loop.zag
 while: while at 28:5 in tests/loop.zag
 '(': ( at 28:11 in tests/loop.zag
 identifier: x at 28:12 in tests/loop.zag
