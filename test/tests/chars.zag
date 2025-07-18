@@ -1,5 +1,7 @@
 // TEST: lex, ir, x86_64-linux
 
+extern fn printf(fmt: *u8, ...) i32;
+
 fn main() i32 {
     var a = 'a';
     var b = '\xA';
@@ -7,6 +9,13 @@ fn main() i32 {
     var bbb = '\xFF';
     var c = '\377';
     var newline = '\n';
+
+    printf(&"a = %c\n", a);
+    printf(&"b = %X\n", b);
+    printf(&"bb = %X\n", bb);
+    printf(&"bbb = %X\n", bbb);
+    printf(&"c = %d\n", c);
+    printf(&"newline = %d\n", newline);
 
     return '';
 }

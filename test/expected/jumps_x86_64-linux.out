@@ -1,38 +1,13 @@
-
-/tmp/tmp.o:     file format elf64-x86-64
-
-
-Disassembly of section .text:
-
-0000000000000000 <ifs>:
-   0:	55                   	push   rbp
-   1:	48 89 e5             	mov    rbp,rsp
-   4:	48 83 ec 10          	sub    rsp,0x10
-   8:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
-   b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-   e:	85 c0                	test   eax,eax
-  10:	0f 84 0d 00 00 00    	je     23 <ifs+0x23>
-  16:	b8 01 00 00 00       	mov    eax,0x1
-  1b:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
-  1e:	e9 08 00 00 00       	jmp    2b <ifs+0x2b>
-  23:	b8 02 00 00 00       	mov    eax,0x2
-  28:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
-  2b:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
-  2e:	c9                   	leave
-  2f:	c3                   	ret
-
-0000000000000030 <more_ifs>:
-  30:	55                   	push   rbp
-  31:	48 89 e5             	mov    rbp,rsp
-  34:	48 83 ec 10          	sub    rsp,0x10
-  38:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
-  3b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  3e:	85 c0                	test   eax,eax
-  40:	0f 84 0a 00 00 00    	je     50 <more_ifs+0x20>
-  46:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  49:	c9                   	leave
-  4a:	c3                   	ret
-  4b:	e9 07 00 00 00       	jmp    57 <more_ifs+0x27>
-  50:	b8 00 00 00 00       	mov    eax,0x0
-  55:	c9                   	leave
-  56:	c3                   	ret
+ifs(0) = 2
+ifs(1) = 1
+more_ifs(0) = 0
+more_ifs(42) = 42
+nested_ifs(1, 1) = 1
+nested_ifs(1, 0) = 2
+nested_ifs(0, 0) = 3
+early_return(0) = -1
+early_return(-5) = -2
+early_return(7) = 7
+fallthrough(11) = 110
+fallthrough(6) = 10
+fallthrough(3) = 0

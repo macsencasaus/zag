@@ -1,5 +1,7 @@
 // TEST: lex, ir, x86_64-linux
 
+extern fn printf(fmt: *u8, ...) i32;
+
 fn id(x: i32) i32 {
     return x;
 }
@@ -22,4 +24,35 @@ fn factorial_tail(n: u32, res: u32) u32 {
 
 fn func_ptrs(func: fn(i32) i32) i32 {
     return func(2);
+}
+
+// Additional identity functions
+fn id_u8(x: u8) u8 { return x; }
+fn id_i8(x: i8) i8 { return x; }
+fn id_u16(x: u16) u16 { return x; }
+fn id_i16(x: i16) i16 { return x; }
+fn id_u32(x: u32) u32 { return x; }
+fn id_i32(x: i32) i32 { return x; }
+fn id_u64(x: u64) u64 { return x; }
+fn id_i64(x: i64) i64 { return x; }
+
+fn main() i32 {
+    // Basic call tests
+    printf(&"id(42) = %d\n", id(42));
+    printf(&"call_id(13) = %d\n", call_id(13));
+    printf(&"factorial(5) = %u\n", factorial(5));
+    printf(&"factorial_tail(5, 1) = %u\n", factorial_tail(5, 1));
+    printf(&"func_ptrs(id) = %d\n", func_ptrs(id));
+
+    // Identity function tests
+    printf(&"id_u8(255) = %u\n", id_u8(255));
+    printf(&"id_i8(-128) = %d\n", id_i8(-128));
+    printf(&"id_u16(65535) = %u\n", id_u16(65535));
+    printf(&"id_i16(-32768) = %d\n", id_i16(-32768));
+    printf(&"id_u32(123456789) = %u\n", id_u32(123456789));
+    printf(&"id_i32(-123456789) = %d\n", id_i32(-123456789));
+    printf(&"id_u64(1234567890123456789) = %lu\n", id_u64(1234567890123456789));
+    printf(&"id_i64(-1234567890123456789) = %ld\n", id_i64(-1234567890123456789));
+
+    return 0;
 }

@@ -1,25 +1,38 @@
-fn: fn at 3:1 in tests/loop.zag
-identifier: loop at 3:4 in tests/loop.zag
-'(': ( at 3:8 in tests/loop.zag
-')': ) at 3:9 in tests/loop.zag
-identifier: i32 at 3:11 in tests/loop.zag
-'{': { at 3:15 in tests/loop.zag
-var: var at 4:5 in tests/loop.zag
-identifier: x at 4:9 in tests/loop.zag
-'=': = at 4:11 in tests/loop.zag
-int literal: 0 at 4:13 in tests/loop.zag
-';': ; at 4:14 in tests/loop.zag
-while: while at 6:5 in tests/loop.zag
-'(': ( at 6:11 in tests/loop.zag
-identifier: x at 6:12 in tests/loop.zag
-'<': < at 6:14 in tests/loop.zag
-int literal: 1000 at 6:16 in tests/loop.zag
-')': ) at 6:20 in tests/loop.zag
-'{': { at 6:22 in tests/loop.zag
-'++': ++ at 7:9 in tests/loop.zag
-identifier: x at 7:11 in tests/loop.zag
-';': ; at 7:12 in tests/loop.zag
-'}': } at 8:5 in tests/loop.zag
+extern: extern at 3:1 in tests/loop.zag
+fn: fn at 3:8 in tests/loop.zag
+identifier: printf at 3:11 in tests/loop.zag
+'(': ( at 3:17 in tests/loop.zag
+identifier: fmt at 3:18 in tests/loop.zag
+':': : at 3:21 in tests/loop.zag
+'*': * at 3:23 in tests/loop.zag
+identifier: u8 at 3:24 in tests/loop.zag
+',': , at 3:26 in tests/loop.zag
+'...': ... at 3:28 in tests/loop.zag
+')': ) at 3:31 in tests/loop.zag
+identifier: i32 at 3:33 in tests/loop.zag
+';': ; at 3:36 in tests/loop.zag
+fn: fn at 5:1 in tests/loop.zag
+identifier: loop at 5:4 in tests/loop.zag
+'(': ( at 5:8 in tests/loop.zag
+')': ) at 5:9 in tests/loop.zag
+identifier: i32 at 5:11 in tests/loop.zag
+'{': { at 5:15 in tests/loop.zag
+var: var at 6:5 in tests/loop.zag
+identifier: x at 6:9 in tests/loop.zag
+'=': = at 6:11 in tests/loop.zag
+int literal: 0 at 6:13 in tests/loop.zag
+';': ; at 6:14 in tests/loop.zag
+while: while at 7:5 in tests/loop.zag
+'(': ( at 7:11 in tests/loop.zag
+identifier: x at 7:12 in tests/loop.zag
+'<': < at 7:14 in tests/loop.zag
+int literal: 1000 at 7:16 in tests/loop.zag
+')': ) at 7:20 in tests/loop.zag
+'{': { at 7:22 in tests/loop.zag
+'++': ++ at 8:9 in tests/loop.zag
+identifier: x at 8:11 in tests/loop.zag
+';': ; at 8:12 in tests/loop.zag
+'}': } at 9:5 in tests/loop.zag
 return: return at 10:5 in tests/loop.zag
 identifier: x at 10:12 in tests/loop.zag
 ';': ; at 10:13 in tests/loop.zag
@@ -35,66 +48,296 @@ identifier: x at 14:9 in tests/loop.zag
 '=': = at 14:11 in tests/loop.zag
 int literal: 0 at 14:13 in tests/loop.zag
 ';': ; at 14:14 in tests/loop.zag
-while: while at 16:5 in tests/loop.zag
-'(': ( at 16:11 in tests/loop.zag
-identifier: x at 16:12 in tests/loop.zag
-'<': < at 16:14 in tests/loop.zag
-int literal: 1000 at 16:16 in tests/loop.zag
-')': ) at 16:20 in tests/loop.zag
-'{': { at 16:22 in tests/loop.zag
-'++': ++ at 17:9 in tests/loop.zag
-identifier: x at 17:11 in tests/loop.zag
-';': ; at 17:12 in tests/loop.zag
-if: if at 18:9 in tests/loop.zag
-'(': ( at 18:12 in tests/loop.zag
-identifier: x at 18:13 in tests/loop.zag
-'==': == at 18:15 in tests/loop.zag
-int literal: 500 at 18:18 in tests/loop.zag
-')': ) at 18:21 in tests/loop.zag
-break: break at 19:13 in tests/loop.zag
-';': ; at 19:18 in tests/loop.zag
-'}': } at 20:5 in tests/loop.zag
-return: return at 22:5 in tests/loop.zag
-identifier: x at 22:12 in tests/loop.zag
-';': ; at 22:13 in tests/loop.zag
-'}': } at 23:1 in tests/loop.zag
-fn: fn at 25:1 in tests/loop.zag
-identifier: loop_continue at 25:4 in tests/loop.zag
-'(': ( at 25:17 in tests/loop.zag
-')': ) at 25:18 in tests/loop.zag
-identifier: i64 at 25:20 in tests/loop.zag
-'{': { at 25:23 in tests/loop.zag
-var: var at 26:5 in tests/loop.zag
-identifier: x at 26:9 in tests/loop.zag
-':': : at 26:10 in tests/loop.zag
-identifier: i64 at 26:12 in tests/loop.zag
-'=': = at 26:16 in tests/loop.zag
-int literal: 0 at 26:18 in tests/loop.zag
-';': ; at 26:19 in tests/loop.zag
-while: while at 28:5 in tests/loop.zag
-'(': ( at 28:11 in tests/loop.zag
-identifier: x at 28:12 in tests/loop.zag
-'<': < at 28:14 in tests/loop.zag
-int literal: 1000 at 28:16 in tests/loop.zag
-')': ) at 28:20 in tests/loop.zag
-'{': { at 28:22 in tests/loop.zag
+while: while at 15:5 in tests/loop.zag
+'(': ( at 15:11 in tests/loop.zag
+identifier: x at 15:12 in tests/loop.zag
+'<': < at 15:14 in tests/loop.zag
+int literal: 1000 at 15:16 in tests/loop.zag
+')': ) at 15:20 in tests/loop.zag
+'{': { at 15:22 in tests/loop.zag
+'++': ++ at 16:9 in tests/loop.zag
+identifier: x at 16:11 in tests/loop.zag
+';': ; at 16:12 in tests/loop.zag
+if: if at 17:9 in tests/loop.zag
+'(': ( at 17:12 in tests/loop.zag
+identifier: x at 17:13 in tests/loop.zag
+'==': == at 17:15 in tests/loop.zag
+int literal: 500 at 17:18 in tests/loop.zag
+')': ) at 17:21 in tests/loop.zag
+break: break at 18:13 in tests/loop.zag
+';': ; at 18:18 in tests/loop.zag
+'}': } at 19:5 in tests/loop.zag
+return: return at 20:5 in tests/loop.zag
+identifier: x at 20:12 in tests/loop.zag
+';': ; at 20:13 in tests/loop.zag
+'}': } at 21:1 in tests/loop.zag
+fn: fn at 23:1 in tests/loop.zag
+identifier: loop_continue at 23:4 in tests/loop.zag
+'(': ( at 23:17 in tests/loop.zag
+')': ) at 23:18 in tests/loop.zag
+identifier: i64 at 23:20 in tests/loop.zag
+'{': { at 23:24 in tests/loop.zag
+var: var at 24:5 in tests/loop.zag
+identifier: x at 24:9 in tests/loop.zag
+':': : at 24:10 in tests/loop.zag
+identifier: i64 at 24:12 in tests/loop.zag
+'=': = at 24:16 in tests/loop.zag
+int literal: 0 at 24:18 in tests/loop.zag
+';': ; at 24:19 in tests/loop.zag
+while: while at 25:5 in tests/loop.zag
+'(': ( at 25:11 in tests/loop.zag
+identifier: x at 25:12 in tests/loop.zag
+'<': < at 25:14 in tests/loop.zag
+int literal: 1000 at 25:16 in tests/loop.zag
+')': ) at 25:20 in tests/loop.zag
+'{': { at 25:22 in tests/loop.zag
+'++': ++ at 26:9 in tests/loop.zag
+identifier: x at 26:11 in tests/loop.zag
+';': ; at 26:12 in tests/loop.zag
+if: if at 27:9 in tests/loop.zag
+'(': ( at 27:12 in tests/loop.zag
+identifier: x at 27:13 in tests/loop.zag
+'>': > at 27:15 in tests/loop.zag
+int literal: 500 at 27:17 in tests/loop.zag
+')': ) at 27:20 in tests/loop.zag
+continue: continue at 28:13 in tests/loop.zag
+';': ; at 28:21 in tests/loop.zag
 '++': ++ at 29:9 in tests/loop.zag
 identifier: x at 29:11 in tests/loop.zag
 ';': ; at 29:12 in tests/loop.zag
-if: if at 30:9 in tests/loop.zag
-'(': ( at 30:12 in tests/loop.zag
-identifier: x at 30:13 in tests/loop.zag
-'>': > at 30:15 in tests/loop.zag
-int literal: 500 at 30:17 in tests/loop.zag
-')': ) at 30:20 in tests/loop.zag
-continue: continue at 31:13 in tests/loop.zag
-';': ; at 31:21 in tests/loop.zag
-'++': ++ at 32:9 in tests/loop.zag
-identifier: x at 32:11 in tests/loop.zag
-';': ; at 32:12 in tests/loop.zag
-'}': } at 33:5 in tests/loop.zag
-return: return at 35:5 in tests/loop.zag
-identifier: x at 35:12 in tests/loop.zag
-';': ; at 35:13 in tests/loop.zag
-'}': } at 36:1 in tests/loop.zag
-EOF:  at 37:1 in tests/loop.zag
+'}': } at 30:5 in tests/loop.zag
+return: return at 31:5 in tests/loop.zag
+identifier: x at 31:12 in tests/loop.zag
+';': ; at 31:13 in tests/loop.zag
+'}': } at 32:1 in tests/loop.zag
+fn: fn at 34:1 in tests/loop.zag
+identifier: count_down at 34:4 in tests/loop.zag
+'(': ( at 34:14 in tests/loop.zag
+')': ) at 34:15 in tests/loop.zag
+identifier: i32 at 34:17 in tests/loop.zag
+'{': { at 34:21 in tests/loop.zag
+var: var at 35:5 in tests/loop.zag
+identifier: x at 35:9 in tests/loop.zag
+'=': = at 35:11 in tests/loop.zag
+int literal: 10 at 35:13 in tests/loop.zag
+';': ; at 35:15 in tests/loop.zag
+var: var at 36:5 in tests/loop.zag
+identifier: sum at 36:9 in tests/loop.zag
+'=': = at 36:13 in tests/loop.zag
+int literal: 0 at 36:15 in tests/loop.zag
+';': ; at 36:16 in tests/loop.zag
+while: while at 37:5 in tests/loop.zag
+'(': ( at 37:11 in tests/loop.zag
+identifier: x at 37:12 in tests/loop.zag
+'>': > at 37:14 in tests/loop.zag
+int literal: 0 at 37:16 in tests/loop.zag
+')': ) at 37:17 in tests/loop.zag
+'{': { at 37:19 in tests/loop.zag
+identifier: sum at 38:9 in tests/loop.zag
+'=': = at 38:13 in tests/loop.zag
+identifier: sum at 38:15 in tests/loop.zag
+'+': + at 38:19 in tests/loop.zag
+identifier: x at 38:21 in tests/loop.zag
+';': ; at 38:22 in tests/loop.zag
+'--': -- at 39:9 in tests/loop.zag
+identifier: x at 39:11 in tests/loop.zag
+';': ; at 39:12 in tests/loop.zag
+'}': } at 40:5 in tests/loop.zag
+return: return at 41:5 in tests/loop.zag
+identifier: sum at 41:12 in tests/loop.zag
+';': ; at 41:15 in tests/loop.zag
+'}': } at 42:1 in tests/loop.zag
+fn: fn at 44:1 in tests/loop.zag
+identifier: nested_loop at 44:4 in tests/loop.zag
+'(': ( at 44:15 in tests/loop.zag
+')': ) at 44:16 in tests/loop.zag
+identifier: i32 at 44:18 in tests/loop.zag
+'{': { at 44:22 in tests/loop.zag
+var: var at 45:5 in tests/loop.zag
+identifier: outer at 45:9 in tests/loop.zag
+'=': = at 45:15 in tests/loop.zag
+int literal: 0 at 45:17 in tests/loop.zag
+';': ; at 45:18 in tests/loop.zag
+var: var at 46:5 in tests/loop.zag
+identifier: total at 46:9 in tests/loop.zag
+'=': = at 46:15 in tests/loop.zag
+int literal: 0 at 46:17 in tests/loop.zag
+';': ; at 46:18 in tests/loop.zag
+while: while at 47:5 in tests/loop.zag
+'(': ( at 47:11 in tests/loop.zag
+identifier: outer at 47:12 in tests/loop.zag
+'<': < at 47:18 in tests/loop.zag
+int literal: 3 at 47:20 in tests/loop.zag
+')': ) at 47:21 in tests/loop.zag
+'{': { at 47:23 in tests/loop.zag
+var: var at 48:9 in tests/loop.zag
+identifier: inner at 48:13 in tests/loop.zag
+'=': = at 48:19 in tests/loop.zag
+int literal: 0 at 48:21 in tests/loop.zag
+';': ; at 48:22 in tests/loop.zag
+while: while at 49:9 in tests/loop.zag
+'(': ( at 49:15 in tests/loop.zag
+identifier: inner at 49:16 in tests/loop.zag
+'<': < at 49:22 in tests/loop.zag
+int literal: 3 at 49:24 in tests/loop.zag
+')': ) at 49:25 in tests/loop.zag
+'{': { at 49:27 in tests/loop.zag
+identifier: total at 50:13 in tests/loop.zag
+'=': = at 50:19 in tests/loop.zag
+identifier: total at 50:21 in tests/loop.zag
+'+': + at 50:27 in tests/loop.zag
+int literal: 1 at 50:29 in tests/loop.zag
+';': ; at 50:30 in tests/loop.zag
+'++': ++ at 51:13 in tests/loop.zag
+identifier: inner at 51:15 in tests/loop.zag
+';': ; at 51:20 in tests/loop.zag
+'}': } at 52:9 in tests/loop.zag
+'++': ++ at 53:9 in tests/loop.zag
+identifier: outer at 53:11 in tests/loop.zag
+';': ; at 53:16 in tests/loop.zag
+'}': } at 54:5 in tests/loop.zag
+return: return at 55:5 in tests/loop.zag
+identifier: total at 55:12 in tests/loop.zag
+';': ; at 55:17 in tests/loop.zag
+'}': } at 56:1 in tests/loop.zag
+fn: fn at 58:1 in tests/loop.zag
+identifier: empty_loop at 58:4 in tests/loop.zag
+'(': ( at 58:14 in tests/loop.zag
+')': ) at 58:15 in tests/loop.zag
+identifier: i32 at 58:17 in tests/loop.zag
+'{': { at 58:21 in tests/loop.zag
+var: var at 59:5 in tests/loop.zag
+identifier: x at 59:9 in tests/loop.zag
+'=': = at 59:11 in tests/loop.zag
+int literal: 0 at 59:13 in tests/loop.zag
+';': ; at 59:14 in tests/loop.zag
+while: while at 60:5 in tests/loop.zag
+'(': ( at 60:11 in tests/loop.zag
+identifier: x at 60:12 in tests/loop.zag
+'<': < at 60:14 in tests/loop.zag
+int literal: 100 at 60:16 in tests/loop.zag
+')': ) at 60:19 in tests/loop.zag
+'{': { at 60:21 in tests/loop.zag
+'++': ++ at 61:9 in tests/loop.zag
+identifier: x at 61:11 in tests/loop.zag
+';': ; at 61:12 in tests/loop.zag
+'}': } at 62:5 in tests/loop.zag
+return: return at 63:5 in tests/loop.zag
+int literal: 123 at 63:12 in tests/loop.zag
+';': ; at 63:15 in tests/loop.zag
+'}': } at 64:1 in tests/loop.zag
+fn: fn at 66:1 in tests/loop.zag
+identifier: early_exit at 66:4 in tests/loop.zag
+'(': ( at 66:14 in tests/loop.zag
+')': ) at 66:15 in tests/loop.zag
+identifier: i32 at 66:17 in tests/loop.zag
+'{': { at 66:21 in tests/loop.zag
+var: var at 67:5 in tests/loop.zag
+identifier: x at 67:9 in tests/loop.zag
+'=': = at 67:11 in tests/loop.zag
+int literal: 0 at 67:13 in tests/loop.zag
+';': ; at 67:14 in tests/loop.zag
+while: while at 68:5 in tests/loop.zag
+'(': ( at 68:11 in tests/loop.zag
+int literal: 1 at 68:12 in tests/loop.zag
+')': ) at 68:13 in tests/loop.zag
+'{': { at 68:15 in tests/loop.zag
+'++': ++ at 69:9 in tests/loop.zag
+identifier: x at 69:11 in tests/loop.zag
+';': ; at 69:12 in tests/loop.zag
+if: if at 70:9 in tests/loop.zag
+'(': ( at 70:12 in tests/loop.zag
+identifier: x at 70:13 in tests/loop.zag
+'==': == at 70:15 in tests/loop.zag
+int literal: 42 at 70:18 in tests/loop.zag
+')': ) at 70:20 in tests/loop.zag
+return: return at 71:13 in tests/loop.zag
+identifier: x at 71:20 in tests/loop.zag
+';': ; at 71:21 in tests/loop.zag
+'}': } at 72:5 in tests/loop.zag
+return: return at 73:5 in tests/loop.zag
+'-': - at 73:12 in tests/loop.zag
+int literal: 1 at 73:13 in tests/loop.zag
+';': ; at 73:14 in tests/loop.zag
+'}': } at 74:1 in tests/loop.zag
+fn: fn at 76:1 in tests/loop.zag
+identifier: main at 76:4 in tests/loop.zag
+'(': ( at 76:8 in tests/loop.zag
+')': ) at 76:9 in tests/loop.zag
+identifier: i32 at 76:11 in tests/loop.zag
+'{': { at 76:15 in tests/loop.zag
+identifier: printf at 77:5 in tests/loop.zag
+'(': ( at 77:11 in tests/loop.zag
+'&': & at 77:12 in tests/loop.zag
+string literal: "loop() = %d\n" at 77:13 in tests/loop.zag
+',': , at 77:28 in tests/loop.zag
+identifier: loop at 77:30 in tests/loop.zag
+'(': ( at 77:34 in tests/loop.zag
+')': ) at 77:35 in tests/loop.zag
+')': ) at 77:36 in tests/loop.zag
+';': ; at 77:37 in tests/loop.zag
+identifier: printf at 78:5 in tests/loop.zag
+'(': ( at 78:11 in tests/loop.zag
+'&': & at 78:12 in tests/loop.zag
+string literal: "loop_break() = %d\n" at 78:13 in tests/loop.zag
+',': , at 78:34 in tests/loop.zag
+identifier: loop_break at 78:36 in tests/loop.zag
+'(': ( at 78:46 in tests/loop.zag
+')': ) at 78:47 in tests/loop.zag
+')': ) at 78:48 in tests/loop.zag
+';': ; at 78:49 in tests/loop.zag
+identifier: printf at 79:5 in tests/loop.zag
+'(': ( at 79:11 in tests/loop.zag
+'&': & at 79:12 in tests/loop.zag
+string literal: "loop_continue() = %ld\n" at 79:13 in tests/loop.zag
+',': , at 79:38 in tests/loop.zag
+identifier: loop_continue at 79:40 in tests/loop.zag
+'(': ( at 79:53 in tests/loop.zag
+')': ) at 79:54 in tests/loop.zag
+')': ) at 79:55 in tests/loop.zag
+';': ; at 79:56 in tests/loop.zag
+identifier: printf at 81:5 in tests/loop.zag
+'(': ( at 81:11 in tests/loop.zag
+'&': & at 81:12 in tests/loop.zag
+string literal: "count_down() = %d\n" at 81:13 in tests/loop.zag
+',': , at 81:34 in tests/loop.zag
+identifier: count_down at 81:36 in tests/loop.zag
+'(': ( at 81:46 in tests/loop.zag
+')': ) at 81:47 in tests/loop.zag
+')': ) at 81:48 in tests/loop.zag
+';': ; at 81:49 in tests/loop.zag
+identifier: printf at 82:5 in tests/loop.zag
+'(': ( at 82:11 in tests/loop.zag
+'&': & at 82:12 in tests/loop.zag
+string literal: "nested_loop() = %d\n" at 82:13 in tests/loop.zag
+',': , at 82:35 in tests/loop.zag
+identifier: nested_loop at 82:37 in tests/loop.zag
+'(': ( at 82:48 in tests/loop.zag
+')': ) at 82:49 in tests/loop.zag
+')': ) at 82:50 in tests/loop.zag
+';': ; at 82:51 in tests/loop.zag
+identifier: printf at 83:5 in tests/loop.zag
+'(': ( at 83:11 in tests/loop.zag
+'&': & at 83:12 in tests/loop.zag
+string literal: "empty_loop() = %d\n" at 83:13 in tests/loop.zag
+',': , at 83:34 in tests/loop.zag
+identifier: empty_loop at 83:36 in tests/loop.zag
+'(': ( at 83:46 in tests/loop.zag
+')': ) at 83:47 in tests/loop.zag
+')': ) at 83:48 in tests/loop.zag
+';': ; at 83:49 in tests/loop.zag
+identifier: printf at 84:5 in tests/loop.zag
+'(': ( at 84:11 in tests/loop.zag
+'&': & at 84:12 in tests/loop.zag
+string literal: "early_exit() = %d\n" at 84:13 in tests/loop.zag
+',': , at 84:34 in tests/loop.zag
+identifier: early_exit at 84:36 in tests/loop.zag
+'(': ( at 84:46 in tests/loop.zag
+')': ) at 84:47 in tests/loop.zag
+')': ) at 84:48 in tests/loop.zag
+';': ; at 84:49 in tests/loop.zag
+return: return at 86:5 in tests/loop.zag
+int literal: 0 at 86:12 in tests/loop.zag
+';': ; at 86:13 in tests/loop.zag
+'}': } at 87:1 in tests/loop.zag
+EOF:  at 88:1 in tests/loop.zag

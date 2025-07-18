@@ -1,41 +1,102 @@
-fn: fn at 3:1 in tests/chars.zag
-identifier: main at 3:4 in tests/chars.zag
-'(': ( at 3:8 in tests/chars.zag
-')': ) at 3:9 in tests/chars.zag
-identifier: i32 at 3:11 in tests/chars.zag
-'{': { at 3:15 in tests/chars.zag
-var: var at 4:5 in tests/chars.zag
-identifier: a at 4:9 in tests/chars.zag
-'=': = at 4:11 in tests/chars.zag
-char literal: 'a' at 4:13 in tests/chars.zag
-';': ; at 4:16 in tests/chars.zag
-var: var at 5:5 in tests/chars.zag
-identifier: b at 5:9 in tests/chars.zag
-'=': = at 5:11 in tests/chars.zag
-char literal: '\xA' at 5:13 in tests/chars.zag
-';': ; at 5:18 in tests/chars.zag
+extern: extern at 3:1 in tests/chars.zag
+fn: fn at 3:8 in tests/chars.zag
+identifier: printf at 3:11 in tests/chars.zag
+'(': ( at 3:17 in tests/chars.zag
+identifier: fmt at 3:18 in tests/chars.zag
+':': : at 3:21 in tests/chars.zag
+'*': * at 3:23 in tests/chars.zag
+identifier: u8 at 3:24 in tests/chars.zag
+',': , at 3:26 in tests/chars.zag
+'...': ... at 3:28 in tests/chars.zag
+')': ) at 3:31 in tests/chars.zag
+identifier: i32 at 3:33 in tests/chars.zag
+';': ; at 3:36 in tests/chars.zag
+fn: fn at 5:1 in tests/chars.zag
+identifier: main at 5:4 in tests/chars.zag
+'(': ( at 5:8 in tests/chars.zag
+')': ) at 5:9 in tests/chars.zag
+identifier: i32 at 5:11 in tests/chars.zag
+'{': { at 5:15 in tests/chars.zag
 var: var at 6:5 in tests/chars.zag
-identifier: bb at 6:9 in tests/chars.zag
-'=': = at 6:12 in tests/chars.zag
-char literal: '\xab' at 6:14 in tests/chars.zag
-';': ; at 6:20 in tests/chars.zag
+identifier: a at 6:9 in tests/chars.zag
+'=': = at 6:11 in tests/chars.zag
+char literal: 'a' at 6:13 in tests/chars.zag
+';': ; at 6:16 in tests/chars.zag
 var: var at 7:5 in tests/chars.zag
-identifier: bbb at 7:9 in tests/chars.zag
-'=': = at 7:13 in tests/chars.zag
-char literal: '\xFF' at 7:15 in tests/chars.zag
-';': ; at 7:21 in tests/chars.zag
+identifier: b at 7:9 in tests/chars.zag
+'=': = at 7:11 in tests/chars.zag
+char literal: '\xA' at 7:13 in tests/chars.zag
+';': ; at 7:18 in tests/chars.zag
 var: var at 8:5 in tests/chars.zag
-identifier: c at 8:9 in tests/chars.zag
-'=': = at 8:11 in tests/chars.zag
-char literal: '\377' at 8:13 in tests/chars.zag
-';': ; at 8:19 in tests/chars.zag
+identifier: bb at 8:9 in tests/chars.zag
+'=': = at 8:12 in tests/chars.zag
+char literal: '\xab' at 8:14 in tests/chars.zag
+';': ; at 8:20 in tests/chars.zag
 var: var at 9:5 in tests/chars.zag
-identifier: newline at 9:9 in tests/chars.zag
-'=': = at 9:17 in tests/chars.zag
-char literal: '\n' at 9:19 in tests/chars.zag
-';': ; at 9:23 in tests/chars.zag
-return: return at 11:5 in tests/chars.zag
-char literal: '' at 11:12 in tests/chars.zag
-';': ; at 11:14 in tests/chars.zag
-'}': } at 12:1 in tests/chars.zag
-EOF:  at 13:1 in tests/chars.zag
+identifier: bbb at 9:9 in tests/chars.zag
+'=': = at 9:13 in tests/chars.zag
+char literal: '\xFF' at 9:15 in tests/chars.zag
+';': ; at 9:21 in tests/chars.zag
+var: var at 10:5 in tests/chars.zag
+identifier: c at 10:9 in tests/chars.zag
+'=': = at 10:11 in tests/chars.zag
+char literal: '\377' at 10:13 in tests/chars.zag
+';': ; at 10:19 in tests/chars.zag
+var: var at 11:5 in tests/chars.zag
+identifier: newline at 11:9 in tests/chars.zag
+'=': = at 11:17 in tests/chars.zag
+char literal: '\n' at 11:19 in tests/chars.zag
+';': ; at 11:23 in tests/chars.zag
+identifier: printf at 13:5 in tests/chars.zag
+'(': ( at 13:11 in tests/chars.zag
+'&': & at 13:12 in tests/chars.zag
+string literal: "a = %c\n" at 13:13 in tests/chars.zag
+',': , at 13:23 in tests/chars.zag
+identifier: a at 13:25 in tests/chars.zag
+')': ) at 13:26 in tests/chars.zag
+';': ; at 13:27 in tests/chars.zag
+identifier: printf at 14:5 in tests/chars.zag
+'(': ( at 14:11 in tests/chars.zag
+'&': & at 14:12 in tests/chars.zag
+string literal: "b = %X\n" at 14:13 in tests/chars.zag
+',': , at 14:23 in tests/chars.zag
+identifier: b at 14:25 in tests/chars.zag
+')': ) at 14:26 in tests/chars.zag
+';': ; at 14:27 in tests/chars.zag
+identifier: printf at 15:5 in tests/chars.zag
+'(': ( at 15:11 in tests/chars.zag
+'&': & at 15:12 in tests/chars.zag
+string literal: "bb = %X\n" at 15:13 in tests/chars.zag
+',': , at 15:24 in tests/chars.zag
+identifier: bb at 15:26 in tests/chars.zag
+')': ) at 15:28 in tests/chars.zag
+';': ; at 15:29 in tests/chars.zag
+identifier: printf at 16:5 in tests/chars.zag
+'(': ( at 16:11 in tests/chars.zag
+'&': & at 16:12 in tests/chars.zag
+string literal: "bbb = %X\n" at 16:13 in tests/chars.zag
+',': , at 16:25 in tests/chars.zag
+identifier: bbb at 16:27 in tests/chars.zag
+')': ) at 16:30 in tests/chars.zag
+';': ; at 16:31 in tests/chars.zag
+identifier: printf at 17:5 in tests/chars.zag
+'(': ( at 17:11 in tests/chars.zag
+'&': & at 17:12 in tests/chars.zag
+string literal: "c = %d\n" at 17:13 in tests/chars.zag
+',': , at 17:23 in tests/chars.zag
+identifier: c at 17:25 in tests/chars.zag
+')': ) at 17:26 in tests/chars.zag
+';': ; at 17:27 in tests/chars.zag
+identifier: printf at 18:5 in tests/chars.zag
+'(': ( at 18:11 in tests/chars.zag
+'&': & at 18:12 in tests/chars.zag
+string literal: "newline = %d\n" at 18:13 in tests/chars.zag
+',': , at 18:29 in tests/chars.zag
+identifier: newline at 18:31 in tests/chars.zag
+')': ) at 18:38 in tests/chars.zag
+';': ; at 18:39 in tests/chars.zag
+return: return at 20:5 in tests/chars.zag
+char literal: '' at 20:12 in tests/chars.zag
+';': ; at 20:14 in tests/chars.zag
+'}': } at 21:1 in tests/chars.zag
+EOF:  at 22:1 in tests/chars.zag

@@ -151,7 +151,7 @@ typedef struct {
 
 // Opcodes
 #define X86_64_MOV_REG 0x8B
-#define X86_64_MOV_REG_BYTE 0x8B
+#define X86_64_MOV_REG_BYTE 0x8A
 #define X86_64_MOV_MEM 0x89
 #define X86_64_MOV_MEM_BYTE 0x88
 
@@ -159,27 +159,20 @@ typedef struct {
 
 #define X86_64_X86_64_X86_64_LEA 0x8D
 
-#define X86_64_ADD_BYTE 0x00
 #define X86_64_ADD 0x01
 
-#define X86_64_SUB_BYTE 0x28
 #define X86_64_SUB 0x29
 #define X86_64_SUB_IMM 0x81
 #define X86_64_SUB_IMM_BYTE 0x83
 
-#define X86_64_MUL_BYTE 0xF6
 #define X86_64_MUL 0xF7
 
-#define X86_64_AND_BYTE 0x20
 #define X86_64_AND 0x21
 
-#define X86_64_OR_BYTE 0x08
 #define X86_64_OR 0x09
 
-#define X86_64_XOR_BYTE 0x30
 #define X86_64_XOR 0x31
 
-#define X86_64_SHL_BYTE 0xD2
 #define X86_64_SHL 0xD3
 
 #define X86_64_POP_REG(reg) (0x58 + (reg & 7))
@@ -188,10 +181,8 @@ typedef struct {
 #define X86_64_PUSH_REG(reg) (0x50 + (reg & 7))
 #define X86_64_PUSH_MEM 0xFF
 
-#define X86_64_NEG_BYTE 0xF6
 #define X86_64_NEG 0xF7
 
-#define X86_64_CMP_BYTE 0x38
 #define X86_64_CMP 0x39
 
 #define X86_64_TEST 0x85
@@ -210,7 +201,11 @@ typedef struct {
 
 #define JE 0x84
 
-#define MOVZX 0xB6
+#define MOVZX_BYTE 0xB6
+#define MOVZX_WORD 0xB7
+
+#define MOVSX_BYTE 0xBE
+#define MOVSX_WORD 0xBF
 
 #define X86_64_SETA 0x97
 #define X86_64_SETAE 0x93
@@ -236,6 +231,10 @@ static u8 x86_64_lookup_cmp_op[BINOP_COUNT] = {
     [BINOP_NE] = X86_64_SETNE,
 };
 
+INLINE bool is_signed_int(const Value *v) {
+    return v->type->kind == TYPE_KIND_INT_SIGNED;
+}
+
 void x86_64_move_imm_to_reg(u64 value, X86_64_Register reg) {
     bool w = value > UINT32_MAX,
          b = reg > 0x7;
@@ -252,18 +251,25 @@ void x86_64_move_imm_to_reg(u64 value, X86_64_Register reg) {
     }
 }
 
-void x86_64_move_stack_to_reg(usize stack_index, usize size, X86_64_Register reg) {
+void x86_64_move_stack_to_reg(usize stack_index, usize size,
+                              bool is_signed, X86_64_Register reg) {
     bool w = size == 8,
+         is16 = size == 2,
+         is8 = size == 1,
          r = reg > 0x7;
-
-    if (size == 2)
-        x86_64_push_op(X86_64_WORD_PRE());
 
     if (w || r)
         x86_64_push_op(X86_64_REX_PRE(w, r, 0, 0));
 
-    u8 mov_code = size == 1 ? X86_64_MOV_REG_BYTE : X86_64_MOV_REG;
-    x86_64_push_op(mov_code);
+    if (is8) {
+        x86_64_push_op(TWO_BYTE_ESC);
+        x86_64_push_op(is_signed ? MOVSX_BYTE : MOVZX_BYTE);
+    } else if (is16) {
+        x86_64_push_op(TWO_BYTE_ESC);
+        x86_64_push_op(is_signed ? MOVSX_WORD : MOVZX_WORD);
+    } else {
+        x86_64_push_op(X86_64_MOV_REG);
+    }
 
     usize disp = stack_index + size;
 
@@ -285,7 +291,7 @@ void x86_64_store_reg_to_stack(X86_64_Register reg, usize stack_index, usize siz
     if (size == 2)
         x86_64_push_op(X86_64_WORD_PRE());
 
-    if (w || r)
+    if (w || r || (size == 1 && reg > 0x4))
         x86_64_push_op(X86_64_REX_PRE(w, r, 0, 0));
 
     u8 mov_code = size == 1 ? X86_64_MOV_MEM_BYTE : X86_64_MOV_MEM;
@@ -332,21 +338,25 @@ void x86_64_load_reg_to_reg_addr(X86_64_Register from, X86_64_Register to, usize
     x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_MEM, from & 0x7, to & 0x7));
 }
 
-void x86_64_load_reg_addr_to_reg(X86_64_Register from, X86_64_Register to, usize size) {
+void x86_64_load_reg_addr_to_reg(X86_64_Register from, X86_64_Register to, usize size, bool is_signed) {
     bool w = size == 8,
+         is16 = size == 2,
+         is8 = size == 1,
          r = to > 0x7,
          b = from > 0x7;
-
-    if (size == 2)
-        x86_64_push_op(X86_64_WORD_PRE());
 
     if (w || r || b)
         x86_64_push_op(X86_64_REX_PRE(w, r, 0, b));
 
-    if (size == 1)
-        x86_64_push_op(X86_64_MOV_REG_BYTE);
-    else
+    if (is8) {
+        x86_64_push_op(TWO_BYTE_ESC);
+        x86_64_push_op(is_signed ? MOVSX_BYTE : MOVZX_BYTE);
+    } else if (is16) {
+        x86_64_push_op(TWO_BYTE_ESC);
+        x86_64_push_op(is_signed ? MOVSX_BYTE : MOVZX_BYTE);
+    } else {
         x86_64_push_op(X86_64_MOV_REG);
+    }
 
     x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_MEM, to & 0x7, from & 0x7));
 }
@@ -381,7 +391,8 @@ void x86_64_load_value_to_reg(const Value *v, X86_64_Register reg) {
     } break;
 
     case VALUE_TYPE_VAR: {
-        x86_64_move_stack_to_reg(v->stack_index, v->type->size, reg);
+        x86_64_move_stack_to_reg(v->stack_index, v->type->size,
+                                 is_signed_int(v), reg);
     } break;
 
     case VALUE_TYPE_FUNC:
@@ -395,8 +406,10 @@ void x86_64_load_value_to_reg(const Value *v, X86_64_Register reg) {
     } break;
 
     case VALUE_TYPE_DEREF: {
-        x86_64_move_stack_to_reg(v->stack_index, 8, X86_64_RAX);
-        x86_64_load_reg_addr_to_reg(X86_64_RAX, reg, v->type->size);
+        x86_64_move_stack_to_reg(v->stack_index, 8,
+                                 /* is_signed */ false, X86_64_RAX);
+        x86_64_load_reg_addr_to_reg(X86_64_RAX, reg, v->type->size,
+                                    is_signed_int(v));
     } break;
 
     case VALUE_TYPE_DATA_OFFSET: {
@@ -427,7 +440,7 @@ void x86_64_alloc_rsp(usize stack_size) {
     stack_size += (16 - (stack_size % 16)) % 16;  // 16 byte alignment
 
     x86_64_push_op(X86_64_REX_PRE(1, 0, 0, 0));
-    if (stack_size <= 255) {
+    if (stack_size <= INT8_MAX) {
         u8 imm = (u8)stack_size;
         x86_64_push_op(X86_64_SUB_IMM_BYTE);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 5, X86_64_RSP));
@@ -462,15 +475,11 @@ void x86_64_test_registers(X86_64_Register reg1, X86_64_Register reg2, usize siz
 
 void x86_64_generate_binop(const Op *binop) {
     usize size = binop->lhs->type->size;
-    bool is64 = size == 8,
-         is16 = size == 2,
-         is8 = size == 1;
+    bool is64 = size == 8;
 
     x86_64_load_value_to_reg(binop->lhs, X86_64_RAX);
     x86_64_load_value_to_reg(binop->rhs, X86_64_RCX);
 
-    if (is16)
-        x86_64_push_op(X86_64_WORD_PRE());
     if (is64)
         x86_64_push_op(X86_64_REX_PRE(1, 0, 0, 0));
 
@@ -478,43 +487,43 @@ void x86_64_generate_binop(const Op *binop) {
     case BINOP_COUNT: UNREACHABLE();
 
     case BINOP_ADD: {
-        x86_64_push_op(is8 ? X86_64_ADD_BYTE : X86_64_ADD);
+        x86_64_push_op(X86_64_ADD);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RCX, X86_64_RAX));
     } break;
 
     case BINOP_SUB: {
-        x86_64_push_op(is8 ? X86_64_SUB_BYTE : X86_64_SUB);
+        x86_64_push_op(X86_64_SUB);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RCX, X86_64_RAX));
     } break;
 
     case BINOP_MUL: {
-        x86_64_push_op(is8 ? X86_64_MUL_BYTE : X86_64_MUL);
+        x86_64_push_op(X86_64_MUL);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 4, X86_64_RCX));
     } break;
 
     case BINOP_IMUL: {
-        x86_64_push_op(is8 ? X86_64_MUL_BYTE : X86_64_MUL);
+        x86_64_push_op(X86_64_MUL);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 5, X86_64_RCX));
     } break;
 
     case BINOP_DIV: {
-        x86_64_push_op(is8 ? X86_64_MUL_BYTE : X86_64_MUL);
+        x86_64_push_op(X86_64_MUL);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 6, X86_64_RCX));
     } break;
 
     case BINOP_IDIV: {
-        x86_64_push_op(is8 ? X86_64_MUL_BYTE : X86_64_MUL);
+        x86_64_push_op(X86_64_MUL);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 7, X86_64_RCX));
     } break;
 
     case BINOP_MOD: {
-        x86_64_push_op(is8 ? X86_64_MUL_BYTE : X86_64_MUL);
+        x86_64_push_op(X86_64_MUL);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 6, X86_64_RCX));
         x86_64_move_reg_to_reg(X86_64_RDX, X86_64_RAX);
     } break;
 
     case BINOP_IMOD: {
-        x86_64_push_op(is8 ? X86_64_MUL_BYTE : X86_64_MUL);
+        x86_64_push_op(X86_64_MUL);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 7, X86_64_RCX));
         x86_64_move_reg_to_reg(X86_64_RDX, X86_64_RAX);
     } break;
@@ -529,7 +538,7 @@ void x86_64_generate_binop(const Op *binop) {
     case BINOP_SGE:
     case BINOP_EQ:
     case BINOP_NE: {
-        x86_64_push_op(is8 ? X86_64_CMP_BYTE : X86_64_CMP);
+        x86_64_push_op(X86_64_CMP);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RCX, X86_64_RAX));
 
         x86_64_push_op(TWO_BYTE_ESC);
@@ -538,37 +547,33 @@ void x86_64_generate_binop(const Op *binop) {
         x86_64_push_op(op);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 0, X86_64_RAX));
 
-        if (!is8) {
-            if (is16)
-                x86_64_push_op(X86_64_WORD_PRE());
-            if (is64)
-                x86_64_push_op(X86_64_REX_PRE(1, 0, 0, 0));
+        if (is64)
+            x86_64_push_op(X86_64_REX_PRE(1, 0, 0, 0));
 
-            x86_64_push_op(TWO_BYTE_ESC);
-            x86_64_push_op(MOVZX);
-            x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RAX, X86_64_RAX));
-        }
+        x86_64_push_op(TWO_BYTE_ESC);
+        x86_64_push_op(MOVZX_BYTE);
+        x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RAX, X86_64_RAX));
     } break;
 
     case BINOP_AND: {
-        x86_64_push_op(is8 ? X86_64_AND_BYTE : X86_64_AND);
+        x86_64_push_op(X86_64_AND);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RCX, X86_64_RAX));
     } break;
 
     case BINOP_OR: {
-        x86_64_push_op(is8 ? X86_64_OR_BYTE : X86_64_OR);
+        x86_64_push_op(X86_64_OR);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RCX, X86_64_RAX));
     } break;
 
     case BINOP_XOR: {
-        x86_64_push_op(is8 ? X86_64_XOR_BYTE : X86_64_XOR);
+        x86_64_push_op(X86_64_XOR);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RCX, X86_64_RAX));
     } break;
 
     case BINOP_SHL:
     case BINOP_ASHR:
     case BINOP_LSHR: {
-        x86_64_push_op(is8 ? X86_64_SHL_BYTE : X86_64_SHL);
+        x86_64_push_op(X86_64_SHL);
         // clang-format off
         u8 reg = binop->op == BINOP_SHL     ? 4
                : binop->op == BINOP_ASHR    ? 7
@@ -596,25 +601,21 @@ void x86_64_generate_op(const Op *op) {
 
     case OP_TYPE_STORE: {
         x86_64_load_value_to_reg(val, X86_64_RAX);
-        x86_64_move_stack_to_reg(op->result, 8, X86_64_RCX);
+        x86_64_move_stack_to_reg(op->result, 8, /* is_signed */ false, X86_64_RCX);
         x86_64_load_reg_to_reg_addr(X86_64_RAX, X86_64_RCX, val->type->size);
     } break;
 
     case OP_TYPE_NEG:
     case OP_TYPE_BNOT: {
         usize size = val->type->size;
-        bool is64 = size == 8,
-             is16 = size == 2,
-             is8 = size == 1;
+        bool is64 = size == 8;
 
         x86_64_load_value_to_reg(val, X86_64_RAX);
 
-        if (is16)
-            x86_64_push_op(X86_64_WORD_PRE());
         if (is64)
             x86_64_push_op(X86_64_REX_PRE(1, 0, 0, 0));
 
-        x86_64_push_op(is8 ? X86_64_NEG_BYTE : X86_64_NEG);
+        x86_64_push_op(X86_64_NEG);
         x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, op->type == OP_TYPE_BNOT ? 2 : 3, X86_64_RAX));
         x86_64_store_reg_to_stack(X86_64_RAX, op->result, val->type->size);
     } break;
@@ -646,7 +647,7 @@ void x86_64_generate_op(const Op *op) {
                 x86_64_push_op(X86_64_REX_PRE(1, 0, 0, 0));
 
             x86_64_push_op(TWO_BYTE_ESC);
-            x86_64_push_op(MOVZX);
+            x86_64_push_op(MOVZX_BYTE);
             x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, X86_64_RAX, X86_64_RAX));
         }
 
@@ -716,7 +717,7 @@ void x86_64_generate_op(const Op *op) {
         } else {
             x86_64_load_value_to_reg(op->func, X86_64_RAX);
             x86_64_push_op(X86_64_CALL_ABS);
-            x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_MEM, 2, X86_64_RAX));
+            x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_REG, 2, X86_64_RAX));
         }
 
         x86_64_store_reg_to_stack(X86_64_RAX, op->result, op->func->type->ret->size);

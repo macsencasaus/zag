@@ -34,20 +34,14 @@ identifier: puts at 7:5 in tests/helloworld.zag
 string literal: "Hello, world!" at 7:11 in tests/helloworld.zag
 ')': ) at 7:26 in tests/helloworld.zag
 ';': ; at 7:27 in tests/helloworld.zag
-identifier: puts at 8:5 in tests/helloworld.zag
-'(': ( at 8:9 in tests/helloworld.zag
-'&': & at 8:10 in tests/helloworld.zag
-string literal: "Bruh moment" at 8:11 in tests/helloworld.zag
-')': ) at 8:24 in tests/helloworld.zag
-';': ; at 8:25 in tests/helloworld.zag
-identifier: printf at 9:5 in tests/helloworld.zag
-'(': ( at 9:11 in tests/helloworld.zag
-'&': & at 9:12 in tests/helloworld.zag
-string literal: "Hello, world!\n with a newline\n" at 9:13 in tests/helloworld.zag
-')': ) at 9:47 in tests/helloworld.zag
-';': ; at 9:48 in tests/helloworld.zag
-return: return at 10:5 in tests/helloworld.zag
-int literal: 0 at 10:12 in tests/helloworld.zag
-';': ; at 10:13 in tests/helloworld.zag
-'}': } at 11:1 in tests/helloworld.zag
-EOF:  at 12:1 in tests/helloworld.zag
+identifier: printf at 8:5 in tests/helloworld.zag
+'(': ( at 8:11 in tests/helloworld.zag
+'&': & at 8:12 in tests/helloworld.zag
+string literal: "Hello, world!\n" at 8:13 in tests/helloworld.zag
+')': ) at 8:30 in tests/helloworld.zag
+';': ; at 8:31 in tests/helloworld.zag
+return: return at 9:5 in tests/helloworld.zag
+int literal: 0 at 9:12 in tests/helloworld.zag
+';': ; at 9:13 in tests/helloworld.zag
+'}': } at 10:1 in tests/helloworld.zag
+EOF:  at 11:1 in tests/helloworld.zag

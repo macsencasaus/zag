@@ -1,105 +1,13 @@
-
-/tmp/tmp.o:     file format elf64-x86-64
-
-
-Disassembly of section .text:
-
-0000000000000000 <id>:
-   0:	55                   	push   rbp
-   1:	48 89 e5             	mov    rbp,rsp
-   4:	48 83 ec 10          	sub    rsp,0x10
-   8:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
-   b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-   e:	c9                   	leave
-   f:	c3                   	ret
-
-0000000000000010 <call_id>:
-  10:	55                   	push   rbp
-  11:	48 89 e5             	mov    rbp,rsp
-  14:	48 83 ec 10          	sub    rsp,0x10
-  18:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
-  1b:	8b 7d fc             	mov    edi,DWORD PTR [rbp-0x4]
-  1e:	e8 00 00 00 00       	call   23 <call_id+0x13>
-  23:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
-  26:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
-  29:	c9                   	leave
-  2a:	c3                   	ret
-
-000000000000002b <factorial>:
-  2b:	55                   	push   rbp
-  2c:	48 89 e5             	mov    rbp,rsp
-  2f:	48 83 ec 10          	sub    rsp,0x10
-  33:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
-  36:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  39:	b9 00 00 00 00       	mov    ecx,0x0
-  3e:	39 c8                	cmp    eax,ecx
-  40:	0f 94 c0             	sete   al
-  43:	0f b6 c0             	movzx  eax,al
-  46:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
-  49:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
-  4c:	85 c0                	test   eax,eax
-  4e:	0f 84 07 00 00 00    	je     5b <factorial+0x30>
-  54:	b8 01 00 00 00       	mov    eax,0x1
-  59:	c9                   	leave
-  5a:	c3                   	ret
-  5b:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  5e:	b9 01 00 00 00       	mov    ecx,0x1
-  63:	29 c8                	sub    eax,ecx
-  65:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
-  68:	8b 7d f4             	mov    edi,DWORD PTR [rbp-0xc]
-  6b:	e8 00 00 00 00       	call   70 <factorial+0x45>
-  70:	89 45 f8             	mov    DWORD PTR [rbp-0x8],eax
-  73:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  76:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
-  79:	f7 e9                	imul   ecx
-  7b:	89 45 f0             	mov    DWORD PTR [rbp-0x10],eax
-  7e:	8b 45 f0             	mov    eax,DWORD PTR [rbp-0x10]
-  81:	c9                   	leave
-  82:	c3                   	ret
-
-0000000000000083 <factorial_tail>:
-  83:	55                   	push   rbp
-  84:	48 89 e5             	mov    rbp,rsp
-  87:	48 83 ec 20          	sub    rsp,0x20
-  8b:	89 7d fc             	mov    DWORD PTR [rbp-0x4],edi
-  8e:	89 75 f8             	mov    DWORD PTR [rbp-0x8],esi
-  91:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  94:	b9 00 00 00 00       	mov    ecx,0x0
-  99:	39 c8                	cmp    eax,ecx
-  9b:	0f 94 c0             	sete   al
-  9e:	0f b6 c0             	movzx  eax,al
-  a1:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
-  a4:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
-  a7:	85 c0                	test   eax,eax
-  a9:	0f 84 05 00 00 00    	je     b4 <factorial_tail+0x31>
-  af:	8b 45 f8             	mov    eax,DWORD PTR [rbp-0x8]
-  b2:	c9                   	leave
-  b3:	c3                   	ret
-  b4:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  b7:	b9 01 00 00 00       	mov    ecx,0x1
-  bc:	29 c8                	sub    eax,ecx
-  be:	89 45 f0             	mov    DWORD PTR [rbp-0x10],eax
-  c1:	8b 45 fc             	mov    eax,DWORD PTR [rbp-0x4]
-  c4:	8b 4d f8             	mov    ecx,DWORD PTR [rbp-0x8]
-  c7:	f7 e9                	imul   ecx
-  c9:	89 45 ec             	mov    DWORD PTR [rbp-0x14],eax
-  cc:	8b 7d f0             	mov    edi,DWORD PTR [rbp-0x10]
-  cf:	8b 75 ec             	mov    esi,DWORD PTR [rbp-0x14]
-  d2:	e8 00 00 00 00       	call   d7 <factorial_tail+0x54>
-  d7:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
-  da:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
-  dd:	c9                   	leave
-  de:	c3                   	ret
-
-00000000000000df <func_ptrs>:
-  df:	55                   	push   rbp
-  e0:	48 89 e5             	mov    rbp,rsp
-  e3:	48 83 ec 10          	sub    rsp,0x10
-  e7:	48 89 7d f8          	mov    QWORD PTR [rbp-0x8],rdi
-  eb:	bf 02 00 00 00       	mov    edi,0x2
-  f0:	48 8b 45 f8          	mov    rax,QWORD PTR [rbp-0x8]
-  f4:	ff 10                	call   QWORD PTR [rax]
-  f6:	89 45 f4             	mov    DWORD PTR [rbp-0xc],eax
-  f9:	8b 45 f4             	mov    eax,DWORD PTR [rbp-0xc]
-  fc:	c9                   	leave
-  fd:	c3                   	ret
+id(42) = 42
+call_id(13) = 13
+factorial(5) = 120
+factorial_tail(5, 1) = 120
+func_ptrs(id) = 2
+id_u8(255) = 255
+id_i8(-128) = -128
+id_u16(65535) = 65535
+id_i16(-32768) = -32768
+id_u32(123456789) = 123456789
+id_i32(-123456789) = -123456789
+id_u64(1234567890123456789) = 1234567890123456789
+id_i64(-1234567890123456789) = -1234567890123456789

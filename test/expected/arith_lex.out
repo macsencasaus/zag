@@ -1,265 +1,1017 @@
-fn: fn at 3:1 in tests/arith.zag
-identifier: square at 3:4 in tests/arith.zag
-'(': ( at 3:10 in tests/arith.zag
-identifier: x at 3:11 in tests/arith.zag
-':': : at 3:12 in tests/arith.zag
-identifier: i32 at 3:14 in tests/arith.zag
-')': ) at 3:17 in tests/arith.zag
-identifier: i32 at 3:19 in tests/arith.zag
-'{': { at 3:23 in tests/arith.zag
-return: return at 4:5 in tests/arith.zag
-identifier: x at 4:12 in tests/arith.zag
-'*': * at 4:14 in tests/arith.zag
-identifier: x at 4:16 in tests/arith.zag
-';': ; at 4:17 in tests/arith.zag
-'}': } at 5:1 in tests/arith.zag
-fn: fn at 7:1 in tests/arith.zag
-identifier: sum at 7:4 in tests/arith.zag
-'(': ( at 7:7 in tests/arith.zag
-identifier: a at 7:8 in tests/arith.zag
-':': : at 7:9 in tests/arith.zag
-identifier: i32 at 7:11 in tests/arith.zag
-',': , at 7:14 in tests/arith.zag
-identifier: b at 7:16 in tests/arith.zag
-':': : at 7:17 in tests/arith.zag
-identifier: i32 at 7:19 in tests/arith.zag
-',': , at 7:22 in tests/arith.zag
-identifier: c at 7:24 in tests/arith.zag
-':': : at 7:25 in tests/arith.zag
-identifier: i32 at 7:27 in tests/arith.zag
-')': ) at 7:30 in tests/arith.zag
-identifier: i32 at 7:32 in tests/arith.zag
-'{': { at 7:36 in tests/arith.zag
-return: return at 8:5 in tests/arith.zag
-identifier: a at 8:12 in tests/arith.zag
-'+': + at 8:14 in tests/arith.zag
-identifier: b at 8:16 in tests/arith.zag
-'+': + at 8:18 in tests/arith.zag
-identifier: c at 8:20 in tests/arith.zag
-';': ; at 8:21 in tests/arith.zag
-'}': } at 9:1 in tests/arith.zag
-fn: fn at 11:1 in tests/arith.zag
-identifier: prec at 11:4 in tests/arith.zag
-'(': ( at 11:8 in tests/arith.zag
-')': ) at 11:9 in tests/arith.zag
-identifier: i64 at 11:11 in tests/arith.zag
-'{': { at 11:15 in tests/arith.zag
-var: var at 12:5 in tests/arith.zag
-identifier: x at 12:9 in tests/arith.zag
-':': : at 12:10 in tests/arith.zag
-identifier: i64 at 12:12 in tests/arith.zag
-'=': = at 12:16 in tests/arith.zag
-int literal: 1 at 12:18 in tests/arith.zag
-'+': + at 12:20 in tests/arith.zag
-int literal: 2 at 12:22 in tests/arith.zag
-'*': * at 12:24 in tests/arith.zag
-int literal: 3 at 12:26 in tests/arith.zag
-';': ; at 12:27 in tests/arith.zag
-var: var at 13:5 in tests/arith.zag
-identifier: y at 13:9 in tests/arith.zag
-':': : at 13:10 in tests/arith.zag
-identifier: i64 at 13:12 in tests/arith.zag
-'=': = at 13:16 in tests/arith.zag
-int literal: 1 at 13:18 in tests/arith.zag
-'/': / at 13:20 in tests/arith.zag
-int literal: 2 at 13:22 in tests/arith.zag
-'-': - at 13:24 in tests/arith.zag
-int literal: 3 at 13:26 in tests/arith.zag
-';': ; at 13:27 in tests/arith.zag
-return: return at 14:5 in tests/arith.zag
-identifier: x at 14:12 in tests/arith.zag
-'%': % at 14:14 in tests/arith.zag
-identifier: y at 14:16 in tests/arith.zag
-';': ; at 14:17 in tests/arith.zag
-'}': } at 15:1 in tests/arith.zag
-fn: fn at 17:1 in tests/arith.zag
-identifier: mismatch at 17:4 in tests/arith.zag
-'(': ( at 17:12 in tests/arith.zag
-')': ) at 17:13 in tests/arith.zag
-identifier: i32 at 17:15 in tests/arith.zag
-'{': { at 17:19 in tests/arith.zag
-var: var at 18:5 in tests/arith.zag
-identifier: y at 18:9 in tests/arith.zag
-':': : at 18:10 in tests/arith.zag
-identifier: i32 at 18:12 in tests/arith.zag
-'=': = at 18:16 in tests/arith.zag
-int literal: 3 at 18:18 in tests/arith.zag
-';': ; at 18:19 in tests/arith.zag
-return: return at 19:5 in tests/arith.zag
-identifier: y at 19:12 in tests/arith.zag
-'+': + at 19:14 in tests/arith.zag
-int literal: 2 at 19:16 in tests/arith.zag
-';': ; at 19:17 in tests/arith.zag
-'}': } at 20:1 in tests/arith.zag
-fn: fn at 22:1 in tests/arith.zag
-identifier: prec2 at 22:4 in tests/arith.zag
-'(': ( at 22:9 in tests/arith.zag
-')': ) at 22:10 in tests/arith.zag
-identifier: i64 at 22:12 in tests/arith.zag
-'{': { at 22:16 in tests/arith.zag
-return: return at 23:5 in tests/arith.zag
-int literal: 2 at 23:12 in tests/arith.zag
-'*': * at 23:14 in tests/arith.zag
-int literal: 2 at 23:16 in tests/arith.zag
-'+': + at 23:18 in tests/arith.zag
-int literal: 3 at 23:20 in tests/arith.zag
-'*': * at 23:22 in tests/arith.zag
-int literal: 3 at 23:24 in tests/arith.zag
-';': ; at 23:25 in tests/arith.zag
-'}': } at 24:1 in tests/arith.zag
-fn: fn at 26:1 in tests/arith.zag
-identifier: prec3 at 26:4 in tests/arith.zag
-'(': ( at 26:9 in tests/arith.zag
-')': ) at 26:10 in tests/arith.zag
-identifier: i64 at 26:12 in tests/arith.zag
-'{': { at 26:16 in tests/arith.zag
-return: return at 27:5 in tests/arith.zag
-int literal: 2 at 27:12 in tests/arith.zag
-'*': * at 27:14 in tests/arith.zag
-'(': ( at 27:16 in tests/arith.zag
-int literal: 2 at 27:17 in tests/arith.zag
-'+': + at 27:19 in tests/arith.zag
-int literal: 3 at 27:21 in tests/arith.zag
-')': ) at 27:22 in tests/arith.zag
-'*': * at 27:24 in tests/arith.zag
-int literal: 3 at 27:26 in tests/arith.zag
-';': ; at 27:27 in tests/arith.zag
-'}': } at 28:1 in tests/arith.zag
-fn: fn at 30:1 in tests/arith.zag
-identifier: prefix at 30:4 in tests/arith.zag
-'(': ( at 30:10 in tests/arith.zag
-')': ) at 30:11 in tests/arith.zag
-identifier: i32 at 30:13 in tests/arith.zag
-'{': { at 30:17 in tests/arith.zag
-var: var at 31:5 in tests/arith.zag
-identifier: x at 31:9 in tests/arith.zag
-':': : at 31:10 in tests/arith.zag
-identifier: i32 at 31:12 in tests/arith.zag
-'=': = at 31:16 in tests/arith.zag
-int literal: 2 at 31:18 in tests/arith.zag
-',': , at 31:19 in tests/arith.zag
-identifier: y at 31:21 in tests/arith.zag
-':': : at 31:22 in tests/arith.zag
-identifier: i32 at 31:24 in tests/arith.zag
-';': ; at 31:27 in tests/arith.zag
-identifier: x at 32:5 in tests/arith.zag
-'=': = at 32:7 in tests/arith.zag
-'-': - at 32:9 in tests/arith.zag
-identifier: x at 32:10 in tests/arith.zag
-';': ; at 32:11 in tests/arith.zag
-identifier: x at 33:5 in tests/arith.zag
-'=': = at 33:7 in tests/arith.zag
-'!': ! at 33:9 in tests/arith.zag
-identifier: x at 33:10 in tests/arith.zag
-';': ; at 33:11 in tests/arith.zag
-identifier: x at 34:5 in tests/arith.zag
-'=': = at 34:7 in tests/arith.zag
-'~': ~ at 34:9 in tests/arith.zag
-identifier: x at 34:10 in tests/arith.zag
-';': ; at 34:11 in tests/arith.zag
-'++': ++ at 35:5 in tests/arith.zag
-identifier: x at 35:7 in tests/arith.zag
-';': ; at 35:8 in tests/arith.zag
-identifier: y at 36:5 in tests/arith.zag
-'=': = at 36:7 in tests/arith.zag
-identifier: x at 36:9 in tests/arith.zag
-'++': ++ at 36:10 in tests/arith.zag
-';': ; at 36:12 in tests/arith.zag
-'--': -- at 37:5 in tests/arith.zag
-identifier: x at 37:7 in tests/arith.zag
-';': ; at 37:8 in tests/arith.zag
-identifier: y at 38:5 in tests/arith.zag
-'=': = at 38:7 in tests/arith.zag
-identifier: x at 38:9 in tests/arith.zag
-'--': -- at 38:10 in tests/arith.zag
-';': ; at 38:12 in tests/arith.zag
-return: return at 39:5 in tests/arith.zag
-identifier: x at 39:12 in tests/arith.zag
-';': ; at 39:13 in tests/arith.zag
-'}': } at 40:1 in tests/arith.zag
-fn: fn at 42:1 in tests/arith.zag
-identifier: more_binops at 42:4 in tests/arith.zag
-'(': ( at 42:15 in tests/arith.zag
-')': ) at 42:16 in tests/arith.zag
-identifier: i32 at 42:18 in tests/arith.zag
-'{': { at 42:22 in tests/arith.zag
+extern: extern at 3:1 in tests/arith.zag
+fn: fn at 3:8 in tests/arith.zag
+identifier: printf at 3:11 in tests/arith.zag
+'(': ( at 3:17 in tests/arith.zag
+identifier: fmt at 3:18 in tests/arith.zag
+':': : at 3:21 in tests/arith.zag
+'*': * at 3:23 in tests/arith.zag
+identifier: u8 at 3:24 in tests/arith.zag
+',': , at 3:26 in tests/arith.zag
+'...': ... at 3:28 in tests/arith.zag
+')': ) at 3:31 in tests/arith.zag
+identifier: i32 at 3:33 in tests/arith.zag
+';': ; at 3:36 in tests/arith.zag
+fn: fn at 5:1 in tests/arith.zag
+identifier: main at 5:4 in tests/arith.zag
+'(': ( at 5:8 in tests/arith.zag
+')': ) at 5:9 in tests/arith.zag
+identifier: i32 at 5:11 in tests/arith.zag
+'{': { at 5:15 in tests/arith.zag
+var: var at 7:5 in tests/arith.zag
+identifier: a at 7:9 in tests/arith.zag
+':': : at 7:10 in tests/arith.zag
+identifier: i32 at 7:12 in tests/arith.zag
+'=': = at 7:16 in tests/arith.zag
+int literal: 3 at 7:18 in tests/arith.zag
+';': ; at 7:19 in tests/arith.zag
+var: var at 8:5 in tests/arith.zag
+identifier: sq at 8:9 in tests/arith.zag
+':': : at 8:11 in tests/arith.zag
+identifier: i32 at 8:13 in tests/arith.zag
+'=': = at 8:17 in tests/arith.zag
+identifier: a at 8:19 in tests/arith.zag
+'*': * at 8:21 in tests/arith.zag
+identifier: a at 8:23 in tests/arith.zag
+';': ; at 8:24 in tests/arith.zag
+identifier: printf at 9:5 in tests/arith.zag
+'(': ( at 9:11 in tests/arith.zag
+'&': & at 9:12 in tests/arith.zag
+string literal: "square(%d) = %d\n" at 9:13 in tests/arith.zag
+',': , at 9:32 in tests/arith.zag
+identifier: a at 9:34 in tests/arith.zag
+',': , at 9:35 in tests/arith.zag
+identifier: sq at 9:37 in tests/arith.zag
+')': ) at 9:39 in tests/arith.zag
+';': ; at 9:40 in tests/arith.zag
+var: var at 11:5 in tests/arith.zag
+identifier: s at 11:9 in tests/arith.zag
+':': : at 11:10 in tests/arith.zag
+identifier: i32 at 11:12 in tests/arith.zag
+'=': = at 11:16 in tests/arith.zag
+int literal: 1 at 11:18 in tests/arith.zag
+'+': + at 11:20 in tests/arith.zag
+int literal: 2 at 11:22 in tests/arith.zag
+'+': + at 11:24 in tests/arith.zag
+int literal: 3 at 11:26 in tests/arith.zag
+';': ; at 11:27 in tests/arith.zag
+identifier: printf at 12:5 in tests/arith.zag
+'(': ( at 12:11 in tests/arith.zag
+'&': & at 12:12 in tests/arith.zag
+string literal: "sum(1, 2, 3) = %d\n" at 12:13 in tests/arith.zag
+',': , at 12:34 in tests/arith.zag
+identifier: s at 12:36 in tests/arith.zag
+')': ) at 12:37 in tests/arith.zag
+';': ; at 12:38 in tests/arith.zag
+var: var at 15:5 in tests/arith.zag
+identifier: x1 at 15:9 in tests/arith.zag
+':': : at 15:11 in tests/arith.zag
+identifier: i64 at 15:13 in tests/arith.zag
+'=': = at 15:17 in tests/arith.zag
+int literal: 1 at 15:19 in tests/arith.zag
+'+': + at 15:21 in tests/arith.zag
+int literal: 2 at 15:23 in tests/arith.zag
+'*': * at 15:25 in tests/arith.zag
+int literal: 3 at 15:27 in tests/arith.zag
+';': ; at 15:28 in tests/arith.zag
+var: var at 16:5 in tests/arith.zag
+identifier: y1 at 16:9 in tests/arith.zag
+':': : at 16:11 in tests/arith.zag
+identifier: i64 at 16:13 in tests/arith.zag
+'=': = at 16:17 in tests/arith.zag
+int literal: 1 at 16:19 in tests/arith.zag
+'/': / at 16:21 in tests/arith.zag
+int literal: 2 at 16:23 in tests/arith.zag
+'-': - at 16:25 in tests/arith.zag
+int literal: 3 at 16:27 in tests/arith.zag
+';': ; at 16:28 in tests/arith.zag
+var: var at 17:5 in tests/arith.zag
+identifier: mod1 at 17:9 in tests/arith.zag
+':': : at 17:13 in tests/arith.zag
+identifier: i64 at 17:15 in tests/arith.zag
+'=': = at 17:19 in tests/arith.zag
+identifier: x1 at 17:21 in tests/arith.zag
+'%': % at 17:24 in tests/arith.zag
+identifier: y1 at 17:26 in tests/arith.zag
+';': ; at 17:28 in tests/arith.zag
+identifier: printf at 18:5 in tests/arith.zag
+'(': ( at 18:11 in tests/arith.zag
+'&': & at 18:12 in tests/arith.zag
+string literal: "prec(): %lld\n" at 18:13 in tests/arith.zag
+',': , at 18:29 in tests/arith.zag
+identifier: mod1 at 18:31 in tests/arith.zag
+')': ) at 18:35 in tests/arith.zag
+';': ; at 18:36 in tests/arith.zag
+var: var at 21:5 in tests/arith.zag
+identifier: p2 at 21:9 in tests/arith.zag
+':': : at 21:11 in tests/arith.zag
+identifier: i64 at 21:13 in tests/arith.zag
+'=': = at 21:17 in tests/arith.zag
+int literal: 2 at 21:19 in tests/arith.zag
+'*': * at 21:21 in tests/arith.zag
+int literal: 2 at 21:23 in tests/arith.zag
+'+': + at 21:25 in tests/arith.zag
+int literal: 3 at 21:27 in tests/arith.zag
+'*': * at 21:29 in tests/arith.zag
+int literal: 3 at 21:31 in tests/arith.zag
+';': ; at 21:32 in tests/arith.zag
+identifier: printf at 22:5 in tests/arith.zag
+'(': ( at 22:11 in tests/arith.zag
+'&': & at 22:12 in tests/arith.zag
+string literal: "prec2(): %lld\n" at 22:13 in tests/arith.zag
+',': , at 22:30 in tests/arith.zag
+identifier: p2 at 22:32 in tests/arith.zag
+')': ) at 22:34 in tests/arith.zag
+';': ; at 22:35 in tests/arith.zag
+var: var at 24:5 in tests/arith.zag
+identifier: p3 at 24:9 in tests/arith.zag
+':': : at 24:11 in tests/arith.zag
+identifier: i64 at 24:13 in tests/arith.zag
+'=': = at 24:17 in tests/arith.zag
+int literal: 2 at 24:19 in tests/arith.zag
+'*': * at 24:21 in tests/arith.zag
+'(': ( at 24:23 in tests/arith.zag
+int literal: 2 at 24:24 in tests/arith.zag
+'+': + at 24:26 in tests/arith.zag
+int literal: 3 at 24:28 in tests/arith.zag
+')': ) at 24:29 in tests/arith.zag
+'*': * at 24:31 in tests/arith.zag
+int literal: 3 at 24:33 in tests/arith.zag
+';': ; at 24:34 in tests/arith.zag
+identifier: printf at 25:5 in tests/arith.zag
+'(': ( at 25:11 in tests/arith.zag
+'&': & at 25:12 in tests/arith.zag
+string literal: "prec3(): %lld\n" at 25:13 in tests/arith.zag
+',': , at 25:30 in tests/arith.zag
+identifier: p3 at 25:32 in tests/arith.zag
+')': ) at 25:34 in tests/arith.zag
+';': ; at 25:35 in tests/arith.zag
+var: var at 28:5 in tests/arith.zag
+identifier: px at 28:9 in tests/arith.zag
+':': : at 28:11 in tests/arith.zag
+identifier: i32 at 28:13 in tests/arith.zag
+'=': = at 28:17 in tests/arith.zag
+int literal: 2 at 28:19 in tests/arith.zag
+';': ; at 28:20 in tests/arith.zag
+var: var at 29:5 in tests/arith.zag
+identifier: py at 29:9 in tests/arith.zag
+':': : at 29:11 in tests/arith.zag
+identifier: i32 at 29:13 in tests/arith.zag
+';': ; at 29:16 in tests/arith.zag
+identifier: px at 31:5 in tests/arith.zag
+'=': = at 31:8 in tests/arith.zag
+'-': - at 31:10 in tests/arith.zag
+identifier: px at 31:11 in tests/arith.zag
+';': ; at 31:13 in tests/arith.zag
+identifier: px at 32:5 in tests/arith.zag
+'=': = at 32:8 in tests/arith.zag
+'!': ! at 32:10 in tests/arith.zag
+identifier: px at 32:11 in tests/arith.zag
+';': ; at 32:13 in tests/arith.zag
+identifier: px at 33:5 in tests/arith.zag
+'=': = at 33:8 in tests/arith.zag
+'~': ~ at 33:10 in tests/arith.zag
+identifier: px at 33:11 in tests/arith.zag
+';': ; at 33:13 in tests/arith.zag
+'++': ++ at 34:5 in tests/arith.zag
+identifier: px at 34:7 in tests/arith.zag
+';': ; at 34:9 in tests/arith.zag
+identifier: py at 35:5 in tests/arith.zag
+'=': = at 35:8 in tests/arith.zag
+identifier: px at 35:10 in tests/arith.zag
+'++': ++ at 35:12 in tests/arith.zag
+';': ; at 35:14 in tests/arith.zag
+'--': -- at 36:5 in tests/arith.zag
+identifier: px at 36:7 in tests/arith.zag
+';': ; at 36:9 in tests/arith.zag
+identifier: py at 37:5 in tests/arith.zag
+'=': = at 37:8 in tests/arith.zag
+identifier: px at 37:10 in tests/arith.zag
+'--': -- at 37:12 in tests/arith.zag
+';': ; at 37:14 in tests/arith.zag
+identifier: printf at 39:5 in tests/arith.zag
+'(': ( at 39:11 in tests/arith.zag
+'&': & at 39:12 in tests/arith.zag
+string literal: "prefix result: x = %d, y = %d\n" at 39:13 in tests/arith.zag
+',': , at 39:46 in tests/arith.zag
+identifier: px at 39:48 in tests/arith.zag
+',': , at 39:50 in tests/arith.zag
+identifier: py at 39:52 in tests/arith.zag
+')': ) at 39:54 in tests/arith.zag
+';': ; at 39:55 in tests/arith.zag
+var: var at 42:5 in tests/arith.zag
+identifier: bx at 42:9 in tests/arith.zag
+':': : at 42:11 in tests/arith.zag
+identifier: i32 at 42:13 in tests/arith.zag
+'=': = at 42:17 in tests/arith.zag
+int literal: 4 at 42:19 in tests/arith.zag
+';': ; at 42:20 in tests/arith.zag
 var: var at 43:5 in tests/arith.zag
-identifier: x at 43:9 in tests/arith.zag
-':': : at 43:10 in tests/arith.zag
-identifier: i32 at 43:12 in tests/arith.zag
-',': , at 43:15 in tests/arith.zag
-identifier: y at 43:17 in tests/arith.zag
-':': : at 43:18 in tests/arith.zag
-identifier: i32 at 43:20 in tests/arith.zag
-';': ; at 43:23 in tests/arith.zag
-identifier: y at 44:5 in tests/arith.zag
-'=': = at 44:7 in tests/arith.zag
-identifier: x at 44:9 in tests/arith.zag
-'<': < at 44:11 in tests/arith.zag
-int literal: 1 at 44:13 in tests/arith.zag
-';': ; at 44:14 in tests/arith.zag
-identifier: y at 45:5 in tests/arith.zag
-'=': = at 45:7 in tests/arith.zag
-identifier: x at 45:9 in tests/arith.zag
-'<=': <= at 45:11 in tests/arith.zag
-int literal: 2 at 45:14 in tests/arith.zag
-';': ; at 45:15 in tests/arith.zag
-identifier: y at 46:5 in tests/arith.zag
-'=': = at 46:7 in tests/arith.zag
-identifier: x at 46:9 in tests/arith.zag
-'==': == at 46:11 in tests/arith.zag
-int literal: 3 at 46:14 in tests/arith.zag
-';': ; at 46:15 in tests/arith.zag
-identifier: y at 47:5 in tests/arith.zag
-'=': = at 47:7 in tests/arith.zag
-identifier: x at 47:9 in tests/arith.zag
-'!=': != at 47:11 in tests/arith.zag
-identifier: y at 47:14 in tests/arith.zag
-';': ; at 47:15 in tests/arith.zag
-identifier: y at 48:5 in tests/arith.zag
-'=': = at 48:7 in tests/arith.zag
-identifier: x at 48:9 in tests/arith.zag
-'>': > at 48:11 in tests/arith.zag
-identifier: y at 48:13 in tests/arith.zag
-';': ; at 48:14 in tests/arith.zag
-identifier: y at 49:5 in tests/arith.zag
-'=': = at 49:7 in tests/arith.zag
-identifier: x at 49:9 in tests/arith.zag
-'>=': >= at 49:11 in tests/arith.zag
-identifier: y at 49:14 in tests/arith.zag
-';': ; at 49:15 in tests/arith.zag
-identifier: y at 50:5 in tests/arith.zag
-'=': = at 50:7 in tests/arith.zag
-identifier: x at 50:9 in tests/arith.zag
-'&': & at 50:11 in tests/arith.zag
-identifier: y at 50:13 in tests/arith.zag
-';': ; at 50:14 in tests/arith.zag
-identifier: y at 51:5 in tests/arith.zag
-'=': = at 51:7 in tests/arith.zag
-identifier: x at 51:9 in tests/arith.zag
-'|': | at 51:11 in tests/arith.zag
-identifier: y at 51:13 in tests/arith.zag
-';': ; at 51:14 in tests/arith.zag
-identifier: y at 52:5 in tests/arith.zag
-'=': = at 52:7 in tests/arith.zag
-identifier: x at 52:9 in tests/arith.zag
-'^': ^ at 52:11 in tests/arith.zag
-identifier: x at 52:13 in tests/arith.zag
-';': ; at 52:14 in tests/arith.zag
-identifier: y at 53:5 in tests/arith.zag
-'=': = at 53:7 in tests/arith.zag
-identifier: x at 53:9 in tests/arith.zag
-'<<': << at 53:11 in tests/arith.zag
-int literal: 1 at 53:14 in tests/arith.zag
-';': ; at 53:15 in tests/arith.zag
-identifier: y at 54:5 in tests/arith.zag
-'=': = at 54:7 in tests/arith.zag
-identifier: x at 54:9 in tests/arith.zag
-'>>': >> at 54:11 in tests/arith.zag
-int literal: 1 at 54:14 in tests/arith.zag
-';': ; at 54:15 in tests/arith.zag
-return: return at 55:5 in tests/arith.zag
-int literal: 0 at 55:12 in tests/arith.zag
-';': ; at 55:13 in tests/arith.zag
-'}': } at 56:1 in tests/arith.zag
-EOF:  at 57:1 in tests/arith.zag
+identifier: by at 43:9 in tests/arith.zag
+':': : at 43:11 in tests/arith.zag
+identifier: i32 at 43:13 in tests/arith.zag
+'=': = at 43:17 in tests/arith.zag
+int literal: 2 at 43:19 in tests/arith.zag
+';': ; at 43:20 in tests/arith.zag
+identifier: printf at 45:5 in tests/arith.zag
+'(': ( at 45:11 in tests/arith.zag
+'&': & at 45:12 in tests/arith.zag
+string literal: "bx = %d\n" at 45:13 in tests/arith.zag
+',': , at 45:24 in tests/arith.zag
+identifier: bx at 45:26 in tests/arith.zag
+')': ) at 45:28 in tests/arith.zag
+';': ; at 45:29 in tests/arith.zag
+identifier: printf at 46:5 in tests/arith.zag
+'(': ( at 46:11 in tests/arith.zag
+'&': & at 46:12 in tests/arith.zag
+string literal: "by = %d\n" at 46:13 in tests/arith.zag
+',': , at 46:24 in tests/arith.zag
+identifier: by at 46:26 in tests/arith.zag
+')': ) at 46:28 in tests/arith.zag
+';': ; at 46:29 in tests/arith.zag
+identifier: printf at 48:5 in tests/arith.zag
+'(': ( at 48:11 in tests/arith.zag
+'&': & at 48:12 in tests/arith.zag
+string literal: "bx < 5: %d\n" at 48:13 in tests/arith.zag
+',': , at 48:27 in tests/arith.zag
+identifier: bx at 48:29 in tests/arith.zag
+'<': < at 48:32 in tests/arith.zag
+int literal: 5 at 48:34 in tests/arith.zag
+')': ) at 48:35 in tests/arith.zag
+';': ; at 48:36 in tests/arith.zag
+identifier: printf at 49:5 in tests/arith.zag
+'(': ( at 49:11 in tests/arith.zag
+'&': & at 49:12 in tests/arith.zag
+string literal: "bx <= 4: %d\n" at 49:13 in tests/arith.zag
+',': , at 49:28 in tests/arith.zag
+identifier: bx at 49:30 in tests/arith.zag
+'<=': <= at 49:33 in tests/arith.zag
+int literal: 4 at 49:36 in tests/arith.zag
+')': ) at 49:37 in tests/arith.zag
+';': ; at 49:38 in tests/arith.zag
+identifier: printf at 50:5 in tests/arith.zag
+'(': ( at 50:11 in tests/arith.zag
+'&': & at 50:12 in tests/arith.zag
+string literal: "bx == 4: %d\n" at 50:13 in tests/arith.zag
+',': , at 50:28 in tests/arith.zag
+identifier: bx at 50:30 in tests/arith.zag
+'==': == at 50:33 in tests/arith.zag
+int literal: 4 at 50:36 in tests/arith.zag
+')': ) at 50:37 in tests/arith.zag
+';': ; at 50:38 in tests/arith.zag
+identifier: printf at 51:5 in tests/arith.zag
+'(': ( at 51:11 in tests/arith.zag
+'&': & at 51:12 in tests/arith.zag
+string literal: "bx != by: %d\n" at 51:13 in tests/arith.zag
+',': , at 51:29 in tests/arith.zag
+identifier: bx at 51:31 in tests/arith.zag
+'!=': != at 51:34 in tests/arith.zag
+identifier: by at 51:37 in tests/arith.zag
+')': ) at 51:39 in tests/arith.zag
+';': ; at 51:40 in tests/arith.zag
+identifier: printf at 52:5 in tests/arith.zag
+'(': ( at 52:11 in tests/arith.zag
+'&': & at 52:12 in tests/arith.zag
+string literal: "bx > by: %d\n" at 52:13 in tests/arith.zag
+',': , at 52:28 in tests/arith.zag
+identifier: bx at 52:30 in tests/arith.zag
+'>': > at 52:33 in tests/arith.zag
+identifier: by at 52:35 in tests/arith.zag
+')': ) at 52:37 in tests/arith.zag
+';': ; at 52:38 in tests/arith.zag
+identifier: printf at 53:5 in tests/arith.zag
+'(': ( at 53:11 in tests/arith.zag
+'&': & at 53:12 in tests/arith.zag
+string literal: "bx >= by: %d\n" at 53:13 in tests/arith.zag
+',': , at 53:29 in tests/arith.zag
+identifier: bx at 53:31 in tests/arith.zag
+'>=': >= at 53:34 in tests/arith.zag
+identifier: by at 53:37 in tests/arith.zag
+')': ) at 53:39 in tests/arith.zag
+';': ; at 53:40 in tests/arith.zag
+identifier: printf at 54:5 in tests/arith.zag
+'(': ( at 54:11 in tests/arith.zag
+'&': & at 54:12 in tests/arith.zag
+string literal: "bx & by: %d\n" at 54:13 in tests/arith.zag
+',': , at 54:28 in tests/arith.zag
+identifier: bx at 54:30 in tests/arith.zag
+'&': & at 54:33 in tests/arith.zag
+identifier: by at 54:35 in tests/arith.zag
+')': ) at 54:37 in tests/arith.zag
+';': ; at 54:38 in tests/arith.zag
+identifier: printf at 55:5 in tests/arith.zag
+'(': ( at 55:11 in tests/arith.zag
+'&': & at 55:12 in tests/arith.zag
+string literal: "bx | by: %d\n" at 55:13 in tests/arith.zag
+',': , at 55:28 in tests/arith.zag
+identifier: bx at 55:30 in tests/arith.zag
+'|': | at 55:33 in tests/arith.zag
+identifier: by at 55:35 in tests/arith.zag
+')': ) at 55:37 in tests/arith.zag
+';': ; at 55:38 in tests/arith.zag
+identifier: printf at 56:5 in tests/arith.zag
+'(': ( at 56:11 in tests/arith.zag
+'&': & at 56:12 in tests/arith.zag
+string literal: "bx ^ bx: %d\n" at 56:13 in tests/arith.zag
+',': , at 56:28 in tests/arith.zag
+identifier: bx at 56:30 in tests/arith.zag
+'^': ^ at 56:33 in tests/arith.zag
+identifier: bx at 56:35 in tests/arith.zag
+')': ) at 56:37 in tests/arith.zag
+';': ; at 56:38 in tests/arith.zag
+identifier: printf at 57:5 in tests/arith.zag
+'(': ( at 57:11 in tests/arith.zag
+'&': & at 57:12 in tests/arith.zag
+string literal: "bx << 1: %d\n" at 57:13 in tests/arith.zag
+',': , at 57:28 in tests/arith.zag
+identifier: bx at 57:30 in tests/arith.zag
+'<<': << at 57:33 in tests/arith.zag
+int literal: 1 at 57:36 in tests/arith.zag
+')': ) at 57:37 in tests/arith.zag
+';': ; at 57:38 in tests/arith.zag
+identifier: printf at 58:5 in tests/arith.zag
+'(': ( at 58:11 in tests/arith.zag
+'&': & at 58:12 in tests/arith.zag
+string literal: "bx >> 1: %d\n" at 58:13 in tests/arith.zag
+',': , at 58:28 in tests/arith.zag
+identifier: bx at 58:30 in tests/arith.zag
+'>>': >> at 58:33 in tests/arith.zag
+int literal: 1 at 58:36 in tests/arith.zag
+')': ) at 58:37 in tests/arith.zag
+';': ; at 58:38 in tests/arith.zag
+var: var at 62:5 in tests/arith.zag
+identifier: a_u8 at 62:9 in tests/arith.zag
+':': : at 62:13 in tests/arith.zag
+identifier: u8 at 62:15 in tests/arith.zag
+'=': = at 62:18 in tests/arith.zag
+int literal: 10 at 62:20 in tests/arith.zag
+';': ; at 62:22 in tests/arith.zag
+var: var at 63:5 in tests/arith.zag
+identifier: b_u8 at 63:9 in tests/arith.zag
+':': : at 63:13 in tests/arith.zag
+identifier: u8 at 63:15 in tests/arith.zag
+'=': = at 63:18 in tests/arith.zag
+int literal: 3 at 63:20 in tests/arith.zag
+';': ; at 63:21 in tests/arith.zag
+identifier: printf at 64:5 in tests/arith.zag
+'(': ( at 64:11 in tests/arith.zag
+'&': & at 64:12 in tests/arith.zag
+string literal: "u8: %u + %u = %u\n" at 64:13 in tests/arith.zag
+',': , at 64:33 in tests/arith.zag
+identifier: a_u8 at 64:35 in tests/arith.zag
+',': , at 64:39 in tests/arith.zag
+identifier: b_u8 at 64:41 in tests/arith.zag
+',': , at 64:45 in tests/arith.zag
+identifier: a_u8 at 64:47 in tests/arith.zag
+'+': + at 64:52 in tests/arith.zag
+identifier: b_u8 at 64:54 in tests/arith.zag
+')': ) at 64:58 in tests/arith.zag
+';': ; at 64:59 in tests/arith.zag
+identifier: printf at 65:5 in tests/arith.zag
+'(': ( at 65:11 in tests/arith.zag
+'&': & at 65:12 in tests/arith.zag
+string literal: "u8: %u - %u = %u\n" at 65:13 in tests/arith.zag
+',': , at 65:33 in tests/arith.zag
+identifier: a_u8 at 65:35 in tests/arith.zag
+',': , at 65:39 in tests/arith.zag
+identifier: b_u8 at 65:41 in tests/arith.zag
+',': , at 65:45 in tests/arith.zag
+identifier: a_u8 at 65:47 in tests/arith.zag
+'-': - at 65:52 in tests/arith.zag
+identifier: b_u8 at 65:54 in tests/arith.zag
+')': ) at 65:58 in tests/arith.zag
+';': ; at 65:59 in tests/arith.zag
+identifier: printf at 66:5 in tests/arith.zag
+'(': ( at 66:11 in tests/arith.zag
+'&': & at 66:12 in tests/arith.zag
+string literal: "u8: %u * %u = %u\n" at 66:13 in tests/arith.zag
+',': , at 66:33 in tests/arith.zag
+identifier: a_u8 at 66:35 in tests/arith.zag
+',': , at 66:39 in tests/arith.zag
+identifier: b_u8 at 66:41 in tests/arith.zag
+',': , at 66:45 in tests/arith.zag
+identifier: a_u8 at 66:47 in tests/arith.zag
+'*': * at 66:52 in tests/arith.zag
+identifier: b_u8 at 66:54 in tests/arith.zag
+')': ) at 66:58 in tests/arith.zag
+';': ; at 66:59 in tests/arith.zag
+identifier: printf at 67:5 in tests/arith.zag
+'(': ( at 67:11 in tests/arith.zag
+'&': & at 67:12 in tests/arith.zag
+string literal: "u8: %u / %u = %u\n" at 67:13 in tests/arith.zag
+',': , at 67:33 in tests/arith.zag
+identifier: a_u8 at 67:35 in tests/arith.zag
+',': , at 67:39 in tests/arith.zag
+identifier: b_u8 at 67:41 in tests/arith.zag
+',': , at 67:45 in tests/arith.zag
+identifier: a_u8 at 67:47 in tests/arith.zag
+'/': / at 67:52 in tests/arith.zag
+identifier: b_u8 at 67:54 in tests/arith.zag
+')': ) at 67:58 in tests/arith.zag
+';': ; at 67:59 in tests/arith.zag
+identifier: printf at 68:5 in tests/arith.zag
+'(': ( at 68:11 in tests/arith.zag
+'&': & at 68:12 in tests/arith.zag
+string literal: "u8: %u %% %u = %u\n" at 68:13 in tests/arith.zag
+',': , at 68:34 in tests/arith.zag
+identifier: a_u8 at 68:36 in tests/arith.zag
+',': , at 68:40 in tests/arith.zag
+identifier: b_u8 at 68:42 in tests/arith.zag
+',': , at 68:46 in tests/arith.zag
+identifier: a_u8 at 68:48 in tests/arith.zag
+'%': % at 68:53 in tests/arith.zag
+identifier: b_u8 at 68:55 in tests/arith.zag
+')': ) at 68:59 in tests/arith.zag
+';': ; at 68:60 in tests/arith.zag
+var: var at 71:5 in tests/arith.zag
+identifier: a_i8 at 71:9 in tests/arith.zag
+':': : at 71:13 in tests/arith.zag
+identifier: i8 at 71:15 in tests/arith.zag
+'=': = at 71:18 in tests/arith.zag
+int literal: 10 at 71:20 in tests/arith.zag
+';': ; at 71:22 in tests/arith.zag
+var: var at 72:5 in tests/arith.zag
+identifier: b_i8 at 72:9 in tests/arith.zag
+':': : at 72:13 in tests/arith.zag
+identifier: i8 at 72:15 in tests/arith.zag
+'=': = at 72:18 in tests/arith.zag
+int literal: 3 at 72:20 in tests/arith.zag
+';': ; at 72:21 in tests/arith.zag
+identifier: printf at 73:5 in tests/arith.zag
+'(': ( at 73:11 in tests/arith.zag
+'&': & at 73:12 in tests/arith.zag
+string literal: "i8: %d + %d = %d\n" at 73:13 in tests/arith.zag
+',': , at 73:33 in tests/arith.zag
+identifier: a_i8 at 73:35 in tests/arith.zag
+',': , at 73:39 in tests/arith.zag
+identifier: b_i8 at 73:41 in tests/arith.zag
+',': , at 73:45 in tests/arith.zag
+identifier: a_i8 at 73:47 in tests/arith.zag
+'+': + at 73:52 in tests/arith.zag
+identifier: b_i8 at 73:54 in tests/arith.zag
+')': ) at 73:58 in tests/arith.zag
+';': ; at 73:59 in tests/arith.zag
+identifier: printf at 74:5 in tests/arith.zag
+'(': ( at 74:11 in tests/arith.zag
+'&': & at 74:12 in tests/arith.zag
+string literal: "i8: %d - %d = %d\n" at 74:13 in tests/arith.zag
+',': , at 74:33 in tests/arith.zag
+identifier: a_i8 at 74:35 in tests/arith.zag
+',': , at 74:39 in tests/arith.zag
+identifier: b_i8 at 74:41 in tests/arith.zag
+',': , at 74:45 in tests/arith.zag
+identifier: a_i8 at 74:47 in tests/arith.zag
+'-': - at 74:52 in tests/arith.zag
+identifier: b_i8 at 74:54 in tests/arith.zag
+')': ) at 74:58 in tests/arith.zag
+';': ; at 74:59 in tests/arith.zag
+identifier: printf at 75:5 in tests/arith.zag
+'(': ( at 75:11 in tests/arith.zag
+'&': & at 75:12 in tests/arith.zag
+string literal: "i8: %d * %d = %d\n" at 75:13 in tests/arith.zag
+',': , at 75:33 in tests/arith.zag
+identifier: a_i8 at 75:35 in tests/arith.zag
+',': , at 75:39 in tests/arith.zag
+identifier: b_i8 at 75:41 in tests/arith.zag
+',': , at 75:45 in tests/arith.zag
+identifier: a_i8 at 75:47 in tests/arith.zag
+'*': * at 75:52 in tests/arith.zag
+identifier: b_i8 at 75:54 in tests/arith.zag
+')': ) at 75:58 in tests/arith.zag
+';': ; at 75:59 in tests/arith.zag
+identifier: printf at 76:5 in tests/arith.zag
+'(': ( at 76:11 in tests/arith.zag
+'&': & at 76:12 in tests/arith.zag
+string literal: "i8: %d / %d = %d\n" at 76:13 in tests/arith.zag
+',': , at 76:33 in tests/arith.zag
+identifier: a_i8 at 76:35 in tests/arith.zag
+',': , at 76:39 in tests/arith.zag
+identifier: b_i8 at 76:41 in tests/arith.zag
+',': , at 76:45 in tests/arith.zag
+identifier: a_i8 at 76:47 in tests/arith.zag
+'/': / at 76:52 in tests/arith.zag
+identifier: b_i8 at 76:54 in tests/arith.zag
+')': ) at 76:58 in tests/arith.zag
+';': ; at 76:59 in tests/arith.zag
+identifier: printf at 77:5 in tests/arith.zag
+'(': ( at 77:11 in tests/arith.zag
+'&': & at 77:12 in tests/arith.zag
+string literal: "i8: %d %% %d = %d\n" at 77:13 in tests/arith.zag
+',': , at 77:34 in tests/arith.zag
+identifier: a_i8 at 77:36 in tests/arith.zag
+',': , at 77:40 in tests/arith.zag
+identifier: b_i8 at 77:42 in tests/arith.zag
+',': , at 77:46 in tests/arith.zag
+identifier: a_i8 at 77:48 in tests/arith.zag
+'%': % at 77:53 in tests/arith.zag
+identifier: b_i8 at 77:55 in tests/arith.zag
+')': ) at 77:59 in tests/arith.zag
+';': ; at 77:60 in tests/arith.zag
+var: var at 80:5 in tests/arith.zag
+identifier: a_u16 at 80:9 in tests/arith.zag
+':': : at 80:14 in tests/arith.zag
+identifier: u16 at 80:16 in tests/arith.zag
+'=': = at 80:20 in tests/arith.zag
+int literal: 1000 at 80:22 in tests/arith.zag
+';': ; at 80:26 in tests/arith.zag
+var: var at 81:5 in tests/arith.zag
+identifier: b_u16 at 81:9 in tests/arith.zag
+':': : at 81:14 in tests/arith.zag
+identifier: u16 at 81:16 in tests/arith.zag
+'=': = at 81:20 in tests/arith.zag
+int literal: 30 at 81:22 in tests/arith.zag
+';': ; at 81:24 in tests/arith.zag
+identifier: printf at 82:5 in tests/arith.zag
+'(': ( at 82:11 in tests/arith.zag
+'&': & at 82:12 in tests/arith.zag
+string literal: "u16: %u + %u = %u\n" at 82:13 in tests/arith.zag
+',': , at 82:34 in tests/arith.zag
+identifier: a_u16 at 82:36 in tests/arith.zag
+',': , at 82:41 in tests/arith.zag
+identifier: b_u16 at 82:43 in tests/arith.zag
+',': , at 82:48 in tests/arith.zag
+identifier: a_u16 at 82:50 in tests/arith.zag
+'+': + at 82:56 in tests/arith.zag
+identifier: b_u16 at 82:58 in tests/arith.zag
+')': ) at 82:63 in tests/arith.zag
+';': ; at 82:64 in tests/arith.zag
+identifier: printf at 83:5 in tests/arith.zag
+'(': ( at 83:11 in tests/arith.zag
+'&': & at 83:12 in tests/arith.zag
+string literal: "u16: %u - %u = %u\n" at 83:13 in tests/arith.zag
+',': , at 83:34 in tests/arith.zag
+identifier: a_u16 at 83:36 in tests/arith.zag
+',': , at 83:41 in tests/arith.zag
+identifier: b_u16 at 83:43 in tests/arith.zag
+',': , at 83:48 in tests/arith.zag
+identifier: a_u16 at 83:50 in tests/arith.zag
+'-': - at 83:56 in tests/arith.zag
+identifier: b_u16 at 83:58 in tests/arith.zag
+')': ) at 83:63 in tests/arith.zag
+';': ; at 83:64 in tests/arith.zag
+identifier: printf at 84:5 in tests/arith.zag
+'(': ( at 84:11 in tests/arith.zag
+'&': & at 84:12 in tests/arith.zag
+string literal: "u16: %u * %u = %u\n" at 84:13 in tests/arith.zag
+',': , at 84:34 in tests/arith.zag
+identifier: a_u16 at 84:36 in tests/arith.zag
+',': , at 84:41 in tests/arith.zag
+identifier: b_u16 at 84:43 in tests/arith.zag
+',': , at 84:48 in tests/arith.zag
+identifier: a_u16 at 84:50 in tests/arith.zag
+'*': * at 84:56 in tests/arith.zag
+identifier: b_u16 at 84:58 in tests/arith.zag
+')': ) at 84:63 in tests/arith.zag
+';': ; at 84:64 in tests/arith.zag
+identifier: printf at 85:5 in tests/arith.zag
+'(': ( at 85:11 in tests/arith.zag
+'&': & at 85:12 in tests/arith.zag
+string literal: "u16: %u / %u = %u\n" at 85:13 in tests/arith.zag
+',': , at 85:34 in tests/arith.zag
+identifier: a_u16 at 85:36 in tests/arith.zag
+',': , at 85:41 in tests/arith.zag
+identifier: b_u16 at 85:43 in tests/arith.zag
+',': , at 85:48 in tests/arith.zag
+identifier: a_u16 at 85:50 in tests/arith.zag
+'/': / at 85:56 in tests/arith.zag
+identifier: b_u16 at 85:58 in tests/arith.zag
+')': ) at 85:63 in tests/arith.zag
+';': ; at 85:64 in tests/arith.zag
+identifier: printf at 86:5 in tests/arith.zag
+'(': ( at 86:11 in tests/arith.zag
+'&': & at 86:12 in tests/arith.zag
+string literal: "u16: %u %% %u = %u\n" at 86:13 in tests/arith.zag
+',': , at 86:35 in tests/arith.zag
+identifier: a_u16 at 86:37 in tests/arith.zag
+',': , at 86:42 in tests/arith.zag
+identifier: b_u16 at 86:44 in tests/arith.zag
+',': , at 86:49 in tests/arith.zag
+identifier: a_u16 at 86:51 in tests/arith.zag
+'%': % at 86:57 in tests/arith.zag
+identifier: b_u16 at 86:59 in tests/arith.zag
+')': ) at 86:64 in tests/arith.zag
+';': ; at 86:65 in tests/arith.zag
+var: var at 89:5 in tests/arith.zag
+identifier: a_i16 at 89:9 in tests/arith.zag
+':': : at 89:14 in tests/arith.zag
+identifier: i16 at 89:16 in tests/arith.zag
+'=': = at 89:20 in tests/arith.zag
+int literal: 1000 at 89:22 in tests/arith.zag
+';': ; at 89:26 in tests/arith.zag
+var: var at 90:5 in tests/arith.zag
+identifier: b_i16 at 90:9 in tests/arith.zag
+':': : at 90:14 in tests/arith.zag
+identifier: i16 at 90:16 in tests/arith.zag
+'=': = at 90:20 in tests/arith.zag
+int literal: 30 at 90:22 in tests/arith.zag
+';': ; at 90:24 in tests/arith.zag
+identifier: printf at 91:5 in tests/arith.zag
+'(': ( at 91:11 in tests/arith.zag
+'&': & at 91:12 in tests/arith.zag
+string literal: "i16: %d + %d = %d\n" at 91:13 in tests/arith.zag
+',': , at 91:34 in tests/arith.zag
+identifier: a_i16 at 91:36 in tests/arith.zag
+',': , at 91:41 in tests/arith.zag
+identifier: b_i16 at 91:43 in tests/arith.zag
+',': , at 91:48 in tests/arith.zag
+identifier: a_i16 at 91:50 in tests/arith.zag
+'+': + at 91:56 in tests/arith.zag
+identifier: b_i16 at 91:58 in tests/arith.zag
+')': ) at 91:63 in tests/arith.zag
+';': ; at 91:64 in tests/arith.zag
+identifier: printf at 92:5 in tests/arith.zag
+'(': ( at 92:11 in tests/arith.zag
+'&': & at 92:12 in tests/arith.zag
+string literal: "i16: %d - %d = %d\n" at 92:13 in tests/arith.zag
+',': , at 92:34 in tests/arith.zag
+identifier: a_i16 at 92:36 in tests/arith.zag
+',': , at 92:41 in tests/arith.zag
+identifier: b_i16 at 92:43 in tests/arith.zag
+',': , at 92:48 in tests/arith.zag
+identifier: a_i16 at 92:50 in tests/arith.zag
+'-': - at 92:56 in tests/arith.zag
+identifier: b_i16 at 92:58 in tests/arith.zag
+')': ) at 92:63 in tests/arith.zag
+';': ; at 92:64 in tests/arith.zag
+identifier: printf at 93:5 in tests/arith.zag
+'(': ( at 93:11 in tests/arith.zag
+'&': & at 93:12 in tests/arith.zag
+string literal: "i16: %d * %d = %d\n" at 93:13 in tests/arith.zag
+',': , at 93:34 in tests/arith.zag
+identifier: a_i16 at 93:36 in tests/arith.zag
+',': , at 93:41 in tests/arith.zag
+identifier: b_i16 at 93:43 in tests/arith.zag
+',': , at 93:48 in tests/arith.zag
+identifier: a_i16 at 93:50 in tests/arith.zag
+'*': * at 93:56 in tests/arith.zag
+identifier: b_i16 at 93:58 in tests/arith.zag
+')': ) at 93:63 in tests/arith.zag
+';': ; at 93:64 in tests/arith.zag
+identifier: printf at 94:5 in tests/arith.zag
+'(': ( at 94:11 in tests/arith.zag
+'&': & at 94:12 in tests/arith.zag
+string literal: "i16: %d / %d = %d\n" at 94:13 in tests/arith.zag
+',': , at 94:34 in tests/arith.zag
+identifier: a_i16 at 94:36 in tests/arith.zag
+',': , at 94:41 in tests/arith.zag
+identifier: b_i16 at 94:43 in tests/arith.zag
+',': , at 94:48 in tests/arith.zag
+identifier: a_i16 at 94:50 in tests/arith.zag
+'/': / at 94:56 in tests/arith.zag
+identifier: b_i16 at 94:58 in tests/arith.zag
+')': ) at 94:63 in tests/arith.zag
+';': ; at 94:64 in tests/arith.zag
+identifier: printf at 95:5 in tests/arith.zag
+'(': ( at 95:11 in tests/arith.zag
+'&': & at 95:12 in tests/arith.zag
+string literal: "i16: %d %% %d = %d\n" at 95:13 in tests/arith.zag
+',': , at 95:35 in tests/arith.zag
+identifier: a_i16 at 95:37 in tests/arith.zag
+',': , at 95:42 in tests/arith.zag
+identifier: b_i16 at 95:44 in tests/arith.zag
+',': , at 95:49 in tests/arith.zag
+identifier: a_i16 at 95:51 in tests/arith.zag
+'%': % at 95:57 in tests/arith.zag
+identifier: b_i16 at 95:59 in tests/arith.zag
+')': ) at 95:64 in tests/arith.zag
+';': ; at 95:65 in tests/arith.zag
+var: var at 98:5 in tests/arith.zag
+identifier: a_u32 at 98:9 in tests/arith.zag
+':': : at 98:14 in tests/arith.zag
+identifier: u32 at 98:16 in tests/arith.zag
+'=': = at 98:20 in tests/arith.zag
+int literal: 1000000 at 98:22 in tests/arith.zag
+';': ; at 98:29 in tests/arith.zag
+var: var at 99:5 in tests/arith.zag
+identifier: b_u32 at 99:9 in tests/arith.zag
+':': : at 99:14 in tests/arith.zag
+identifier: u32 at 99:16 in tests/arith.zag
+'=': = at 99:20 in tests/arith.zag
+int literal: 3000 at 99:22 in tests/arith.zag
+';': ; at 99:26 in tests/arith.zag
+identifier: printf at 100:5 in tests/arith.zag
+'(': ( at 100:11 in tests/arith.zag
+'&': & at 100:12 in tests/arith.zag
+string literal: "u32: %u + %u = %u\n" at 100:13 in tests/arith.zag
+',': , at 100:34 in tests/arith.zag
+identifier: a_u32 at 100:36 in tests/arith.zag
+',': , at 100:41 in tests/arith.zag
+identifier: b_u32 at 100:43 in tests/arith.zag
+',': , at 100:48 in tests/arith.zag
+identifier: a_u32 at 100:50 in tests/arith.zag
+'+': + at 100:56 in tests/arith.zag
+identifier: b_u32 at 100:58 in tests/arith.zag
+')': ) at 100:63 in tests/arith.zag
+';': ; at 100:64 in tests/arith.zag
+identifier: printf at 101:5 in tests/arith.zag
+'(': ( at 101:11 in tests/arith.zag
+'&': & at 101:12 in tests/arith.zag
+string literal: "u32: %u - %u = %u\n" at 101:13 in tests/arith.zag
+',': , at 101:34 in tests/arith.zag
+identifier: a_u32 at 101:36 in tests/arith.zag
+',': , at 101:41 in tests/arith.zag
+identifier: b_u32 at 101:43 in tests/arith.zag
+',': , at 101:48 in tests/arith.zag
+identifier: a_u32 at 101:50 in tests/arith.zag
+'-': - at 101:56 in tests/arith.zag
+identifier: b_u32 at 101:58 in tests/arith.zag
+')': ) at 101:63 in tests/arith.zag
+';': ; at 101:64 in tests/arith.zag
+identifier: printf at 102:5 in tests/arith.zag
+'(': ( at 102:11 in tests/arith.zag
+'&': & at 102:12 in tests/arith.zag
+string literal: "u32: %u * %u = %u\n" at 102:13 in tests/arith.zag
+',': , at 102:34 in tests/arith.zag
+identifier: a_u32 at 102:36 in tests/arith.zag
+',': , at 102:41 in tests/arith.zag
+identifier: b_u32 at 102:43 in tests/arith.zag
+',': , at 102:48 in tests/arith.zag
+identifier: a_u32 at 102:50 in tests/arith.zag
+'*': * at 102:56 in tests/arith.zag
+identifier: b_u32 at 102:58 in tests/arith.zag
+')': ) at 102:63 in tests/arith.zag
+';': ; at 102:64 in tests/arith.zag
+identifier: printf at 103:5 in tests/arith.zag
+'(': ( at 103:11 in tests/arith.zag
+'&': & at 103:12 in tests/arith.zag
+string literal: "u32: %u / %u = %u\n" at 103:13 in tests/arith.zag
+',': , at 103:34 in tests/arith.zag
+identifier: a_u32 at 103:36 in tests/arith.zag
+',': , at 103:41 in tests/arith.zag
+identifier: b_u32 at 103:43 in tests/arith.zag
+',': , at 103:48 in tests/arith.zag
+identifier: a_u32 at 103:50 in tests/arith.zag
+'/': / at 103:56 in tests/arith.zag
+identifier: b_u32 at 103:58 in tests/arith.zag
+')': ) at 103:63 in tests/arith.zag
+';': ; at 103:64 in tests/arith.zag
+identifier: printf at 104:5 in tests/arith.zag
+'(': ( at 104:11 in tests/arith.zag
+'&': & at 104:12 in tests/arith.zag
+string literal: "u32: %u %% %u = %u\n" at 104:13 in tests/arith.zag
+',': , at 104:35 in tests/arith.zag
+identifier: a_u32 at 104:37 in tests/arith.zag
+',': , at 104:42 in tests/arith.zag
+identifier: b_u32 at 104:44 in tests/arith.zag
+',': , at 104:49 in tests/arith.zag
+identifier: a_u32 at 104:51 in tests/arith.zag
+'%': % at 104:57 in tests/arith.zag
+identifier: b_u32 at 104:59 in tests/arith.zag
+')': ) at 104:64 in tests/arith.zag
+';': ; at 104:65 in tests/arith.zag
+var: var at 107:5 in tests/arith.zag
+identifier: a_i32 at 107:9 in tests/arith.zag
+':': : at 107:14 in tests/arith.zag
+identifier: i32 at 107:16 in tests/arith.zag
+'=': = at 107:20 in tests/arith.zag
+int literal: 1000000 at 107:22 in tests/arith.zag
+';': ; at 107:29 in tests/arith.zag
+var: var at 108:5 in tests/arith.zag
+identifier: b_i32 at 108:9 in tests/arith.zag
+':': : at 108:14 in tests/arith.zag
+identifier: i32 at 108:16 in tests/arith.zag
+'=': = at 108:20 in tests/arith.zag
+int literal: 3000 at 108:22 in tests/arith.zag
+';': ; at 108:26 in tests/arith.zag
+identifier: printf at 109:5 in tests/arith.zag
+'(': ( at 109:11 in tests/arith.zag
+'&': & at 109:12 in tests/arith.zag
+string literal: "i32: %d + %d = %d\n" at 109:13 in tests/arith.zag
+',': , at 109:34 in tests/arith.zag
+identifier: a_i32 at 109:36 in tests/arith.zag
+',': , at 109:41 in tests/arith.zag
+identifier: b_i32 at 109:43 in tests/arith.zag
+',': , at 109:48 in tests/arith.zag
+identifier: a_i32 at 109:50 in tests/arith.zag
+'+': + at 109:56 in tests/arith.zag
+identifier: b_i32 at 109:58 in tests/arith.zag
+')': ) at 109:63 in tests/arith.zag
+';': ; at 109:64 in tests/arith.zag
+identifier: printf at 110:5 in tests/arith.zag
+'(': ( at 110:11 in tests/arith.zag
+'&': & at 110:12 in tests/arith.zag
+string literal: "i32: %d - %d = %d\n" at 110:13 in tests/arith.zag
+',': , at 110:34 in tests/arith.zag
+identifier: a_i32 at 110:36 in tests/arith.zag
+',': , at 110:41 in tests/arith.zag
+identifier: b_i32 at 110:43 in tests/arith.zag
+',': , at 110:48 in tests/arith.zag
+identifier: a_i32 at 110:50 in tests/arith.zag
+'-': - at 110:56 in tests/arith.zag
+identifier: b_i32 at 110:58 in tests/arith.zag
+')': ) at 110:63 in tests/arith.zag
+';': ; at 110:64 in tests/arith.zag
+identifier: printf at 111:5 in tests/arith.zag
+'(': ( at 111:11 in tests/arith.zag
+'&': & at 111:12 in tests/arith.zag
+string literal: "i32: %d * %d = %d\n" at 111:13 in tests/arith.zag
+',': , at 111:34 in tests/arith.zag
+identifier: a_i32 at 111:36 in tests/arith.zag
+',': , at 111:41 in tests/arith.zag
+identifier: b_i32 at 111:43 in tests/arith.zag
+',': , at 111:48 in tests/arith.zag
+identifier: a_i32 at 111:50 in tests/arith.zag
+'*': * at 111:56 in tests/arith.zag
+identifier: b_i32 at 111:58 in tests/arith.zag
+')': ) at 111:63 in tests/arith.zag
+';': ; at 111:64 in tests/arith.zag
+identifier: printf at 112:5 in tests/arith.zag
+'(': ( at 112:11 in tests/arith.zag
+'&': & at 112:12 in tests/arith.zag
+string literal: "i32: %d / %d = %d\n" at 112:13 in tests/arith.zag
+',': , at 112:34 in tests/arith.zag
+identifier: a_i32 at 112:36 in tests/arith.zag
+',': , at 112:41 in tests/arith.zag
+identifier: b_i32 at 112:43 in tests/arith.zag
+',': , at 112:48 in tests/arith.zag
+identifier: a_i32 at 112:50 in tests/arith.zag
+'/': / at 112:56 in tests/arith.zag
+identifier: b_i32 at 112:58 in tests/arith.zag
+')': ) at 112:63 in tests/arith.zag
+';': ; at 112:64 in tests/arith.zag
+identifier: printf at 113:5 in tests/arith.zag
+'(': ( at 113:11 in tests/arith.zag
+'&': & at 113:12 in tests/arith.zag
+string literal: "i32: %d %% %d = %d\n" at 113:13 in tests/arith.zag
+',': , at 113:35 in tests/arith.zag
+identifier: a_i32 at 113:37 in tests/arith.zag
+',': , at 113:42 in tests/arith.zag
+identifier: b_i32 at 113:44 in tests/arith.zag
+',': , at 113:49 in tests/arith.zag
+identifier: a_i32 at 113:51 in tests/arith.zag
+'%': % at 113:57 in tests/arith.zag
+identifier: b_i32 at 113:59 in tests/arith.zag
+')': ) at 113:64 in tests/arith.zag
+';': ; at 113:65 in tests/arith.zag
+var: var at 116:5 in tests/arith.zag
+identifier: a_u64 at 116:9 in tests/arith.zag
+':': : at 116:14 in tests/arith.zag
+identifier: u64 at 116:16 in tests/arith.zag
+'=': = at 116:20 in tests/arith.zag
+int literal: 1000000000 at 116:22 in tests/arith.zag
+';': ; at 116:32 in tests/arith.zag
+var: var at 117:5 in tests/arith.zag
+identifier: b_u64 at 117:9 in tests/arith.zag
+':': : at 117:14 in tests/arith.zag
+identifier: u64 at 117:16 in tests/arith.zag
+'=': = at 117:20 in tests/arith.zag
+int literal: 300000 at 117:22 in tests/arith.zag
+';': ; at 117:28 in tests/arith.zag
+identifier: printf at 118:5 in tests/arith.zag
+'(': ( at 118:11 in tests/arith.zag
+'&': & at 118:12 in tests/arith.zag
+string literal: "u64: %llu + %llu = %llu\n" at 118:13 in tests/arith.zag
+',': , at 118:40 in tests/arith.zag
+identifier: a_u64 at 118:42 in tests/arith.zag
+',': , at 118:47 in tests/arith.zag
+identifier: b_u64 at 118:49 in tests/arith.zag
+',': , at 118:54 in tests/arith.zag
+identifier: a_u64 at 118:56 in tests/arith.zag
+'+': + at 118:62 in tests/arith.zag
+identifier: b_u64 at 118:64 in tests/arith.zag
+')': ) at 118:69 in tests/arith.zag
+';': ; at 118:70 in tests/arith.zag
+identifier: printf at 119:5 in tests/arith.zag
+'(': ( at 119:11 in tests/arith.zag
+'&': & at 119:12 in tests/arith.zag
+string literal: "u64: %llu - %llu = %llu\n" at 119:13 in tests/arith.zag
+',': , at 119:40 in tests/arith.zag
+identifier: a_u64 at 119:42 in tests/arith.zag
+',': , at 119:47 in tests/arith.zag
+identifier: b_u64 at 119:49 in tests/arith.zag
+',': , at 119:54 in tests/arith.zag
+identifier: a_u64 at 119:56 in tests/arith.zag
+'-': - at 119:62 in tests/arith.zag
+identifier: b_u64 at 119:64 in tests/arith.zag
+')': ) at 119:69 in tests/arith.zag
+';': ; at 119:70 in tests/arith.zag
+identifier: printf at 120:5 in tests/arith.zag
+'(': ( at 120:11 in tests/arith.zag
+'&': & at 120:12 in tests/arith.zag
+string literal: "u64: %llu * %llu = %llu\n" at 120:13 in tests/arith.zag
+',': , at 120:40 in tests/arith.zag
+identifier: a_u64 at 120:42 in tests/arith.zag
+',': , at 120:47 in tests/arith.zag
+identifier: b_u64 at 120:49 in tests/arith.zag
+',': , at 120:54 in tests/arith.zag
+identifier: a_u64 at 120:56 in tests/arith.zag
+'*': * at 120:62 in tests/arith.zag
+identifier: b_u64 at 120:64 in tests/arith.zag
+')': ) at 120:69 in tests/arith.zag
+';': ; at 120:70 in tests/arith.zag
+identifier: printf at 121:5 in tests/arith.zag
+'(': ( at 121:11 in tests/arith.zag
+'&': & at 121:12 in tests/arith.zag
+string literal: "u64: %llu / %llu = %llu\n" at 121:13 in tests/arith.zag
+',': , at 121:40 in tests/arith.zag
+identifier: a_u64 at 121:42 in tests/arith.zag
+',': , at 121:47 in tests/arith.zag
+identifier: b_u64 at 121:49 in tests/arith.zag
+',': , at 121:54 in tests/arith.zag
+identifier: a_u64 at 121:56 in tests/arith.zag
+'/': / at 121:62 in tests/arith.zag
+identifier: b_u64 at 121:64 in tests/arith.zag
+')': ) at 121:69 in tests/arith.zag
+';': ; at 121:70 in tests/arith.zag
+identifier: printf at 122:5 in tests/arith.zag
+'(': ( at 122:11 in tests/arith.zag
+'&': & at 122:12 in tests/arith.zag
+string literal: "u64: %llu %% %llu = %llu\n" at 122:13 in tests/arith.zag
+',': , at 122:41 in tests/arith.zag
+identifier: a_u64 at 122:43 in tests/arith.zag
+',': , at 122:48 in tests/arith.zag
+identifier: b_u64 at 122:50 in tests/arith.zag
+',': , at 122:55 in tests/arith.zag
+identifier: a_u64 at 122:57 in tests/arith.zag
+'%': % at 122:63 in tests/arith.zag
+identifier: b_u64 at 122:65 in tests/arith.zag
+')': ) at 122:70 in tests/arith.zag
+';': ; at 122:71 in tests/arith.zag
+var: var at 125:5 in tests/arith.zag
+identifier: a_i64 at 125:9 in tests/arith.zag
+':': : at 125:14 in tests/arith.zag
+identifier: i64 at 125:16 in tests/arith.zag
+'=': = at 125:20 in tests/arith.zag
+int literal: 1000000000 at 125:22 in tests/arith.zag
+';': ; at 125:32 in tests/arith.zag
+var: var at 126:5 in tests/arith.zag
+identifier: b_i64 at 126:9 in tests/arith.zag
+':': : at 126:14 in tests/arith.zag
+identifier: i64 at 126:16 in tests/arith.zag
+'=': = at 126:20 in tests/arith.zag
+int literal: 300000 at 126:22 in tests/arith.zag
+';': ; at 126:28 in tests/arith.zag
+identifier: printf at 127:5 in tests/arith.zag
+'(': ( at 127:11 in tests/arith.zag
+'&': & at 127:12 in tests/arith.zag
+string literal: "i64: %lld + %lld = %lld\n" at 127:13 in tests/arith.zag
+',': , at 127:40 in tests/arith.zag
+identifier: a_i64 at 127:42 in tests/arith.zag
+',': , at 127:47 in tests/arith.zag
+identifier: b_i64 at 127:49 in tests/arith.zag
+',': , at 127:54 in tests/arith.zag
+identifier: a_i64 at 127:56 in tests/arith.zag
+'+': + at 127:62 in tests/arith.zag
+identifier: b_i64 at 127:64 in tests/arith.zag
+')': ) at 127:69 in tests/arith.zag
+';': ; at 127:70 in tests/arith.zag
+identifier: printf at 128:5 in tests/arith.zag
+'(': ( at 128:11 in tests/arith.zag
+'&': & at 128:12 in tests/arith.zag
+string literal: "i64: %lld - %lld = %lld\n" at 128:13 in tests/arith.zag
+',': , at 128:40 in tests/arith.zag
+identifier: a_i64 at 128:42 in tests/arith.zag
+',': , at 128:47 in tests/arith.zag
+identifier: b_i64 at 128:49 in tests/arith.zag
+',': , at 128:54 in tests/arith.zag
+identifier: a_i64 at 128:56 in tests/arith.zag
+'-': - at 128:62 in tests/arith.zag
+identifier: b_i64 at 128:64 in tests/arith.zag
+')': ) at 128:69 in tests/arith.zag
+';': ; at 128:70 in tests/arith.zag
+identifier: printf at 129:5 in tests/arith.zag
+'(': ( at 129:11 in tests/arith.zag
+'&': & at 129:12 in tests/arith.zag
+string literal: "i64: %lld * %lld = %lld\n" at 129:13 in tests/arith.zag
+',': , at 129:40 in tests/arith.zag
+identifier: a_i64 at 129:42 in tests/arith.zag
+',': , at 129:47 in tests/arith.zag
+identifier: b_i64 at 129:49 in tests/arith.zag
+',': , at 129:54 in tests/arith.zag
+identifier: a_i64 at 129:56 in tests/arith.zag
+'*': * at 129:62 in tests/arith.zag
+identifier: b_i64 at 129:64 in tests/arith.zag
+')': ) at 129:69 in tests/arith.zag
+';': ; at 129:70 in tests/arith.zag
+identifier: printf at 130:5 in tests/arith.zag
+'(': ( at 130:11 in tests/arith.zag
+'&': & at 130:12 in tests/arith.zag
+string literal: "i64: %lld / %lld = %lld\n" at 130:13 in tests/arith.zag
+',': , at 130:40 in tests/arith.zag
+identifier: a_i64 at 130:42 in tests/arith.zag
+',': , at 130:47 in tests/arith.zag
+identifier: b_i64 at 130:49 in tests/arith.zag
+',': , at 130:54 in tests/arith.zag
+identifier: a_i64 at 130:56 in tests/arith.zag
+'/': / at 130:62 in tests/arith.zag
+identifier: b_i64 at 130:64 in tests/arith.zag
+')': ) at 130:69 in tests/arith.zag
+';': ; at 130:70 in tests/arith.zag
+identifier: printf at 131:5 in tests/arith.zag
+'(': ( at 131:11 in tests/arith.zag
+'&': & at 131:12 in tests/arith.zag
+string literal: "i64: %lld %% %lld = %lld\n" at 131:13 in tests/arith.zag
+',': , at 131:41 in tests/arith.zag
+identifier: a_i64 at 131:43 in tests/arith.zag
+',': , at 131:48 in tests/arith.zag
+identifier: b_i64 at 131:50 in tests/arith.zag
+',': , at 131:55 in tests/arith.zag
+identifier: a_i64 at 131:57 in tests/arith.zag
+'%': % at 131:63 in tests/arith.zag
+identifier: b_i64 at 131:65 in tests/arith.zag
+')': ) at 131:70 in tests/arith.zag
+';': ; at 131:71 in tests/arith.zag
+return: return at 133:5 in tests/arith.zag
+int literal: 0 at 133:12 in tests/arith.zag
+';': ; at 133:13 in tests/arith.zag
+'}': } at 134:1 in tests/arith.zag
+EOF:  at 135:1 in tests/arith.zag

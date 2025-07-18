@@ -2,6 +2,7 @@
 ; Function header formatted as:
 ; @func[<max-stack-size>](<param-type>,...)
 
+extern @printf(ptr) i32
 
 @ifs[8](i32) i32:
     jmpz .L0, i32 %s[0]
@@ -20,3 +21,108 @@
     ret i32 0
 .L3:
 
+@nested_ifs[12](i32, i32) i32:
+    %s[8] = sgt i32 %s[0], i32 0
+    jmpz .L4, i32 %s[8]
+    %s[8] = sgt i32 %s[4], i32 0
+    jmpz .L5, i32 %s[8]
+    ret i32 1
+    jmp .L6
+.L5:
+    ret i32 2
+.L6:
+    jmp .L7
+.L4:
+    ret i32 3
+.L7:
+
+@early_return[8](i32) i32:
+    %s[4] = eq i32 %s[0], i32 0
+    jmpz .L8, i32 %s[4]
+    ret i32 -1
+.L8:
+    %s[4] = slt i32 %s[0], i32 0
+    jmpz .L9, i32 %s[4]
+    ret i32 -2
+.L9:
+    ret i32 %s[0]
+
+@fallthrough[12](i32) i32:
+    %s[4] = i32 0
+    %s[8] = sgt i32 %s[0], i32 10
+    jmpz .L10, i32 %s[8]
+    %s[4] = i32 100
+.L10:
+    %s[8] = sgt i32 %s[0], i32 5
+    jmpz .L11, i32 %s[8]
+    %s[8] = add i32 %s[4], i32 10
+    %s[4] = i32 %s[8]
+.L11:
+    ret i32 %s[4]
+
+@main[20]() i32:
+    %s[8] = ref i8 %data[0]
+    %s[16] = i32 call @ifs(i32 0)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[13]
+    %s[16] = i32 call @ifs(i32 1)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[26]
+    %s[16] = i32 call @more_ifs(i32 0)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[44]
+    %s[16] = i32 call @more_ifs(i32 42)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[63]
+    %s[16] = i32 call @nested_ifs(i32 1, i32 1)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[86]
+    %s[16] = i32 call @nested_ifs(i32 1, i32 0)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[109]
+    %s[16] = i32 call @nested_ifs(i32 0, i32 0)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[132]
+    %s[16] = i32 call @early_return(i32 0)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[154]
+    %s[16] = i32 call @early_return(i32 -5)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[177]
+    %s[16] = i32 call @early_return(i32 7)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[199]
+    %s[16] = i32 call @fallthrough(i32 11)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[221]
+    %s[16] = i32 call @fallthrough(i32 6)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    %s[8] = ref i8 %data[242]
+    %s[16] = i32 call @fallthrough(i32 3)
+    %s[0] = i32 call @printf(ptr %s[8], i32 %s[16])
+    ret i32 0
+
+
+Data:
+  0: 69 66 73 28 30 29 20 3D 20 25 64  A          ifs(0).=.%d.
+  c:  0 69 66 73 28 31 29 20 3D 20 25 64          .ifs(1).=.%d
+ 18:  A  0 6D 6F 72 65 5F 69 66 73 28 30          ..more_ifs(0
+ 24: 29 20 3D 20 25 64  A  0 6D 6F 72 65          ).=.%d..more
+ 30: 5F 69 66 73 28 34 32 29 20 3D 20 25          _ifs(42).=.%
+ 3c: 64  A  0 6E 65 73 74 65 64 5F 69 66          d..nested_if
+ 48: 73 28 31 2C 20 31 29 20 3D 20 25 64          s(1,.1).=.%d
+ 54:  A  0 6E 65 73 74 65 64 5F 69 66 73          ..nested_ifs
+ 60: 28 31 2C 20 30 29 20 3D 20 25 64  A          (1,.0).=.%d.
+ 6c:  0 6E 65 73 74 65 64 5F 69 66 73 28          .nested_ifs(
+ 78: 30 2C 20 30 29 20 3D 20 25 64  A  0          0,.0).=.%d..
+ 84: 65 61 72 6C 79 5F 72 65 74 75 72 6E          early_return
+ 90: 28 30 29 20 3D 20 25 64  A  0 65 61          (0).=.%d..ea
+ 9c: 72 6C 79 5F 72 65 74 75 72 6E 28 2D          rly_return(-
+ a8: 35 29 20 3D 20 25 64  A  0 65 61 72          5).=.%d..ear
+ b4: 6C 79 5F 72 65 74 75 72 6E 28 37 29          ly_return(7)
+ c0: 20 3D 20 25 64  A  0 66 61 6C 6C 74          .=.%d..fallt
+ cc: 68 72 6F 75 67 68 28 31 31 29 20 3D          hrough(11).=
+ d8: 20 25 64  A  0 66 61 6C 6C 74 68 72          .%d..fallthr
+ e4: 6F 75 67 68 28 36 29 20 3D 20 25 64          ough(6).=.%d
+ f0:  A  0 66 61 6C 6C 74 68 72 6F 75 67          ..fallthroug
+ fc: 68 28 33 29 20 3D 20 25 64  A  0             h(3).=.%d..

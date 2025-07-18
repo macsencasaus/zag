@@ -1,36 +1,87 @@
 // TEST: lex, ir, x86_64-linux
 
+extern fn printf(fmt: *u8, ...) i32;
+
 fn loop() i32 {
     var x = 0;
-
     while (x < 1000) {
         ++x;
     }
-
     return x;
 }
 
 fn loop_break() i32 {
     var x = 0;
-
     while (x < 1000) {
         ++x;
         if (x == 500)
             break;
     }
-
     return x;
 }
 
-fn loop_continue() i64{
+fn loop_continue() i64 {
     var x: i64 = 0;
-
     while (x < 1000) {
         ++x;
         if (x > 500)
             continue;
         ++x;
     }
-
     return x;
+}
+
+fn count_down() i32 {
+    var x = 10;
+    var sum = 0;
+    while (x > 0) {
+        sum = sum + x;
+        --x;
+    }
+    return sum;
+}
+
+fn nested_loop() i32 {
+    var outer = 0;
+    var total = 0;
+    while (outer < 3) {
+        var inner = 0;
+        while (inner < 3) {
+            total = total + 1;
+            ++inner;
+        }
+        ++outer;
+    }
+    return total;
+}
+
+fn empty_loop() i32 {
+    var x = 0;
+    while (x < 100) {
+        ++x;
+    }
+    return 123;
+}
+
+fn early_exit() i32 {
+    var x = 0;
+    while (1) {
+        ++x;
+        if (x == 42)
+            return x;
+    }
+    return -1; // unreachable
+}
+
+fn main() i32 {
+    printf(&"loop() = %d\n", loop());                 // expect 1000
+    printf(&"loop_break() = %d\n", loop_break());     // expect 500
+    printf(&"loop_continue() = %ld\n", loop_continue()); // expect 1000
+
+    printf(&"count_down() = %d\n", count_down());     // expect 55
+    printf(&"nested_loop() = %d\n", nested_loop());   // expect 9
+    printf(&"empty_loop() = %d\n", empty_loop());     // expect 123
+    printf(&"early_exit() = %d\n", early_exit());     // expect 42
+
+    return 0;
 }

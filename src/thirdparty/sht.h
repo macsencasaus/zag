@@ -64,6 +64,12 @@ void sht_free(String_Hash_Table *);
 
 #ifdef SHT_IMPLEMENTATION
 
+typedef struct {
+    int64_t next;
+    size_t key_size;
+    char key[];
+} String_Hash_Table_Item;
+
 #define VOID_OFFSET(__a, __offset) (void *)((char *)(__a) + (__offset))
 #define VOID_DIF(__a, __b) ((char *)__a - (char *)__b)
 
@@ -101,7 +107,7 @@ void sht_init(String_Hash_Table *ht, size_t value_t_size,
 }
 
 void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
-    size_t item_size = sizeof(int64_t) + key_t_size + ht->value_t_size;
+    size_t item_size = sizeof(int64_t) + sizeof(key_t_size) + key_t_size + ht->value_t_size;
 
     if (ht->arena == NULL) {
         ht->arena_b_capacity = SHT_INIT_B_CAP;
@@ -117,15 +123,15 @@ void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
     int64_t *last_offset = ht->bins + bin_idx;
     int64_t next = *last_offset;
 
-    void *item, *value;
-    char *cur_key;
+    String_Hash_Table_Item *item;
+    void *value;
 
     while (next != -1) {
         item = VOID_OFFSET(ht->arena, next);
-        cur_key = (char *)VOID_OFFSET(item, sizeof(int64_t));
-        value = VOID_OFFSET(cur_key, key_t_size);
+        value = VOID_OFFSET(item->key, key_t_size);
 
-        if (SHT_STRNCMP(key, cur_key, key_t_size) == 0)
+        if (item->key_size == key_t_size &&
+            SHT_STRNCMP(key, item->key, key_t_size) == 0)
             return value;
 
         last_offset = (int64_t *)item;
@@ -151,14 +157,14 @@ void *sht_get(String_Hash_Table *ht, const char *key, size_t key_t_size) {
 
     *last_offset = (int64_t)ht->b_size;
     item = VOID_OFFSET(ht->arena, ht->b_size);
-    *(int64_t *)item = -1ll;
+    item->next = -1ll;
     ++ht->size;
     ht->b_size += item_size;
 
-    cur_key = (char *)VOID_OFFSET(item, sizeof(int64_t));
-    memcpy(cur_key, key, key_t_size);
+    item->key_size = key_t_size;
+    memcpy(item->key, key, key_t_size);
 
-    value = VOID_OFFSET(cur_key, key_t_size);
+    value = VOID_OFFSET(item->key, key_t_size);
     return value;
 }
 
@@ -171,19 +177,20 @@ void *sht_try_get(const String_Hash_Table *ht, const char *key, size_t key_t_siz
 
     int64_t next = ht->bins[bin_idx];
 
-    void *item, *value;
-    const char *cur_key;
+    String_Hash_Table_Item *item;
+    void *value;
 
     while (next != -1) {
         item = VOID_OFFSET(ht->arena, next);
-        cur_key = (char *)VOID_OFFSET(item, sizeof(int64_t));
-        value = VOID_OFFSET(cur_key, key_t_size);
+        value = VOID_OFFSET(item->key, key_t_size);
 
-        if (SHT_STRNCMP(key, cur_key, key_t_size) == 0)
+        if (item->key_size == key_t_size &&
+            SHT_STRNCMP(key, item->key, key_t_size) == 0)
             return value;
 
         next = *(int64_t *)item;
     }
+
     return NULL;
 }
 

@@ -1346,7 +1346,7 @@ INLINE Prec peek_prec(const Compiler *c) {
 Value *find_scoped_var(const Compiler *c, usize scope, sv name) {
     const String_Hash_Table *scope_vars = c->vars.store + scope;
     Value **val = sht_try_get(scope_vars, name.store, name.len);
-    if (!val) return NULL;
+    if (!val)  return NULL;
     return *val;
 }
 
@@ -2275,7 +2275,7 @@ bool compile_var_stmt(Compiler *c, bool top_level) {
         }
 
         if (declare_var(c, name.lit, offset, decl_type, top_level) == NULL) {
-            compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
+            compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", TOKEN_FMT(&name));
             return false;
         }
     } while (try_peek_tok(c, TOKEN_TYPE_COMMA));

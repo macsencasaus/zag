@@ -85,7 +85,7 @@ tests = [
 test_cmds = {
     "lex": "%zag --lex %s",
     "ir": "%zag --emit-zag-ir %s",
-    "x86_64-linux": "%zag -c -o /tmp/tmp.o %s && objdump -M intel -d /tmp/tmp.o",
+    "x86_64-linux": "%zag -o /tmp/zag_tmp %s && /tmp/zag_tmp",
 }
 
 if args.monochrome:
@@ -165,12 +165,12 @@ if not args.update:
     print()
     legend = f"""
       {state_symbols[Test_State.Passed]} - Passed
-      {state_symbols[Test_State.IncorrectAnswer]} - Incorrect Answer
+      {state_symbols[Test_State.IncorrectAnswer]} - Incorrect answer
       {state_symbols[Test_State.Crashed]} - Crashed
-      {state_symbols[Test_State.Skipped]} - Not Applicable (skipped)
+      {state_symbols[Test_State.Skipped]} - Not applicable (skipped)
 
       {memory_symbols[Memory_Test_State.Passed]} - No memory leaks detected
-      {memory_symbols[Memory_Test_State.Leak]} - Leak Detected
+      {memory_symbols[Memory_Test_State.Leak]} - Leak / memory error Detected
       {memory_symbols[Memory_Test_State.Skipped]} - Skipped
     """
     print(f"Legend:{legend}")
@@ -292,7 +292,8 @@ for test_file in test_files:
         else:
             print(f"{memory_symbols[Memory_Test_State.Skipped]} ", end="")
 
-    print()
+    if not args.update:
+        print()
 
 if args.update:
     exit()

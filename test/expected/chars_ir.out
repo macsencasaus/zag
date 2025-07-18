@@ -2,13 +2,33 @@
 ; Function header formatted as:
 ; @func[<max-stack-size>](<param-type>,...)
 
+extern @printf(ptr) i32
 
-@main[24]() i32:
+@main[40]() i32:
     %s[0] = i32 97
     %s[4] = i32 10
     %s[8] = i32 171
     %s[12] = i32 255
     %s[16] = i32 255
     %s[20] = i32 10
+    %s[32] = ref i8 %data[0]
+    %s[24] = i32 call @printf(ptr %s[32], i32 %s[0])
+    %s[32] = ref i8 %data[8]
+    %s[24] = i32 call @printf(ptr %s[32], i32 %s[4])
+    %s[32] = ref i8 %data[16]
+    %s[24] = i32 call @printf(ptr %s[32], i32 %s[8])
+    %s[32] = ref i8 %data[25]
+    %s[24] = i32 call @printf(ptr %s[32], i32 %s[12])
+    %s[32] = ref i8 %data[35]
+    %s[24] = i32 call @printf(ptr %s[32], i32 %s[16])
+    %s[32] = ref i8 %data[43]
+    %s[24] = i32 call @printf(ptr %s[32], i32 %s[20])
     ret i32 0
 
+
+Data:
+  0: 61 20 3D 20 25 63  A  0 62 20 3D 20          a.=.%c..b.=.
+  c: 25 58  A  0 62 62 20 3D 20 25 58  A          %X..bb.=.%X.
+ 18:  0 62 62 62 20 3D 20 25 58  A  0 63          .bbb.=.%X..c
+ 24: 20 3D 20 25 64  A  0 6E 65 77 6C 69          .=.%d..newli
+ 30: 6E 65 20 3D 20 25 64  A  0                   ne.=.%d..

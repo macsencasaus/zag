@@ -1,53 +1,338 @@
-fn: fn at 3:1 in tests/jumps.zag
-identifier: ifs at 3:4 in tests/jumps.zag
-'(': ( at 3:7 in tests/jumps.zag
-identifier: cond at 3:8 in tests/jumps.zag
-':': : at 3:12 in tests/jumps.zag
-identifier: i32 at 3:14 in tests/jumps.zag
-')': ) at 3:17 in tests/jumps.zag
-identifier: i32 at 3:19 in tests/jumps.zag
-'{': { at 3:23 in tests/jumps.zag
-var: var at 4:5 in tests/jumps.zag
-identifier: x at 4:9 in tests/jumps.zag
-':': : at 4:10 in tests/jumps.zag
-identifier: i32 at 4:12 in tests/jumps.zag
-';': ; at 4:15 in tests/jumps.zag
-if: if at 5:5 in tests/jumps.zag
+extern: extern at 3:1 in tests/jumps.zag
+fn: fn at 3:8 in tests/jumps.zag
+identifier: printf at 3:11 in tests/jumps.zag
+'(': ( at 3:17 in tests/jumps.zag
+identifier: fmt at 3:18 in tests/jumps.zag
+':': : at 3:21 in tests/jumps.zag
+'*': * at 3:23 in tests/jumps.zag
+identifier: u8 at 3:24 in tests/jumps.zag
+',': , at 3:26 in tests/jumps.zag
+'...': ... at 3:28 in tests/jumps.zag
+')': ) at 3:31 in tests/jumps.zag
+identifier: i32 at 3:33 in tests/jumps.zag
+';': ; at 3:36 in tests/jumps.zag
+fn: fn at 5:1 in tests/jumps.zag
+identifier: ifs at 5:4 in tests/jumps.zag
+'(': ( at 5:7 in tests/jumps.zag
 identifier: cond at 5:8 in tests/jumps.zag
+':': : at 5:12 in tests/jumps.zag
+identifier: i32 at 5:14 in tests/jumps.zag
+')': ) at 5:17 in tests/jumps.zag
+identifier: i32 at 5:19 in tests/jumps.zag
+'{': { at 5:23 in tests/jumps.zag
+var: var at 6:5 in tests/jumps.zag
 identifier: x at 6:9 in tests/jumps.zag
-'=': = at 6:11 in tests/jumps.zag
-int literal: 1 at 6:13 in tests/jumps.zag
-';': ; at 6:14 in tests/jumps.zag
-else: else at 7:5 in tests/jumps.zag
+':': : at 6:10 in tests/jumps.zag
+identifier: i32 at 6:12 in tests/jumps.zag
+';': ; at 6:15 in tests/jumps.zag
+if: if at 7:5 in tests/jumps.zag
+identifier: cond at 7:8 in tests/jumps.zag
 identifier: x at 8:9 in tests/jumps.zag
 '=': = at 8:11 in tests/jumps.zag
-int literal: 2 at 8:13 in tests/jumps.zag
+int literal: 1 at 8:13 in tests/jumps.zag
 ';': ; at 8:14 in tests/jumps.zag
-return: return at 9:5 in tests/jumps.zag
-identifier: x at 9:12 in tests/jumps.zag
-';': ; at 9:13 in tests/jumps.zag
-'}': } at 10:1 in tests/jumps.zag
-fn: fn at 12:1 in tests/jumps.zag
-identifier: more_ifs at 12:4 in tests/jumps.zag
-'(': ( at 12:12 in tests/jumps.zag
-identifier: cond at 12:13 in tests/jumps.zag
-':': : at 12:17 in tests/jumps.zag
-identifier: i32 at 12:19 in tests/jumps.zag
-')': ) at 12:22 in tests/jumps.zag
-identifier: i32 at 12:24 in tests/jumps.zag
-'{': { at 12:28 in tests/jumps.zag
-if: if at 13:5 in tests/jumps.zag
-identifier: cond at 13:8 in tests/jumps.zag
-'{': { at 13:13 in tests/jumps.zag
-return: return at 14:9 in tests/jumps.zag
-identifier: cond at 14:16 in tests/jumps.zag
-';': ; at 14:20 in tests/jumps.zag
-'}': } at 15:5 in tests/jumps.zag
-else: else at 15:7 in tests/jumps.zag
-'{': { at 15:12 in tests/jumps.zag
+else: else at 9:5 in tests/jumps.zag
+identifier: x at 10:9 in tests/jumps.zag
+'=': = at 10:11 in tests/jumps.zag
+int literal: 2 at 10:13 in tests/jumps.zag
+';': ; at 10:14 in tests/jumps.zag
+return: return at 11:5 in tests/jumps.zag
+identifier: x at 11:12 in tests/jumps.zag
+';': ; at 11:13 in tests/jumps.zag
+'}': } at 12:1 in tests/jumps.zag
+fn: fn at 14:1 in tests/jumps.zag
+identifier: more_ifs at 14:4 in tests/jumps.zag
+'(': ( at 14:12 in tests/jumps.zag
+identifier: cond at 14:13 in tests/jumps.zag
+':': : at 14:17 in tests/jumps.zag
+identifier: i32 at 14:19 in tests/jumps.zag
+')': ) at 14:22 in tests/jumps.zag
+identifier: i32 at 14:24 in tests/jumps.zag
+'{': { at 14:28 in tests/jumps.zag
+if: if at 15:5 in tests/jumps.zag
+identifier: cond at 15:8 in tests/jumps.zag
+'{': { at 15:13 in tests/jumps.zag
 return: return at 16:9 in tests/jumps.zag
-int literal: 0 at 16:16 in tests/jumps.zag
-';': ; at 16:17 in tests/jumps.zag
+identifier: cond at 16:16 in tests/jumps.zag
+';': ; at 16:20 in tests/jumps.zag
 '}': } at 17:5 in tests/jumps.zag
-'}': } at 18:1 in tests/jumps.zag
-EOF:  at 19:1 in tests/jumps.zag
+else: else at 17:7 in tests/jumps.zag
+'{': { at 17:12 in tests/jumps.zag
+return: return at 18:9 in tests/jumps.zag
+int literal: 0 at 18:16 in tests/jumps.zag
+';': ; at 18:17 in tests/jumps.zag
+'}': } at 19:5 in tests/jumps.zag
+'}': } at 20:1 in tests/jumps.zag
+fn: fn at 22:1 in tests/jumps.zag
+identifier: nested_ifs at 22:4 in tests/jumps.zag
+'(': ( at 22:14 in tests/jumps.zag
+identifier: a at 22:15 in tests/jumps.zag
+':': : at 22:16 in tests/jumps.zag
+identifier: i32 at 22:18 in tests/jumps.zag
+',': , at 22:21 in tests/jumps.zag
+identifier: b at 22:23 in tests/jumps.zag
+':': : at 22:24 in tests/jumps.zag
+identifier: i32 at 22:26 in tests/jumps.zag
+')': ) at 22:29 in tests/jumps.zag
+identifier: i32 at 22:31 in tests/jumps.zag
+'{': { at 22:35 in tests/jumps.zag
+if: if at 23:5 in tests/jumps.zag
+identifier: a at 23:8 in tests/jumps.zag
+'>': > at 23:10 in tests/jumps.zag
+int literal: 0 at 23:12 in tests/jumps.zag
+'{': { at 23:14 in tests/jumps.zag
+if: if at 24:9 in tests/jumps.zag
+identifier: b at 24:12 in tests/jumps.zag
+'>': > at 24:14 in tests/jumps.zag
+int literal: 0 at 24:16 in tests/jumps.zag
+'{': { at 24:18 in tests/jumps.zag
+return: return at 25:13 in tests/jumps.zag
+int literal: 1 at 25:20 in tests/jumps.zag
+';': ; at 25:21 in tests/jumps.zag
+'}': } at 26:9 in tests/jumps.zag
+else: else at 26:11 in tests/jumps.zag
+'{': { at 26:16 in tests/jumps.zag
+return: return at 27:13 in tests/jumps.zag
+int literal: 2 at 27:20 in tests/jumps.zag
+';': ; at 27:21 in tests/jumps.zag
+'}': } at 28:9 in tests/jumps.zag
+'}': } at 29:5 in tests/jumps.zag
+else: else at 29:7 in tests/jumps.zag
+'{': { at 29:12 in tests/jumps.zag
+return: return at 30:9 in tests/jumps.zag
+int literal: 3 at 30:16 in tests/jumps.zag
+';': ; at 30:17 in tests/jumps.zag
+'}': } at 31:5 in tests/jumps.zag
+'}': } at 32:1 in tests/jumps.zag
+fn: fn at 34:1 in tests/jumps.zag
+identifier: early_return at 34:4 in tests/jumps.zag
+'(': ( at 34:16 in tests/jumps.zag
+identifier: n at 34:17 in tests/jumps.zag
+':': : at 34:18 in tests/jumps.zag
+identifier: i32 at 34:20 in tests/jumps.zag
+')': ) at 34:23 in tests/jumps.zag
+identifier: i32 at 34:25 in tests/jumps.zag
+'{': { at 34:29 in tests/jumps.zag
+if: if at 35:5 in tests/jumps.zag
+identifier: n at 35:8 in tests/jumps.zag
+'==': == at 35:10 in tests/jumps.zag
+int literal: 0 at 35:13 in tests/jumps.zag
+'{': { at 35:15 in tests/jumps.zag
+return: return at 36:9 in tests/jumps.zag
+'-': - at 36:16 in tests/jumps.zag
+int literal: 1 at 36:17 in tests/jumps.zag
+';': ; at 36:18 in tests/jumps.zag
+'}': } at 37:5 in tests/jumps.zag
+if: if at 38:5 in tests/jumps.zag
+identifier: n at 38:8 in tests/jumps.zag
+'<': < at 38:10 in tests/jumps.zag
+int literal: 0 at 38:12 in tests/jumps.zag
+'{': { at 38:14 in tests/jumps.zag
+return: return at 39:9 in tests/jumps.zag
+'-': - at 39:16 in tests/jumps.zag
+int literal: 2 at 39:17 in tests/jumps.zag
+';': ; at 39:18 in tests/jumps.zag
+'}': } at 40:5 in tests/jumps.zag
+return: return at 41:5 in tests/jumps.zag
+identifier: n at 41:12 in tests/jumps.zag
+';': ; at 41:13 in tests/jumps.zag
+'}': } at 42:1 in tests/jumps.zag
+fn: fn at 44:1 in tests/jumps.zag
+identifier: fallthrough at 44:4 in tests/jumps.zag
+'(': ( at 44:15 in tests/jumps.zag
+identifier: x at 44:16 in tests/jumps.zag
+':': : at 44:17 in tests/jumps.zag
+identifier: i32 at 44:19 in tests/jumps.zag
+')': ) at 44:22 in tests/jumps.zag
+identifier: i32 at 44:24 in tests/jumps.zag
+'{': { at 44:28 in tests/jumps.zag
+var: var at 45:5 in tests/jumps.zag
+identifier: result at 45:9 in tests/jumps.zag
+':': : at 45:15 in tests/jumps.zag
+identifier: i32 at 45:17 in tests/jumps.zag
+'=': = at 45:21 in tests/jumps.zag
+int literal: 0 at 45:23 in tests/jumps.zag
+';': ; at 45:24 in tests/jumps.zag
+if: if at 46:5 in tests/jumps.zag
+identifier: x at 46:8 in tests/jumps.zag
+'>': > at 46:10 in tests/jumps.zag
+int literal: 10 at 46:12 in tests/jumps.zag
+identifier: result at 47:9 in tests/jumps.zag
+'=': = at 47:16 in tests/jumps.zag
+int literal: 100 at 47:18 in tests/jumps.zag
+';': ; at 47:21 in tests/jumps.zag
+if: if at 48:5 in tests/jumps.zag
+identifier: x at 48:8 in tests/jumps.zag
+'>': > at 48:10 in tests/jumps.zag
+int literal: 5 at 48:12 in tests/jumps.zag
+identifier: result at 49:9 in tests/jumps.zag
+'=': = at 49:16 in tests/jumps.zag
+identifier: result at 49:18 in tests/jumps.zag
+'+': + at 49:25 in tests/jumps.zag
+int literal: 10 at 49:27 in tests/jumps.zag
+';': ; at 49:29 in tests/jumps.zag
+return: return at 50:5 in tests/jumps.zag
+identifier: result at 50:12 in tests/jumps.zag
+';': ; at 50:18 in tests/jumps.zag
+'}': } at 51:1 in tests/jumps.zag
+fn: fn at 53:1 in tests/jumps.zag
+identifier: main at 53:4 in tests/jumps.zag
+'(': ( at 53:8 in tests/jumps.zag
+')': ) at 53:9 in tests/jumps.zag
+identifier: i32 at 53:11 in tests/jumps.zag
+'{': { at 53:15 in tests/jumps.zag
+identifier: printf at 55:5 in tests/jumps.zag
+'(': ( at 55:11 in tests/jumps.zag
+'&': & at 55:12 in tests/jumps.zag
+string literal: "ifs(0) = %d\n" at 55:13 in tests/jumps.zag
+',': , at 55:28 in tests/jumps.zag
+identifier: ifs at 55:30 in tests/jumps.zag
+'(': ( at 55:33 in tests/jumps.zag
+int literal: 0 at 55:34 in tests/jumps.zag
+')': ) at 55:35 in tests/jumps.zag
+')': ) at 55:36 in tests/jumps.zag
+';': ; at 55:37 in tests/jumps.zag
+identifier: printf at 56:5 in tests/jumps.zag
+'(': ( at 56:11 in tests/jumps.zag
+'&': & at 56:12 in tests/jumps.zag
+string literal: "ifs(1) = %d\n" at 56:13 in tests/jumps.zag
+',': , at 56:28 in tests/jumps.zag
+identifier: ifs at 56:30 in tests/jumps.zag
+'(': ( at 56:33 in tests/jumps.zag
+int literal: 1 at 56:34 in tests/jumps.zag
+')': ) at 56:35 in tests/jumps.zag
+')': ) at 56:36 in tests/jumps.zag
+';': ; at 56:37 in tests/jumps.zag
+identifier: printf at 59:5 in tests/jumps.zag
+'(': ( at 59:11 in tests/jumps.zag
+'&': & at 59:12 in tests/jumps.zag
+string literal: "more_ifs(0) = %d\n" at 59:13 in tests/jumps.zag
+',': , at 59:33 in tests/jumps.zag
+identifier: more_ifs at 59:35 in tests/jumps.zag
+'(': ( at 59:43 in tests/jumps.zag
+int literal: 0 at 59:44 in tests/jumps.zag
+')': ) at 59:45 in tests/jumps.zag
+')': ) at 59:46 in tests/jumps.zag
+';': ; at 59:47 in tests/jumps.zag
+identifier: printf at 60:5 in tests/jumps.zag
+'(': ( at 60:11 in tests/jumps.zag
+'&': & at 60:12 in tests/jumps.zag
+string literal: "more_ifs(42) = %d\n" at 60:13 in tests/jumps.zag
+',': , at 60:34 in tests/jumps.zag
+identifier: more_ifs at 60:36 in tests/jumps.zag
+'(': ( at 60:44 in tests/jumps.zag
+int literal: 42 at 60:45 in tests/jumps.zag
+')': ) at 60:47 in tests/jumps.zag
+')': ) at 60:48 in tests/jumps.zag
+';': ; at 60:49 in tests/jumps.zag
+identifier: printf at 63:5 in tests/jumps.zag
+'(': ( at 63:11 in tests/jumps.zag
+'&': & at 63:12 in tests/jumps.zag
+string literal: "nested_ifs(1, 1) = %d\n" at 63:13 in tests/jumps.zag
+',': , at 63:38 in tests/jumps.zag
+identifier: nested_ifs at 63:40 in tests/jumps.zag
+'(': ( at 63:50 in tests/jumps.zag
+int literal: 1 at 63:51 in tests/jumps.zag
+',': , at 63:52 in tests/jumps.zag
+int literal: 1 at 63:54 in tests/jumps.zag
+')': ) at 63:55 in tests/jumps.zag
+')': ) at 63:56 in tests/jumps.zag
+';': ; at 63:57 in tests/jumps.zag
+identifier: printf at 64:5 in tests/jumps.zag
+'(': ( at 64:11 in tests/jumps.zag
+'&': & at 64:12 in tests/jumps.zag
+string literal: "nested_ifs(1, 0) = %d\n" at 64:13 in tests/jumps.zag
+',': , at 64:38 in tests/jumps.zag
+identifier: nested_ifs at 64:40 in tests/jumps.zag
+'(': ( at 64:50 in tests/jumps.zag
+int literal: 1 at 64:51 in tests/jumps.zag
+',': , at 64:52 in tests/jumps.zag
+int literal: 0 at 64:54 in tests/jumps.zag
+')': ) at 64:55 in tests/jumps.zag
+')': ) at 64:56 in tests/jumps.zag
+';': ; at 64:57 in tests/jumps.zag
+identifier: printf at 65:5 in tests/jumps.zag
+'(': ( at 65:11 in tests/jumps.zag
+'&': & at 65:12 in tests/jumps.zag
+string literal: "nested_ifs(0, 0) = %d\n" at 65:13 in tests/jumps.zag
+',': , at 65:38 in tests/jumps.zag
+identifier: nested_ifs at 65:40 in tests/jumps.zag
+'(': ( at 65:50 in tests/jumps.zag
+int literal: 0 at 65:51 in tests/jumps.zag
+',': , at 65:52 in tests/jumps.zag
+int literal: 0 at 65:54 in tests/jumps.zag
+')': ) at 65:55 in tests/jumps.zag
+')': ) at 65:56 in tests/jumps.zag
+';': ; at 65:57 in tests/jumps.zag
+identifier: printf at 68:5 in tests/jumps.zag
+'(': ( at 68:11 in tests/jumps.zag
+'&': & at 68:12 in tests/jumps.zag
+string literal: "early_return(0) = %d\n" at 68:13 in tests/jumps.zag
+',': , at 68:37 in tests/jumps.zag
+identifier: early_return at 68:39 in tests/jumps.zag
+'(': ( at 68:51 in tests/jumps.zag
+int literal: 0 at 68:52 in tests/jumps.zag
+')': ) at 68:53 in tests/jumps.zag
+')': ) at 68:54 in tests/jumps.zag
+';': ; at 68:55 in tests/jumps.zag
+identifier: printf at 69:5 in tests/jumps.zag
+'(': ( at 69:11 in tests/jumps.zag
+'&': & at 69:12 in tests/jumps.zag
+string literal: "early_return(-5) = %d\n" at 69:13 in tests/jumps.zag
+',': , at 69:38 in tests/jumps.zag
+identifier: early_return at 69:40 in tests/jumps.zag
+'(': ( at 69:52 in tests/jumps.zag
+'-': - at 69:53 in tests/jumps.zag
+int literal: 5 at 69:54 in tests/jumps.zag
+')': ) at 69:55 in tests/jumps.zag
+')': ) at 69:56 in tests/jumps.zag
+';': ; at 69:57 in tests/jumps.zag
+identifier: printf at 70:5 in tests/jumps.zag
+'(': ( at 70:11 in tests/jumps.zag
+'&': & at 70:12 in tests/jumps.zag
+string literal: "early_return(7) = %d\n" at 70:13 in tests/jumps.zag
+',': , at 70:37 in tests/jumps.zag
+identifier: early_return at 70:39 in tests/jumps.zag
+'(': ( at 70:51 in tests/jumps.zag
+int literal: 7 at 70:52 in tests/jumps.zag
+')': ) at 70:53 in tests/jumps.zag
+')': ) at 70:54 in tests/jumps.zag
+';': ; at 70:55 in tests/jumps.zag
+identifier: printf at 73:5 in tests/jumps.zag
+'(': ( at 73:11 in tests/jumps.zag
+'&': & at 73:12 in tests/jumps.zag
+string literal: "fallthrough(11) = %d\n" at 73:13 in tests/jumps.zag
+',': , at 73:37 in tests/jumps.zag
+identifier: fallthrough at 73:39 in tests/jumps.zag
+'(': ( at 73:50 in tests/jumps.zag
+int literal: 11 at 73:51 in tests/jumps.zag
+')': ) at 73:53 in tests/jumps.zag
+')': ) at 73:54 in tests/jumps.zag
+';': ; at 73:55 in tests/jumps.zag
+identifier: printf at 74:5 in tests/jumps.zag
+'(': ( at 74:11 in tests/jumps.zag
+'&': & at 74:12 in tests/jumps.zag
+string literal: "fallthrough(6) = %d\n" at 74:13 in tests/jumps.zag
+',': , at 74:36 in tests/jumps.zag
+identifier: fallthrough at 74:38 in tests/jumps.zag
+'(': ( at 74:49 in tests/jumps.zag
+int literal: 6 at 74:50 in tests/jumps.zag
+')': ) at 74:51 in tests/jumps.zag
+')': ) at 74:52 in tests/jumps.zag
+';': ; at 74:53 in tests/jumps.zag
+identifier: printf at 75:5 in tests/jumps.zag
+'(': ( at 75:11 in tests/jumps.zag
+'&': & at 75:12 in tests/jumps.zag
+string literal: "fallthrough(3) = %d\n" at 75:13 in tests/jumps.zag
+',': , at 75:36 in tests/jumps.zag
+identifier: fallthrough at 75:38 in tests/jumps.zag
+'(': ( at 75:49 in tests/jumps.zag
+int literal: 3 at 75:50 in tests/jumps.zag
+')': ) at 75:51 in tests/jumps.zag
+')': ) at 75:52 in tests/jumps.zag
+';': ; at 75:53 in tests/jumps.zag
+return: return at 77:5 in tests/jumps.zag
+int literal: 0 at 77:12 in tests/jumps.zag
+';': ; at 77:13 in tests/jumps.zag
+'}': } at 78:1 in tests/jumps.zag
+EOF:  at 79:1 in tests/jumps.zag

@@ -1,56 +1,134 @@
 // TEST: lex, ir, x86_64-linux
 
-fn square(x: i32) i32 {
-    return x * x;
-}
+extern fn printf(fmt: *u8, ...) i32;
 
-fn sum(a: i32, b: i32, c: i32) i32 {
-    return a + b + c;
-}
+fn main() i32 {
+    // square and sum
+    var a: i32 = 3;
+    var sq: i32 = a * a;
+    printf(&"square(%d) = %d\n", a, sq); // 9
 
-fn prec() i64 {
-    var x: i64 = 1 + 2 * 3;
-    var y: i64 = 1 / 2 - 3;
-    return x % y;
-}
+    var s: i32 = 1 + 2 + 3;
+    printf(&"sum(1, 2, 3) = %d\n", s); // 5
 
-fn mismatch() i32 {
-    var y: i32 = 3;
-    return y + 2;
-}
+    // precedence example
+    var x1: i64 = 1 + 2 * 3;          // 1 + 6 = 7
+    var y1: i64 = 1 / 2 - 3;          // 0 - 3 = -3
+    var mod1: i64 = x1 % y1;          // 7 % -3 = 1
+    printf(&"prec(): %lld\n", mod1);
 
-fn prec2() i64 {
-    return 2 * 2 + 3 * 3;
-}
+    // another precedence test
+    var p2: i64 = 2 * 2 + 3 * 3;      // 4 + 9 = 13
+    printf(&"prec2(): %lld\n", p2);
 
-fn prec3() i64 {
-    return 2 * (2 + 3) * 3;
-}
+    var p3: i64 = 2 * (2 + 3) * 3;    // 2 * 5 * 3 = 30
+    printf(&"prec3(): %lld\n", p3);
 
-fn prefix() i32 {
-    var x: i32 = 2, y: i32;
-    x = -x;
-    x = !x;
-    x = ~x;
-    ++x;
-    y = x++;
-    --x;
-    y = x--;
-    return x;
-}
+    // prefix/postfix ops
+    var px: i32 = 2;
+    var py: i32;
 
-fn more_binops() i32 {
-    var x: i32, y: i32;
-    y = x < 1;
-    y = x <= 2;
-    y = x == 3;
-    y = x != y;
-    y = x > y;
-    y = x >= y;
-    y = x & y;
-    y = x | y;
-    y = x ^ x;
-    y = x << 1;
-    y = x >> 1;
+    px = -px;       // -2
+    px = !px;       // 0 (logical NOT)
+    px = ~px;       // bitwise NOT of 0 = -1
+    ++px;           // -1 + 1 = 0
+    py = px++;      // py = 0, px = 1
+    --px;           // px = 0
+    py = px--;      // py = 0, px = -1
+
+    printf(&"prefix result: x = %d, y = %d\n", px, py);
+
+    // more binary ops
+    var bx: i32 = 4;
+    var by: i32 = 2;
+
+    printf(&"bx = %d\n", bx);
+    printf(&"by = %d\n", by);
+
+    printf(&"bx < 5: %d\n", bx < 5);       // 1
+    printf(&"bx <= 4: %d\n", bx <= 4);     // 1
+    printf(&"bx == 4: %d\n", bx == 4);     // 1
+    printf(&"bx != by: %d\n", bx != by);   // 1
+    printf(&"bx > by: %d\n", bx > by);     // 1
+    printf(&"bx >= by: %d\n", bx >= by);   // 1
+    printf(&"bx & by: %d\n", bx & by);     // 4 & 2 = 0
+    printf(&"bx | by: %d\n", bx | by);     // 4 | 2 = 6
+    printf(&"bx ^ bx: %d\n", bx ^ bx);     // 4 ^ 4 = 0
+    printf(&"bx << 1: %d\n", bx << 1);     // 4 << 1 = 8
+    printf(&"bx >> 1: %d\n", bx >> 1);     // 4 >> 1 = 2
+
+
+    // u8
+    var a_u8: u8 = 10;
+    var b_u8: u8 = 3;
+    printf(&"u8: %u + %u = %u\n", a_u8, b_u8, a_u8 + b_u8);
+    printf(&"u8: %u - %u = %u\n", a_u8, b_u8, a_u8 - b_u8);
+    printf(&"u8: %u * %u = %u\n", a_u8, b_u8, a_u8 * b_u8);
+    printf(&"u8: %u / %u = %u\n", a_u8, b_u8, a_u8 / b_u8);
+    printf(&"u8: %u %% %u = %u\n", a_u8, b_u8, a_u8 % b_u8);
+
+    // i8
+    var a_i8: i8 = 10;
+    var b_i8: i8 = 3;
+    printf(&"i8: %d + %d = %d\n", a_i8, b_i8, a_i8 + b_i8);
+    printf(&"i8: %d - %d = %d\n", a_i8, b_i8, a_i8 - b_i8);
+    printf(&"i8: %d * %d = %d\n", a_i8, b_i8, a_i8 * b_i8);
+    printf(&"i8: %d / %d = %d\n", a_i8, b_i8, a_i8 / b_i8);
+    printf(&"i8: %d %% %d = %d\n", a_i8, b_i8, a_i8 % b_i8);
+
+    // u16
+    var a_u16: u16 = 1000;
+    var b_u16: u16 = 30;
+    printf(&"u16: %u + %u = %u\n", a_u16, b_u16, a_u16 + b_u16);
+    printf(&"u16: %u - %u = %u\n", a_u16, b_u16, a_u16 - b_u16);
+    printf(&"u16: %u * %u = %u\n", a_u16, b_u16, a_u16 * b_u16);
+    printf(&"u16: %u / %u = %u\n", a_u16, b_u16, a_u16 / b_u16);
+    printf(&"u16: %u %% %u = %u\n", a_u16, b_u16, a_u16 % b_u16);
+
+    // i16
+    var a_i16: i16 = 1000;
+    var b_i16: i16 = 30;
+    printf(&"i16: %d + %d = %d\n", a_i16, b_i16, a_i16 + b_i16);
+    printf(&"i16: %d - %d = %d\n", a_i16, b_i16, a_i16 - b_i16);
+    printf(&"i16: %d * %d = %d\n", a_i16, b_i16, a_i16 * b_i16);
+    printf(&"i16: %d / %d = %d\n", a_i16, b_i16, a_i16 / b_i16);
+    printf(&"i16: %d %% %d = %d\n", a_i16, b_i16, a_i16 % b_i16);
+
+    // u32
+    var a_u32: u32 = 1000000;
+    var b_u32: u32 = 3000;
+    printf(&"u32: %u + %u = %u\n", a_u32, b_u32, a_u32 + b_u32);
+    printf(&"u32: %u - %u = %u\n", a_u32, b_u32, a_u32 - b_u32);
+    printf(&"u32: %u * %u = %u\n", a_u32, b_u32, a_u32 * b_u32);
+    printf(&"u32: %u / %u = %u\n", a_u32, b_u32, a_u32 / b_u32);
+    printf(&"u32: %u %% %u = %u\n", a_u32, b_u32, a_u32 % b_u32);
+
+    // i32
+    var a_i32: i32 = 1000000;
+    var b_i32: i32 = 3000;
+    printf(&"i32: %d + %d = %d\n", a_i32, b_i32, a_i32 + b_i32);
+    printf(&"i32: %d - %d = %d\n", a_i32, b_i32, a_i32 - b_i32);
+    printf(&"i32: %d * %d = %d\n", a_i32, b_i32, a_i32 * b_i32);
+    printf(&"i32: %d / %d = %d\n", a_i32, b_i32, a_i32 / b_i32);
+    printf(&"i32: %d %% %d = %d\n", a_i32, b_i32, a_i32 % b_i32);
+
+    // u64
+    var a_u64: u64 = 1000000000;
+    var b_u64: u64 = 300000;
+    printf(&"u64: %llu + %llu = %llu\n", a_u64, b_u64, a_u64 + b_u64);
+    printf(&"u64: %llu - %llu = %llu\n", a_u64, b_u64, a_u64 - b_u64);
+    printf(&"u64: %llu * %llu = %llu\n", a_u64, b_u64, a_u64 * b_u64);
+    printf(&"u64: %llu / %llu = %llu\n", a_u64, b_u64, a_u64 / b_u64);
+    printf(&"u64: %llu %% %llu = %llu\n", a_u64, b_u64, a_u64 % b_u64);
+
+    // i64
+    var a_i64: i64 = 1000000000;
+    var b_i64: i64 = 300000;
+    printf(&"i64: %lld + %lld = %lld\n", a_i64, b_i64, a_i64 + b_i64);
+    printf(&"i64: %lld - %lld = %lld\n", a_i64, b_i64, a_i64 - b_i64);
+    printf(&"i64: %lld * %lld = %lld\n", a_i64, b_i64, a_i64 * b_i64);
+    printf(&"i64: %lld / %lld = %lld\n", a_i64, b_i64, a_i64 / b_i64);
+    printf(&"i64: %lld %% %lld = %lld\n", a_i64, b_i64, a_i64 % b_i64);
+
     return 0;
 }

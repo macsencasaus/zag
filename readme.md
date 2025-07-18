@@ -34,6 +34,9 @@ Use the `-h` flag for more options.
 // only external function declarations are allowed to have variadic parameters
 extern fn printf(fmt: *u8, ...);
 
+// top level declarations live for the life of the program
+var g = 100;
+
 // the entry point, just like C, is the main function
 fn main() i32 {
     

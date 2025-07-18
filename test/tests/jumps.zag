@@ -1,5 +1,7 @@
 // TEST: lex, ir, x86_64-linux
 
+extern fn printf(fmt: *u8, ...) i32;
+
 fn ifs(cond: i32) i32 {
     var x: i32;
     if cond
@@ -15,4 +17,62 @@ fn more_ifs(cond: i32) i32 {
     } else {
         return 0;
     }
+}
+
+fn nested_ifs(a: i32, b: i32) i32 {
+    if a > 0 {
+        if b > 0 {
+            return 1;
+        } else {
+            return 2;
+        }
+    } else {
+        return 3;
+    }
+}
+
+fn early_return(n: i32) i32 {
+    if n == 0 {
+        return -1;
+    }
+    if n < 0 {
+        return -2;
+    }
+    return n;
+}
+
+fn fallthrough(x: i32) i32 {
+    var result: i32 = 0;
+    if x > 10
+        result = 100;
+    if x > 5
+        result = result + 10;
+    return result;
+}
+
+fn main() i32 {
+    // Test ifs
+    printf(&"ifs(0) = %d\n", ifs(0)); // expect 2
+    printf(&"ifs(1) = %d\n", ifs(1)); // expect 1
+
+    // Test more_ifs
+    printf(&"more_ifs(0) = %d\n", more_ifs(0)); // expect 0
+    printf(&"more_ifs(42) = %d\n", more_ifs(42)); // expect 42
+
+    // Test nested ifs
+    printf(&"nested_ifs(1, 1) = %d\n", nested_ifs(1, 1)); // expect 1
+    printf(&"nested_ifs(1, 0) = %d\n", nested_ifs(1, 0)); // expect 2
+    printf(&"nested_ifs(0, 0) = %d\n", nested_ifs(0, 0)); // expect 3
+
+    // Test early returns
+    printf(&"early_return(0) = %d\n", early_return(0));  // expect -1
+    printf(&"early_return(-5) = %d\n", early_return(-5)); // expect -2
+    printf(&"early_return(7) = %d\n", early_return(7));  // expect 7
+
+    // Test fallthrough logic
+    printf(&"fallthrough(11) = %d\n", fallthrough(11)); // expect 110
+    printf(&"fallthrough(6) = %d\n", fallthrough(6));   // expect 10
+    printf(&"fallthrough(3) = %d\n", fallthrough(3));   // expect 0
+
+    return 0;
 }

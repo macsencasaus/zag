@@ -1,13 +1,37 @@
 // TEST: lex, ir, x86_64-linux
 
-fn main() i32 {
-    var array: [3]u32;
-    array[0] = 1;
-    array[1] = 2;
-    array[2] = 3;
-    return 0;
-}
+extern fn printf(fmt: *u8, ...) i32;
 
-fn init() i32 {
-    var array = []u32{1, 2, 3};
+fn main() i32 {
+    // Static-size array declaration and assignment
+    var array1: [3]u32;
+    array1[0] = 1;
+    array1[1] = 2;
+    array1[2] = 3;
+    printf(&"array1: %u %u %u\n", array1[0], array1[1], array1[2]);
+
+    // Array initializer
+    var array2 = [3]u32{4, 5, 6};
+    printf(&"array2: %u %u %u\n", array2[0], array2[1], array2[2]);
+
+    // Modify and print updated array2
+    array2[1] = 50;
+    printf(&"array2 after update: %u %u %u\n", array2[0], array2[1], array2[2]);
+
+    // Iterating over array2
+    var i: u64 = 0;
+    while (i < 3) {
+        printf(&"array2[%u] = %u\n", i, array2[i]);
+        i = i + 1;
+    }
+
+    // Zero-initialized array
+    // var array3: [2]u32 = .{};
+    // printf(&"array3: %u %u\n", array3[0], array3[1]);
+
+    // Array of u8 used like booleans
+    var flags = [4]u8{1, 0, 1, 0};
+    printf(&"flags: %u %u %u %u\n", flags[0], flags[1], flags[2], flags[3]);
+
+    return 0;
 }

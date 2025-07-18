@@ -1,61 +1,215 @@
-fn: fn at 3:1 in tests/arrays.zag
-identifier: main at 3:4 in tests/arrays.zag
-'(': ( at 3:8 in tests/arrays.zag
-')': ) at 3:9 in tests/arrays.zag
-identifier: i32 at 3:11 in tests/arrays.zag
-'{': { at 3:15 in tests/arrays.zag
-var: var at 4:5 in tests/arrays.zag
-identifier: array at 4:9 in tests/arrays.zag
-':': : at 4:14 in tests/arrays.zag
-'[': [ at 4:16 in tests/arrays.zag
-int literal: 3 at 4:17 in tests/arrays.zag
-']': ] at 4:18 in tests/arrays.zag
-identifier: u32 at 4:19 in tests/arrays.zag
-';': ; at 4:22 in tests/arrays.zag
-identifier: array at 5:5 in tests/arrays.zag
-'[': [ at 5:10 in tests/arrays.zag
-int literal: 0 at 5:11 in tests/arrays.zag
-']': ] at 5:12 in tests/arrays.zag
-'=': = at 5:14 in tests/arrays.zag
-int literal: 1 at 5:16 in tests/arrays.zag
-';': ; at 5:17 in tests/arrays.zag
-identifier: array at 6:5 in tests/arrays.zag
-'[': [ at 6:10 in tests/arrays.zag
-int literal: 1 at 6:11 in tests/arrays.zag
-']': ] at 6:12 in tests/arrays.zag
-'=': = at 6:14 in tests/arrays.zag
-int literal: 2 at 6:16 in tests/arrays.zag
-';': ; at 6:17 in tests/arrays.zag
-identifier: array at 7:5 in tests/arrays.zag
-'[': [ at 7:10 in tests/arrays.zag
-int literal: 2 at 7:11 in tests/arrays.zag
-']': ] at 7:12 in tests/arrays.zag
-'=': = at 7:14 in tests/arrays.zag
-int literal: 3 at 7:16 in tests/arrays.zag
-';': ; at 7:17 in tests/arrays.zag
-return: return at 8:5 in tests/arrays.zag
+extern: extern at 3:1 in tests/arrays.zag
+fn: fn at 3:8 in tests/arrays.zag
+identifier: printf at 3:11 in tests/arrays.zag
+'(': ( at 3:17 in tests/arrays.zag
+identifier: fmt at 3:18 in tests/arrays.zag
+':': : at 3:21 in tests/arrays.zag
+'*': * at 3:23 in tests/arrays.zag
+identifier: u8 at 3:24 in tests/arrays.zag
+',': , at 3:26 in tests/arrays.zag
+'...': ... at 3:28 in tests/arrays.zag
+')': ) at 3:31 in tests/arrays.zag
+identifier: i32 at 3:33 in tests/arrays.zag
+';': ; at 3:36 in tests/arrays.zag
+fn: fn at 5:1 in tests/arrays.zag
+identifier: main at 5:4 in tests/arrays.zag
+'(': ( at 5:8 in tests/arrays.zag
+')': ) at 5:9 in tests/arrays.zag
+identifier: i32 at 5:11 in tests/arrays.zag
+'{': { at 5:15 in tests/arrays.zag
+var: var at 7:5 in tests/arrays.zag
+identifier: array1 at 7:9 in tests/arrays.zag
+':': : at 7:15 in tests/arrays.zag
+'[': [ at 7:17 in tests/arrays.zag
+int literal: 3 at 7:18 in tests/arrays.zag
+']': ] at 7:19 in tests/arrays.zag
+identifier: u32 at 7:20 in tests/arrays.zag
+';': ; at 7:23 in tests/arrays.zag
+identifier: array1 at 8:5 in tests/arrays.zag
+'[': [ at 8:11 in tests/arrays.zag
 int literal: 0 at 8:12 in tests/arrays.zag
-';': ; at 8:13 in tests/arrays.zag
-'}': } at 9:1 in tests/arrays.zag
-fn: fn at 11:1 in tests/arrays.zag
-identifier: init at 11:4 in tests/arrays.zag
-'(': ( at 11:8 in tests/arrays.zag
-')': ) at 11:9 in tests/arrays.zag
-identifier: i32 at 11:11 in tests/arrays.zag
-'{': { at 11:15 in tests/arrays.zag
-var: var at 12:5 in tests/arrays.zag
-identifier: array at 12:9 in tests/arrays.zag
-'=': = at 12:15 in tests/arrays.zag
-'[': [ at 12:17 in tests/arrays.zag
-']': ] at 12:18 in tests/arrays.zag
-identifier: u32 at 12:19 in tests/arrays.zag
-'{': { at 12:22 in tests/arrays.zag
-int literal: 1 at 12:23 in tests/arrays.zag
-',': , at 12:24 in tests/arrays.zag
-int literal: 2 at 12:26 in tests/arrays.zag
-',': , at 12:27 in tests/arrays.zag
-int literal: 3 at 12:29 in tests/arrays.zag
-'}': } at 12:30 in tests/arrays.zag
-';': ; at 12:31 in tests/arrays.zag
-'}': } at 13:1 in tests/arrays.zag
-EOF:  at 14:1 in tests/arrays.zag
+']': ] at 8:13 in tests/arrays.zag
+'=': = at 8:15 in tests/arrays.zag
+int literal: 1 at 8:17 in tests/arrays.zag
+';': ; at 8:18 in tests/arrays.zag
+identifier: array1 at 9:5 in tests/arrays.zag
+'[': [ at 9:11 in tests/arrays.zag
+int literal: 1 at 9:12 in tests/arrays.zag
+']': ] at 9:13 in tests/arrays.zag
+'=': = at 9:15 in tests/arrays.zag
+int literal: 2 at 9:17 in tests/arrays.zag
+';': ; at 9:18 in tests/arrays.zag
+identifier: array1 at 10:5 in tests/arrays.zag
+'[': [ at 10:11 in tests/arrays.zag
+int literal: 2 at 10:12 in tests/arrays.zag
+']': ] at 10:13 in tests/arrays.zag
+'=': = at 10:15 in tests/arrays.zag
+int literal: 3 at 10:17 in tests/arrays.zag
+';': ; at 10:18 in tests/arrays.zag
+identifier: printf at 11:5 in tests/arrays.zag
+'(': ( at 11:11 in tests/arrays.zag
+'&': & at 11:12 in tests/arrays.zag
+string literal: "array1: %u %u %u\n" at 11:13 in tests/arrays.zag
+',': , at 11:33 in tests/arrays.zag
+identifier: array1 at 11:35 in tests/arrays.zag
+'[': [ at 11:41 in tests/arrays.zag
+int literal: 0 at 11:42 in tests/arrays.zag
+']': ] at 11:43 in tests/arrays.zag
+',': , at 11:44 in tests/arrays.zag
+identifier: array1 at 11:46 in tests/arrays.zag
+'[': [ at 11:52 in tests/arrays.zag
+int literal: 1 at 11:53 in tests/arrays.zag
+']': ] at 11:54 in tests/arrays.zag
+',': , at 11:55 in tests/arrays.zag
+identifier: array1 at 11:57 in tests/arrays.zag
+'[': [ at 11:63 in tests/arrays.zag
+int literal: 2 at 11:64 in tests/arrays.zag
+']': ] at 11:65 in tests/arrays.zag
+')': ) at 11:66 in tests/arrays.zag
+';': ; at 11:67 in tests/arrays.zag
+var: var at 14:5 in tests/arrays.zag
+identifier: array2 at 14:9 in tests/arrays.zag
+'=': = at 14:16 in tests/arrays.zag
+'[': [ at 14:18 in tests/arrays.zag
+int literal: 3 at 14:19 in tests/arrays.zag
+']': ] at 14:20 in tests/arrays.zag
+identifier: u32 at 14:21 in tests/arrays.zag
+'{': { at 14:24 in tests/arrays.zag
+int literal: 4 at 14:25 in tests/arrays.zag
+',': , at 14:26 in tests/arrays.zag
+int literal: 5 at 14:28 in tests/arrays.zag
+',': , at 14:29 in tests/arrays.zag
+int literal: 6 at 14:31 in tests/arrays.zag
+'}': } at 14:32 in tests/arrays.zag
+';': ; at 14:33 in tests/arrays.zag
+identifier: printf at 15:5 in tests/arrays.zag
+'(': ( at 15:11 in tests/arrays.zag
+'&': & at 15:12 in tests/arrays.zag
+string literal: "array2: %u %u %u\n" at 15:13 in tests/arrays.zag
+',': , at 15:33 in tests/arrays.zag
+identifier: array2 at 15:35 in tests/arrays.zag
+'[': [ at 15:41 in tests/arrays.zag
+int literal: 0 at 15:42 in tests/arrays.zag
+']': ] at 15:43 in tests/arrays.zag
+',': , at 15:44 in tests/arrays.zag
+identifier: array2 at 15:46 in tests/arrays.zag
+'[': [ at 15:52 in tests/arrays.zag
+int literal: 1 at 15:53 in tests/arrays.zag
+']': ] at 15:54 in tests/arrays.zag
+',': , at 15:55 in tests/arrays.zag
+identifier: array2 at 15:57 in tests/arrays.zag
+'[': [ at 15:63 in tests/arrays.zag
+int literal: 2 at 15:64 in tests/arrays.zag
+']': ] at 15:65 in tests/arrays.zag
+')': ) at 15:66 in tests/arrays.zag
+';': ; at 15:67 in tests/arrays.zag
+identifier: array2 at 18:5 in tests/arrays.zag
+'[': [ at 18:11 in tests/arrays.zag
+int literal: 1 at 18:12 in tests/arrays.zag
+']': ] at 18:13 in tests/arrays.zag
+'=': = at 18:15 in tests/arrays.zag
+int literal: 50 at 18:17 in tests/arrays.zag
+';': ; at 18:19 in tests/arrays.zag
+identifier: printf at 19:5 in tests/arrays.zag
+'(': ( at 19:11 in tests/arrays.zag
+'&': & at 19:12 in tests/arrays.zag
+string literal: "array2 after update: %u %u %u\n" at 19:13 in tests/arrays.zag
+',': , at 19:46 in tests/arrays.zag
+identifier: array2 at 19:48 in tests/arrays.zag
+'[': [ at 19:54 in tests/arrays.zag
+int literal: 0 at 19:55 in tests/arrays.zag
+']': ] at 19:56 in tests/arrays.zag
+',': , at 19:57 in tests/arrays.zag
+identifier: array2 at 19:59 in tests/arrays.zag
+'[': [ at 19:65 in tests/arrays.zag
+int literal: 1 at 19:66 in tests/arrays.zag
+']': ] at 19:67 in tests/arrays.zag
+',': , at 19:68 in tests/arrays.zag
+identifier: array2 at 19:70 in tests/arrays.zag
+'[': [ at 19:76 in tests/arrays.zag
+int literal: 2 at 19:77 in tests/arrays.zag
+']': ] at 19:78 in tests/arrays.zag
+')': ) at 19:79 in tests/arrays.zag
+';': ; at 19:80 in tests/arrays.zag
+var: var at 22:5 in tests/arrays.zag
+identifier: i at 22:9 in tests/arrays.zag
+':': : at 22:10 in tests/arrays.zag
+identifier: u64 at 22:12 in tests/arrays.zag
+'=': = at 22:16 in tests/arrays.zag
+int literal: 0 at 22:18 in tests/arrays.zag
+';': ; at 22:19 in tests/arrays.zag
+while: while at 23:5 in tests/arrays.zag
+'(': ( at 23:11 in tests/arrays.zag
+identifier: i at 23:12 in tests/arrays.zag
+'<': < at 23:14 in tests/arrays.zag
+int literal: 3 at 23:16 in tests/arrays.zag
+')': ) at 23:17 in tests/arrays.zag
+'{': { at 23:19 in tests/arrays.zag
+identifier: printf at 24:9 in tests/arrays.zag
+'(': ( at 24:15 in tests/arrays.zag
+'&': & at 24:16 in tests/arrays.zag
+string literal: "array2[%u] = %u\n" at 24:17 in tests/arrays.zag
+',': , at 24:36 in tests/arrays.zag
+identifier: i at 24:38 in tests/arrays.zag
+',': , at 24:39 in tests/arrays.zag
+identifier: array2 at 24:41 in tests/arrays.zag
+'[': [ at 24:47 in tests/arrays.zag
+identifier: i at 24:48 in tests/arrays.zag
+']': ] at 24:49 in tests/arrays.zag
+')': ) at 24:50 in tests/arrays.zag
+';': ; at 24:51 in tests/arrays.zag
+identifier: i at 25:9 in tests/arrays.zag
+'=': = at 25:11 in tests/arrays.zag
+identifier: i at 25:13 in tests/arrays.zag
+'+': + at 25:15 in tests/arrays.zag
+int literal: 1 at 25:17 in tests/arrays.zag
+';': ; at 25:18 in tests/arrays.zag
+'}': } at 26:5 in tests/arrays.zag
+var: var at 33:5 in tests/arrays.zag
+identifier: flags at 33:9 in tests/arrays.zag
+'=': = at 33:15 in tests/arrays.zag
+'[': [ at 33:17 in tests/arrays.zag
+int literal: 4 at 33:18 in tests/arrays.zag
+']': ] at 33:19 in tests/arrays.zag
+identifier: u8 at 33:20 in tests/arrays.zag
+'{': { at 33:22 in tests/arrays.zag
+int literal: 1 at 33:23 in tests/arrays.zag
+',': , at 33:24 in tests/arrays.zag
+int literal: 0 at 33:26 in tests/arrays.zag
+',': , at 33:27 in tests/arrays.zag
+int literal: 1 at 33:29 in tests/arrays.zag
+',': , at 33:30 in tests/arrays.zag
+int literal: 0 at 33:32 in tests/arrays.zag
+'}': } at 33:33 in tests/arrays.zag
+';': ; at 33:34 in tests/arrays.zag
+identifier: printf at 34:5 in tests/arrays.zag
+'(': ( at 34:11 in tests/arrays.zag
+'&': & at 34:12 in tests/arrays.zag
+string literal: "flags: %u %u %u %u\n" at 34:13 in tests/arrays.zag
+',': , at 34:35 in tests/arrays.zag
+identifier: flags at 34:37 in tests/arrays.zag
+'[': [ at 34:42 in tests/arrays.zag
+int literal: 0 at 34:43 in tests/arrays.zag
+']': ] at 34:44 in tests/arrays.zag
+',': , at 34:45 in tests/arrays.zag
+identifier: flags at 34:47 in tests/arrays.zag
+'[': [ at 34:52 in tests/arrays.zag
+int literal: 1 at 34:53 in tests/arrays.zag
+']': ] at 34:54 in tests/arrays.zag
+',': , at 34:55 in tests/arrays.zag
+identifier: flags at 34:57 in tests/arrays.zag
+'[': [ at 34:62 in tests/arrays.zag
+int literal: 2 at 34:63 in tests/arrays.zag
+']': ] at 34:64 in tests/arrays.zag
+',': , at 34:65 in tests/arrays.zag
+identifier: flags at 34:67 in tests/arrays.zag
+'[': [ at 34:72 in tests/arrays.zag
+int literal: 3 at 34:73 in tests/arrays.zag
+']': ] at 34:74 in tests/arrays.zag
+')': ) at 34:75 in tests/arrays.zag
+';': ; at 34:76 in tests/arrays.zag
+return: return at 36:5 in tests/arrays.zag
+int literal: 0 at 36:12 in tests/arrays.zag
+';': ; at 36:13 in tests/arrays.zag
+'}': } at 37:1 in tests/arrays.zag
+EOF:  at 38:1 in tests/arrays.zag
