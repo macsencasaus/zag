@@ -1,0 +1,51 @@
+; Zag Readable Intermediate Representation
+; Function header formatted as:
+; @func[<max-stack-size>](<param-type>,...)
+
+extern @printf(ptr) i32
+
+@main[32]() i32:
+    %s[8] = ref i8 %data[48]
+    %s[0] = i32 call @printf(ptr %s[8], i32 %data[0])
+    %s[8] = ref i8 %data[56]
+    %s[0] = i32 call @printf(ptr %s[8], i32 %data[4])
+    %s[8] = ref i8 %data[64]
+    %s[0] = i32 call @printf(ptr %s[8], i32 %data[8])
+    %s[8] = ref i8 %data[72]
+    %s[0] = i32 call @printf(ptr %s[8], i32 %data[12])
+    %s[8] = ref i8 %data[80]
+    %s[16] = ref i32 %data[16]
+    %s[24] = add ptr %s[16], i64 0
+    %s[0] = i32 call @printf(ptr %s[8], i32 deref %s[24])
+    %s[8] = ref i8 %data[94]
+    %s[16] = ref i32 %data[16]
+    %s[24] = add ptr %s[16], i64 16
+    %s[0] = i32 call @printf(ptr %s[8], i32 deref %s[24])
+    %s[8] = ref i8 %data[108]
+    %s[16] = ref i32 %data[36]
+    %s[24] = add ptr %s[16], i64 4
+    %s[0] = i32 call @printf(ptr %s[8], i32 deref %s[24])
+    %s[8] = ref i8 %data[126]
+    %s[16] = ref i32 %data[36]
+    %s[24] = add ptr %s[16], i64 8
+    %s[0] = i32 call @printf(ptr %s[8], i32 deref %s[24])
+    %s[8] = ref i8 %data[144]
+    %s[0] = i32 call @printf(ptr %s[8], i32 0)
+    ret i32 0
+
+
+Data:
+  0:  A  0  0  0 FB FF FF FF  0  0  0  0          ............
+  c: 40 E2  1  0  1  0  0  0  2  0  0  0          @...........
+ 18:  3  0  0  0  4  0  0  0  5  0  0  0          ............
+ 24: 2A  0  0  0 64  0  0  0 F9 FF FF FF          *...d.......
+ 30: 78 20 3D 20 25 64  A  0 79 20 3D 20          x.=.%d..y.=.
+ 3c: 25 64  A  0 7A 20 3D 20 25 64  A  0          %d..z.=.%d..
+ 48: 61 20 3D 20 25 64  A  0 6E 75 6D 73          a.=.%d..nums
+ 54: 5B 30 5D 20 3D 20 25 64  A  0 6E 75          [0].=.%d..nu
+ 60: 6D 73 5B 34 5D 20 3D 20 25 64  A  0          ms[4].=.%d..
+ 6c: 6D 6F 72 65 4E 75 6D 73 5B 31 5D 20          moreNums[1].
+ 78: 3D 20 25 64  A  0 6D 6F 72 65 4E 75          =.%d..moreNu
+ 84: 6D 73 5B 32 5D 20 3D 20 25 64  A  0          ms[2].=.%d..
+ 90: 65 6D 70 74 79 20 6C 69 73 74 20 73          empty.list.s
+ 9c: 69 7A 65 20 3D 20 25 64  A  0                ize.=.%d..

@@ -1,0 +1,30 @@
+// TEST: lex, ir, x86_64-linux
+
+extern fn printf(fmt: *u8, ...) i32;
+
+var x = 10;
+var y = -5;
+var z = 0;
+var a = 123456;
+var nums = []i32{1, 2, 3, 4, 5};
+var empty = []i32{};
+var moreNums = []i32{42, 100, -7};
+
+fn main() i32 {
+    // Simple integer prints
+    printf(&"x = %d\n", x);
+    printf(&"y = %d\n", y);
+    printf(&"z = %d\n", z);
+    printf(&"a = %d\n", a);
+
+    // Accessing array values
+    printf(&"nums[0] = %d\n", nums[0]);
+    printf(&"nums[4] = %d\n", nums[4]);
+
+    printf(&"moreNums[1] = %d\n", moreNums[1]);
+    printf(&"moreNums[2] = %d\n", moreNums[2]);
+
+    printf(&"empty list size = %d\n", 0);
+
+    return 0;
+}

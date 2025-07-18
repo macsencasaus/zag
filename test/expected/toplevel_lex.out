@@ -1,0 +1,171 @@
+extern: extern at 3:1 in tests/toplevel.zag
+fn: fn at 3:8 in tests/toplevel.zag
+identifier: printf at 3:11 in tests/toplevel.zag
+'(': ( at 3:17 in tests/toplevel.zag
+identifier: fmt at 3:18 in tests/toplevel.zag
+':': : at 3:21 in tests/toplevel.zag
+'*': * at 3:23 in tests/toplevel.zag
+identifier: u8 at 3:24 in tests/toplevel.zag
+',': , at 3:26 in tests/toplevel.zag
+'...': ... at 3:28 in tests/toplevel.zag
+')': ) at 3:31 in tests/toplevel.zag
+identifier: i32 at 3:33 in tests/toplevel.zag
+';': ; at 3:36 in tests/toplevel.zag
+var: var at 5:1 in tests/toplevel.zag
+identifier: x at 5:5 in tests/toplevel.zag
+'=': = at 5:7 in tests/toplevel.zag
+int literal: 10 at 5:9 in tests/toplevel.zag
+';': ; at 5:11 in tests/toplevel.zag
+var: var at 6:1 in tests/toplevel.zag
+identifier: y at 6:5 in tests/toplevel.zag
+'=': = at 6:7 in tests/toplevel.zag
+'-': - at 6:9 in tests/toplevel.zag
+int literal: 5 at 6:10 in tests/toplevel.zag
+';': ; at 6:11 in tests/toplevel.zag
+var: var at 7:1 in tests/toplevel.zag
+identifier: z at 7:5 in tests/toplevel.zag
+'=': = at 7:7 in tests/toplevel.zag
+int literal: 0 at 7:9 in tests/toplevel.zag
+';': ; at 7:10 in tests/toplevel.zag
+var: var at 8:1 in tests/toplevel.zag
+identifier: a at 8:5 in tests/toplevel.zag
+'=': = at 8:7 in tests/toplevel.zag
+int literal: 123456 at 8:9 in tests/toplevel.zag
+';': ; at 8:15 in tests/toplevel.zag
+var: var at 9:1 in tests/toplevel.zag
+identifier: nums at 9:5 in tests/toplevel.zag
+'=': = at 9:10 in tests/toplevel.zag
+'[': [ at 9:12 in tests/toplevel.zag
+']': ] at 9:13 in tests/toplevel.zag
+identifier: i32 at 9:14 in tests/toplevel.zag
+'{': { at 9:17 in tests/toplevel.zag
+int literal: 1 at 9:18 in tests/toplevel.zag
+',': , at 9:19 in tests/toplevel.zag
+int literal: 2 at 9:21 in tests/toplevel.zag
+',': , at 9:22 in tests/toplevel.zag
+int literal: 3 at 9:24 in tests/toplevel.zag
+',': , at 9:25 in tests/toplevel.zag
+int literal: 4 at 9:27 in tests/toplevel.zag
+',': , at 9:28 in tests/toplevel.zag
+int literal: 5 at 9:30 in tests/toplevel.zag
+'}': } at 9:31 in tests/toplevel.zag
+';': ; at 9:32 in tests/toplevel.zag
+var: var at 10:1 in tests/toplevel.zag
+identifier: empty at 10:5 in tests/toplevel.zag
+'=': = at 10:11 in tests/toplevel.zag
+'[': [ at 10:13 in tests/toplevel.zag
+']': ] at 10:14 in tests/toplevel.zag
+identifier: i32 at 10:15 in tests/toplevel.zag
+'{': { at 10:18 in tests/toplevel.zag
+'}': } at 10:19 in tests/toplevel.zag
+';': ; at 10:20 in tests/toplevel.zag
+var: var at 11:1 in tests/toplevel.zag
+identifier: moreNums at 11:5 in tests/toplevel.zag
+'=': = at 11:14 in tests/toplevel.zag
+'[': [ at 11:16 in tests/toplevel.zag
+']': ] at 11:17 in tests/toplevel.zag
+identifier: i32 at 11:18 in tests/toplevel.zag
+'{': { at 11:21 in tests/toplevel.zag
+int literal: 42 at 11:22 in tests/toplevel.zag
+',': , at 11:24 in tests/toplevel.zag
+int literal: 100 at 11:26 in tests/toplevel.zag
+',': , at 11:29 in tests/toplevel.zag
+'-': - at 11:31 in tests/toplevel.zag
+int literal: 7 at 11:32 in tests/toplevel.zag
+'}': } at 11:33 in tests/toplevel.zag
+';': ; at 11:34 in tests/toplevel.zag
+fn: fn at 13:1 in tests/toplevel.zag
+identifier: main at 13:4 in tests/toplevel.zag
+'(': ( at 13:8 in tests/toplevel.zag
+')': ) at 13:9 in tests/toplevel.zag
+identifier: i32 at 13:11 in tests/toplevel.zag
+'{': { at 13:15 in tests/toplevel.zag
+identifier: printf at 15:5 in tests/toplevel.zag
+'(': ( at 15:11 in tests/toplevel.zag
+'&': & at 15:12 in tests/toplevel.zag
+string literal: "x = %d\n" at 15:13 in tests/toplevel.zag
+',': , at 15:23 in tests/toplevel.zag
+identifier: x at 15:25 in tests/toplevel.zag
+')': ) at 15:26 in tests/toplevel.zag
+';': ; at 15:27 in tests/toplevel.zag
+identifier: printf at 16:5 in tests/toplevel.zag
+'(': ( at 16:11 in tests/toplevel.zag
+'&': & at 16:12 in tests/toplevel.zag
+string literal: "y = %d\n" at 16:13 in tests/toplevel.zag
+',': , at 16:23 in tests/toplevel.zag
+identifier: y at 16:25 in tests/toplevel.zag
+')': ) at 16:26 in tests/toplevel.zag
+';': ; at 16:27 in tests/toplevel.zag
+identifier: printf at 17:5 in tests/toplevel.zag
+'(': ( at 17:11 in tests/toplevel.zag
+'&': & at 17:12 in tests/toplevel.zag
+string literal: "z = %d\n" at 17:13 in tests/toplevel.zag
+',': , at 17:23 in tests/toplevel.zag
+identifier: z at 17:25 in tests/toplevel.zag
+')': ) at 17:26 in tests/toplevel.zag
+';': ; at 17:27 in tests/toplevel.zag
+identifier: printf at 18:5 in tests/toplevel.zag
+'(': ( at 18:11 in tests/toplevel.zag
+'&': & at 18:12 in tests/toplevel.zag
+string literal: "a = %d\n" at 18:13 in tests/toplevel.zag
+',': , at 18:23 in tests/toplevel.zag
+identifier: a at 18:25 in tests/toplevel.zag
+')': ) at 18:26 in tests/toplevel.zag
+';': ; at 18:27 in tests/toplevel.zag
+identifier: printf at 21:5 in tests/toplevel.zag
+'(': ( at 21:11 in tests/toplevel.zag
+'&': & at 21:12 in tests/toplevel.zag
+string literal: "nums[0] = %d\n" at 21:13 in tests/toplevel.zag
+',': , at 21:29 in tests/toplevel.zag
+identifier: nums at 21:31 in tests/toplevel.zag
+'[': [ at 21:35 in tests/toplevel.zag
+int literal: 0 at 21:36 in tests/toplevel.zag
+']': ] at 21:37 in tests/toplevel.zag
+')': ) at 21:38 in tests/toplevel.zag
+';': ; at 21:39 in tests/toplevel.zag
+identifier: printf at 22:5 in tests/toplevel.zag
+'(': ( at 22:11 in tests/toplevel.zag
+'&': & at 22:12 in tests/toplevel.zag
+string literal: "nums[4] = %d\n" at 22:13 in tests/toplevel.zag
+',': , at 22:29 in tests/toplevel.zag
+identifier: nums at 22:31 in tests/toplevel.zag
+'[': [ at 22:35 in tests/toplevel.zag
+int literal: 4 at 22:36 in tests/toplevel.zag
+']': ] at 22:37 in tests/toplevel.zag
+')': ) at 22:38 in tests/toplevel.zag
+';': ; at 22:39 in tests/toplevel.zag
+identifier: printf at 24:5 in tests/toplevel.zag
+'(': ( at 24:11 in tests/toplevel.zag
+'&': & at 24:12 in tests/toplevel.zag
+string literal: "moreNums[1] = %d\n" at 24:13 in tests/toplevel.zag
+',': , at 24:33 in tests/toplevel.zag
+identifier: moreNums at 24:35 in tests/toplevel.zag
+'[': [ at 24:43 in tests/toplevel.zag
+int literal: 1 at 24:44 in tests/toplevel.zag
+']': ] at 24:45 in tests/toplevel.zag
+')': ) at 24:46 in tests/toplevel.zag
+';': ; at 24:47 in tests/toplevel.zag
+identifier: printf at 25:5 in tests/toplevel.zag
+'(': ( at 25:11 in tests/toplevel.zag
+'&': & at 25:12 in tests/toplevel.zag
+string literal: "moreNums[2] = %d\n" at 25:13 in tests/toplevel.zag
+',': , at 25:33 in tests/toplevel.zag
+identifier: moreNums at 25:35 in tests/toplevel.zag
+'[': [ at 25:43 in tests/toplevel.zag
+int literal: 2 at 25:44 in tests/toplevel.zag
+']': ] at 25:45 in tests/toplevel.zag
+')': ) at 25:46 in tests/toplevel.zag
+';': ; at 25:47 in tests/toplevel.zag
+identifier: printf at 27:5 in tests/toplevel.zag
+'(': ( at 27:11 in tests/toplevel.zag
+'&': & at 27:12 in tests/toplevel.zag
+string literal: "empty list size = %d\n" at 27:13 in tests/toplevel.zag
+',': , at 27:37 in tests/toplevel.zag
+int literal: 0 at 27:39 in tests/toplevel.zag
+')': ) at 27:40 in tests/toplevel.zag
+';': ; at 27:41 in tests/toplevel.zag
+return: return at 29:5 in tests/toplevel.zag
+int literal: 0 at 29:12 in tests/toplevel.zag
+';': ; at 29:13 in tests/toplevel.zag
+'}': } at 30:1 in tests/toplevel.zag
+EOF:  at 31:1 in tests/toplevel.zag

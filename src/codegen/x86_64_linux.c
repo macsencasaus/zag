@@ -151,7 +151,7 @@ typedef struct {
 
 // Opcodes
 #define X86_64_MOV_REG 0x8B
-#define X86_64_MOV_REG_BYTE 0x8a
+#define X86_64_MOV_REG_BYTE 0x8B
 #define X86_64_MOV_MEM 0x89
 #define X86_64_MOV_MEM_BYTE 0x88
 
@@ -371,6 +371,8 @@ void x86_64_load_effective_address(usize stack_index, usize size, X86_64_Registe
 }
 
 void x86_64_load_value_to_reg(const Value *v, X86_64_Register reg) {
+    if (v->type->kind == TYPE_KIND_ARRAY)
+        UNIMPLEMENTED();
     switch (v->value_type) {
     case VALUE_TYPE_COUNT: UNREACHABLE();
 
@@ -397,8 +399,28 @@ void x86_64_load_value_to_reg(const Value *v, X86_64_Register reg) {
         x86_64_load_reg_addr_to_reg(X86_64_RAX, reg, v->type->size);
     } break;
 
-    case VALUE_TYPE_DATA_OFFSET: UNIMPLEMENTED();
-    case VALUE_TYPE_INIT_LIST: UNIMPLEMENTED();
+    case VALUE_TYPE_DATA_OFFSET: {
+        usize size = v->type->size;
+        bool w = size == 8,
+             r = reg > 0x7;
+
+        if (size == 2)
+            x86_64_push_op(X86_64_WORD_PRE());
+
+        if (w || r)
+            x86_64_push_op(X86_64_REX_PRE(w, r, 0, 0));
+
+        if (size == 1)
+            x86_64_push_op(X86_64_MOV_REG_BYTE);
+        else
+            x86_64_push_op(X86_64_MOV_REG);
+
+        x86_64_push_op(X86_64_MOD_REG_RM(X86_64_MOD_MEM, reg & 0x7, 5));
+        x86_64_push_data_patch(v->offset, x86_64_pos());
+        x86_64_push_u32(0);
+    } break;
+
+    case VALUE_TYPE_INIT_LIST: UNREACHABLE();
     }
 }
 void x86_64_alloc_rsp(usize stack_size) {

@@ -784,8 +784,6 @@ typedef struct {
     Token cur_token;
     Token peek_token;
 
-    usize stack_index;
-
     Types_Ctx ty_ctx;
     Loop_Ctx loop_ctx;
 
@@ -794,6 +792,7 @@ typedef struct {
     usize scope;
 
     // current func compiler is working on
+    usize stack_index;
     Value *func;
 
     Dynamic_Array(const Value *) funcs;
@@ -1365,10 +1364,11 @@ Value *find_var_far(const Compiler *c, sv name) {
     return NULL;
 }
 
-INLINE const Value *declare_var(Compiler *c, sv name, usize stack_index, const Type *type) {
+INLINE const Value *declare_var(Compiler *c, sv name, usize offset, const Type *type, bool top_level) {
     if (find_var_near(c, name) != NULL)
         return NULL;
-    Value *var = new_var(c, type, stack_index);
+    Value *var = top_level ? new_data_offset(c, type, offset)
+                           : new_var(c, type, offset);
     *(Value **)sht_get(c->vars.store + c->vars.size - 1, SV_SPREAD(name)) = var;
     return var;
 }
@@ -1421,8 +1421,37 @@ INLINE usize alloc_scoped_var(Compiler *c, const Type *type) {
     return frame;
 }
 
-INLINE bool is_constant(const Value *arg) {
+INLINE usize alloc_data_var(Compiler *c, const Type *type) {
+    usize alignment = type->alignment;
+    ZAG_ASSERT((alignment > 0) && ((alignment & (alignment - 1)) == 0));
+
+    usize size = type->size;
+
+    usize aligned_data_size = (c->data.size + alignment - 1) & ~(alignment - 1);
+    for (usize i = 0; i < aligned_data_size - c->data.size; ++i)
+        sb_append_null(&c->data);
+    usize frame = c->data.size;
+
+    for (usize i = 0; i < size; ++i)
+        sb_append_null(&c->data);
+
+    return frame;
+}
+
+INLINE bool is_constant_int(const Value *arg) {
     return arg->value_type == VALUE_TYPE_INT_LITERAL;
+}
+
+INLINE bool is_constant(const Value *arg) {
+    if (arg->value_type == VALUE_TYPE_INIT_LIST) {
+        for (usize i = 0; i < arg->elems.size; ++i) {
+            const Value *elem = *da_at(&arg->elems, i);
+            if (!is_constant(elem))
+                return false;
+        }
+        return true;
+    }
+    return is_constant_int(arg);
 }
 
 INLINE bool is_integer_type(const Type *t) {
@@ -1459,8 +1488,6 @@ static u8 one_char_esc_lookup[UINT8_MAX] = {
     ['\''] = '\'',
     ['"'] = '\"',
 };
-
-typedef bool Compile_Stmt_Fn(Compiler *);
 
 Value *compile_expr(Compiler *c, Prec prec, const Type *hint, bool *is_lvalue)
     __attribute__((warn_unused_result));
@@ -1803,6 +1830,20 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
 
         Value *arg;
         CHECK(arg = compile_expr(c, PREC_PREFIX, hint, NULL));
+
+        if (arg->value_type == VALUE_TYPE_INT_LITERAL) {
+            if (op_type == OP_TYPE_LNOT) {
+                arg->int_value = !arg->int_value;
+            } else if (op_type == OP_TYPE_BNOT) {
+                arg->int_value = ~arg->int_value;
+            } else {
+                arg->int_value = (~arg->int_value) + 1;
+            }
+            val = arg;
+            lval = false;
+            break;
+        }
+
         usize result = alloc_scoped_var(c, arg->type);
 
         push_op(c, new_prefix_op(c, op_type, result, arg));
@@ -2146,7 +2187,7 @@ bool compile_stmt(Compiler *c)
 bool compile_block(Compiler *c)
     __attribute__((warn_unused_result));
 
-bool compile_var_stmt(Compiler *c) {
+bool compile_var_stmt(Compiler *c, bool top_level) {
     do {
         CHECK(expect_peek(c, TOKEN_TYPE_IDENT));
         Token name = c->cur_token;
@@ -2162,7 +2203,8 @@ bool compile_var_stmt(Compiler *c) {
             }
         }
 
-        usize stack_index;
+        // can be either stack index or data offset depending on top_level
+        usize offset;
 
         if (peek_tok_is(c, TOKEN_TYPE_ASSIGN)) {
             next_token(c);
@@ -2171,7 +2213,7 @@ bool compile_var_stmt(Compiler *c) {
             Value *arg;
             CHECK(arg = compile_expr_save_stack(c, PREC_LOWEST, decl_type, NULL));
 
-            if (is_constant(arg) && !coerce_constant_type(arg, decl_type)) {
+            if (is_constant_int(arg) && !coerce_constant_type(arg, decl_type)) {
                 char *decl_type_name = get_type_name(decl_type);
                 compiler_error(c, &c->cur_token.loc, "Type Error: Unable to coerce constant to type '%s'",
                                decl_type_name);
@@ -2193,14 +2235,35 @@ bool compile_var_stmt(Compiler *c) {
                 decl_type = arg->type;
             }
 
-            stack_index = alloc_scoped_var(c, decl_type);
-            if (decl_type->kind != TYPE_KIND_ARRAY) {
-                push_op(c, new_assign_op(c, stack_index, arg));
+            if (top_level) {
+                offset = alloc_data_var(c, decl_type);
+                if (!is_constant(arg)) {
+                    compiler_error(c, cur_loc(c), "Top level declarations must be a constant");
+                    return false;
+                }
+
+                // TODO: make recursive
+                if (is_integer_type(arg->type)) {
+                    memcpy(da_at(&c->data, offset), &arg->int_value, arg->type->size);
+                } else {
+                    ZAG_ASSERT(arg->value_type == VALUE_TYPE_INIT_LIST);
+                    for (usize i = 0; i < arg->elems.size; ++i) {
+                        const Value *elem = *da_at(&arg->elems, i);
+                        ZAG_ASSERT(elem->value_type == VALUE_TYPE_INT_LITERAL);
+                        usize size = elem->type->size;
+                        memcpy(da_at(&c->data, offset + (i * size)), &elem->int_value, size);
+                    }
+                }
             } else {
-                const Type *internal = decl_type->internal;
-                for (usize i = 0; i < decl_type->len; ++i) {
-                    usize s = stack_index + (decl_type->len - i - 1) * internal->size;
-                    push_op(c, new_assign_op(c, s, *da_at(&arg->elems, i)));
+                offset = alloc_scoped_var(c, decl_type);
+                if (decl_type->kind != TYPE_KIND_ARRAY) {
+                    push_op(c, new_assign_op(c, offset, arg));
+                } else {
+                    const Type *internal = decl_type->internal;
+                    for (usize i = 0; i < decl_type->len; ++i) {
+                        usize s = offset + (decl_type->len - i - 1) * internal->size;
+                        push_op(c, new_assign_op(c, s, *da_at(&arg->elems, i)));
+                    }
                 }
             }
         } else {
@@ -2208,10 +2271,10 @@ bool compile_var_stmt(Compiler *c) {
                 compiler_error(c, &c->cur_token.loc, "Variable declaration must have type");
                 return false;
             }
-            stack_index = alloc_scoped_var(c, decl_type);
+            offset = alloc_scoped_var(c, decl_type);
         }
 
-        if (declare_var(c, name.lit, stack_index, decl_type) == NULL) {
+        if (declare_var(c, name.lit, offset, decl_type, top_level) == NULL) {
             compiler_error(c, &c->cur_token.loc, "Redefinition of %.*s", CUR_TOKEN_FMT(c));
             return false;
         }
@@ -2349,22 +2412,25 @@ bool compile_expr_stmt(Compiler *c) {
     return true;
 }
 
-static Compile_Stmt_Fn *compile_stmt_fns[TOKEN_TYPE_COUNT] = {
-    [TOKEN_TYPE_VAR] = compile_var_stmt,
-    [TOKEN_TYPE_RETURN] = compile_return_stmt,
-    [TOKEN_TYPE_IF] = compile_if_stmt,
-    [TOKEN_TYPE_LBRACE] = compile_block_stmt,
-    [TOKEN_TYPE_WHILE] = compile_while_stmt,
-    [TOKEN_TYPE_BREAK] = compile_break_stmt,
-    [TOKEN_TYPE_CONTINUE] = compile_continue_stmt,
-};
-
 bool compile_stmt(Compiler *c) {
-    Compile_Stmt_Fn *compile_fn = compile_stmt_fns[c->cur_token.type];
-    if (compile_fn == NULL) {
+    switch (c->cur_token.type) {
+    case TOKEN_TYPE_VAR:
+        return compile_var_stmt(c, /* top_level */ false);
+    case TOKEN_TYPE_RETURN:
+        return compile_return_stmt(c);
+    case TOKEN_TYPE_IF:
+        return compile_if_stmt(c);
+    case TOKEN_TYPE_LBRACE:
+        return compile_block_stmt(c);
+    case TOKEN_TYPE_WHILE:
+        return compile_while_stmt(c);
+    case TOKEN_TYPE_BREAK:
+        return compile_break_stmt(c);
+    case TOKEN_TYPE_CONTINUE:
+        return compile_continue_stmt(c);
+    default:
         return compile_expr_stmt(c);
     }
-    return compile_fn(c);
 }
 
 bool compile_block(Compiler *c) {
@@ -2395,7 +2461,7 @@ bool compile_program(Compiler *c) {
 
         switch (c->cur_token.type) {
         case TOKEN_TYPE_VAR: {
-            CHECK(compile_var_stmt(c));
+            CHECK(compile_var_stmt(c, /* top_level */ true));
         } break;
 
         case TOKEN_TYPE_FN: {
@@ -2530,7 +2596,7 @@ bool compile_program(Compiler *c) {
                 const Type *param_type = get_param_type(existing_func, i);
                 usize stack_index = alloc_scoped_var(c, param_type);
                 param->index = stack_index;
-                ZAG_ASSERT(declare_var(c, param->name, stack_index, param_type) != NULL);
+                ZAG_ASSERT(declare_var(c, param->name, stack_index, param_type, /* top_level */ false) != NULL);
             }
 
             CHECK(compile_block(c));

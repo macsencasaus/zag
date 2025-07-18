@@ -196,34 +196,34 @@ void print_readable_char(FILE *out, const char *buf, u32 idx) {
 }
 
 void print_ir_data(const Compiler *c, FILE *out) {
-    const u32 data_line_length = 12;
-    const u32 target_readable_col = 50;
+    const i32 data_line_length = 12;
+    const i32 target_readable_col = 50;
 
     fprintf(out, "\nData:\n");
 
-    u32 col = 0;
-    u32 n = c->data.size;
-    for (u32 i = 0; i < n; ++i) {
+    i32 col = 0;
+    i32 n = c->data.size;
+    for (i32 i = 0; i < n; ++i) {
         if (i % data_line_length == 0) {
             if (i != 0) {
-                for (u32 j = 0; j < target_readable_col - col; ++j)
+                for (i32 j = 0; j < target_readable_col - col; ++j)
                     fprintf(out, " ");
                 col = 0;
 
-                for (u32 j = i - data_line_length; j < i; ++j)
+                for (i32 j = i - data_line_length; j < i; ++j)
                     print_readable_char(out, c->data.store, j);
 
                 fprintf(out, "\n");
             }
             col += fprintf(out, "%3x: ", i);
         }
-        col += fprintf(out, "%2X ", c->data.store[i]);
+        col += fprintf(out, "%2X ", (u8)c->data.store[i]);
     }
 
-    for (u32 j = 0; j < target_readable_col - col; ++j)
+    for (i32 j = 0; j < target_readable_col - col; ++j)
         fprintf(out, " ");
-    u32 s = (n / data_line_length) * data_line_length;
-    for (u32 j = s; j < n; ++j) {
+    i32 s = (n / data_line_length) * data_line_length;
+    for (i32 j = s; j < n; ++j) {
         print_readable_char(out, c->data.store, j);
     }
     fprintf(out, "\n");
