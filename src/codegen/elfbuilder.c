@@ -100,6 +100,7 @@ void Elf_Builder_init(Elf_Builder *ctx, const char *filename) {
 
 void Elf_Builder_delete(Elf_Builder *ctx) {
     da_delete(&ctx->text);
+    da_delete(&ctx->relocations);
     da_delete(&ctx->symbols);
     da_delete(&ctx->strtab);
     da_delete(&ctx->shstrtab);

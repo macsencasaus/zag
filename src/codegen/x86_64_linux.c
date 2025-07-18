@@ -567,6 +567,8 @@ void x86_64_generate_op(const Op *op) {
 
     case OP_TYPE_ASSIGN: {
         x86_64_load_value_to_reg(val, X86_64_RAX);
+        (void)op->result;
+        (void)val->type->size;
         x86_64_store_reg_to_stack(X86_64_RAX, op->result, val->type->size);
     } break;
 
@@ -676,11 +678,11 @@ void x86_64_generate_op(const Op *op) {
     } break;
 
     case OP_TYPE_CALL: {
-        if (op->params.size > 6)
+        if (op->params->len > 6)
             UNIMPLEMENTED();
 
-        for (usize i = 0; i < op->params.size; ++i) {
-            const Value *param = *da_at(&op->params, i);
+        for (usize i = 0; i < op->params->len; ++i) {
+            const Value *param = *at(op->params, i);
             x86_64_load_value_to_reg(param, x86_64_linux_registers[i]);
         }
 
@@ -772,4 +774,6 @@ void x86_64_generate_program(const Compiler *c, FILE *out) {
     sb_free(&ctx->ops);
     da_delete(&ctx->labels);
     da_delete(&ctx->label_patches);
+    da_delete(&ctx->rela_patches);
+    da_delete(&ctx->data_patches);
 }

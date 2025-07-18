@@ -30,7 +30,7 @@
 #endif
 
 #ifndef SHT_INIT_B_CAP  // in bytes
-#define SHT_INIT_B_CAP 1024 * 1024
+#define SHT_INIT_B_CAP 1024
 #endif
 
 typedef struct {

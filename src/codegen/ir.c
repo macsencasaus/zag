@@ -135,11 +135,11 @@ void print_ir_op(const Op *op, FILE *out) {
             print_ir_val(op->func, out);
             fprintf(out, "](");
         }
-        for (usize i = 0; i < op->params.size; ++i) {
-            const Value *param = op->params.store[i];
+        for (usize i = 0; i < op->params->len; ++i) {
+            const Value *param = op->params->store[i];
             print_ir_val(param, out);
 
-            if (i < op->params.size - 1)
+            if (i < op->params->len - 1)
                 fprintf(out, ", ");
         }
         fprintf(out, ")");

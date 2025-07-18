@@ -697,6 +697,8 @@ typedef enum {
     OP_TYPE_COUNT,
 } Op_Type;
 
+Array_Template(const Value *, MAX_PARAM_COUNT, Param_Value_Array);
+
 struct Op {
     Op_Type type;
 
@@ -723,7 +725,7 @@ struct Op {
         // call
         struct {
             const Value *func;
-            Dynamic_Array(const Value *) params;
+            Param_Value_Array *params;
         };
     };
 };
@@ -764,7 +766,8 @@ static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
 
 typedef struct {
     // TODO: replace with bump alloc
-    Dynamic_Array(Type) types;
+    Bump_Alloc type_alloc;
+    Dynamic_Array(Type *) types;
     String_Hash_Table named_types;
     usize next_id;
 } Types_Ctx;
@@ -881,9 +884,10 @@ void compiler_init(Compiler *c, Lexer *l) {
     for (usize i = 0; i < ARRAY_SIZE(builtin_types); ++i) {
         const Builtin_Type *builtin = builtin_types + i;
 
-        da_append(&ty_ctx->types, builtin->type);
+        Type *type = ba_alloc_aligned(&ty_ctx->type_alloc, sizeof(Type), _Alignof(Type));
+        da_append(&ty_ctx->types, type);
 
-        Type *type = da_last(&ty_ctx->types);
+        *type = builtin->type;
         if (type->id == DEFAULT_INT_LITERAL_TYPE_ID)
             default_int_literal_type = type;
         type->name = builtin->name;
@@ -900,7 +904,9 @@ void compiler_init(Compiler *c, Lexer *l) {
 }
 
 void compiler_destroy(Compiler *c) {
+    ba_free(&c->ty_ctx.type_alloc);
     da_delete(&c->ty_ctx.types);
+    sht_free(&c->ty_ctx.named_types);
 
     for (usize i = 0; i < c->vars.size; ++i) {
         String_Hash_Table *sht = da_at(&c->vars, i);
@@ -914,8 +920,8 @@ void compiler_destroy(Compiler *c) {
         da_delete(&f->ops);
     }
     da_delete(&c->funcs);
-
     da_delete(&c->extern_funcs);
+    sb_free(&c->data);
 
     ba_free(&c->value_alloc);
     ba_free(&c->op_alloc);
@@ -1094,6 +1100,7 @@ INLINE Op *new_call(Compiler *c, usize result) {
     *o = (Op){
         .type = OP_TYPE_CALL,
         .result = result,
+        .params = ba_alloc_aligned(&c->arrays, sizeof(Param_Value_Array), _Alignof(Param_Value_Array)),
     };
     return o;
 }
@@ -1148,7 +1155,7 @@ INLINE bool is_signed(const Type *t) {
 const Type *lookup_interned_type(const Types_Ctx *ty_ctx, const Type *local_ty) {
     usize n = ty_ctx->types.size;
     for (usize i = 0; i < n; ++i) {
-        const Type *type = da_at(&ty_ctx->types, i);
+        const Type *type = *da_at(&ty_ctx->types, i);
         if (type_cmp(type, local_ty))
             return type;
     }
@@ -1160,9 +1167,10 @@ INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
     const Type *existing = lookup_interned_type(ty_ctx, local_ty);
     if (existing) return existing;
 
-    da_append(&ty_ctx->types, *local_ty);
-    Type *t = da_last(&ty_ctx->types);
+    Type *t = (Type *)ba_alloc_aligned(&ty_ctx->type_alloc, sizeof(Type), _Alignof(Type));
+    *t = *local_ty;
     t->id = ty_ctx->next_id++;
+    da_append(&ty_ctx->types, t);
     return t;
 }
 
@@ -1435,6 +1443,7 @@ INLINE void push_scope(Compiler *c) {
 
 INLINE void pop_scope(Compiler *c) {
     --c->scope;
+    sht_free(da_last(&c->vars));
     da_pop(&c->vars);
 }
 
@@ -1664,6 +1673,13 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
             }
         }
 
+        usize n = val->elems.size * sizeof(const Value *);
+        void *arr_mem = ba_alloc_aligned(&c->arrays, n, _Alignof(const Value *));
+        memcpy(arr_mem, val->elems.store, n);
+
+        da_delete(&val->elems);
+        val->elems.store = arr_mem;
+
         if (has_len && val->elems.size > len) {
             compiler_error(c, &loc, "Initializer list longer than specified array type");
             return NULL;
@@ -1890,7 +1906,7 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                     }
                 }
 
-                da_append(&call->params, val);
+                append(call->params, val);
 
                 if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
                     next_token(c);
@@ -1900,7 +1916,7 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                 }
             }
 
-            if (call->params.size < func_type->params->len) {
+            if (call->params->len < func_type->params->len) {
                 if (func_type->is_variadic) {
                     compiler_error(c, &loc,
                                    "Too few arguments to function call"
@@ -2599,11 +2615,6 @@ static char *read_stdin(usize *n) {
     *n = len;
 
     return buffer;
-}
-
-INLINE char *stpcpy_fallback(char *dest, const char *src) {
-    while ((*dest++ = *src++));
-    return dest - 1;
 }
 
 #define STDIN_FILE_NAME "stdin"
