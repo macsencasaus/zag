@@ -1,0 +1,51 @@
+// TEST: lex, ir
+extern fn printf(fmt: *u8, ...) i32;
+
+fn main() i32 {
+    // Basic load and store with i32
+    var x: i32 = 42;
+    var px: *i32 = &x;
+    printf(&"x = %d\n", x);
+    *px = 99;
+    printf(&"*px = %d, x = %d\n", *px, x); // both should be 99
+
+    // Use of address-of to read from stack variable
+    var y: i32 = *&x;
+    printf(&"y = %d (copied from &x)\n", y); // 99
+
+    // Chained dereference and store
+    *&x = 123;
+    printf(&"x = %d (after *&x = 123)\n", x); // 123
+
+    // Pointers to different variables
+    var a: i32 = 1;
+    var b: i32 = 2;
+    var p: *i32 = &a;
+    *p = 10;
+    printf(&"a = %d, b = %d\n", a, b); // a = 10, b = 2
+    p = &b;
+    *p = 20;
+    printf(&"a = %d, b = %d\n", a, b); // a = 10, b = 20
+
+    // Pointer to u8
+    var byte: u8 = 255;
+    var pbyte: *u8 = &byte;
+    printf(&"byte = %u\n", *pbyte);
+
+    // Pointer arithmetic simulation with array
+    var arr = [3]i32{1, 2, 3};
+    var parr: *i32 = &arr[0];
+    *parr = 100;
+    *(parr + 1) = 200;
+    *(parr + 2) = 300;
+    printf(&"arr = %d %d %d\n", arr[0], arr[1], arr[2]);
+
+    // Double indirection
+    var z: i32 = 5;
+    var pz: *i32 = &z;
+    var ppz: **i32 = &pz;
+    **ppz = 77;
+    printf(&"z = %d\n", z); // 77
+
+    return 0;
+}

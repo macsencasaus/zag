@@ -1,0 +1,96 @@
+; Zag Readable Intermediate Representation
+; Function header formatted as:
+; @func[<max-stack-size>](<param-type>,...)
+
+extern @printf(ptr) i32
+
+@main[144]() i32:
+    %s[0] = i32 42
+    %s[8] = ref i32 %s[0]
+    %s[8] = ptr %s[8]
+    %s[24] = ref i8 %data[0]
+    %s[16] = i32 call @printf(ptr %s[24], i32 %s[0])
+    %s[16] = ptr %s[8]
+    store [%s[16]], i32 99
+    %s[24] = ref i8 %data[8]
+    %s[32] = ptr %s[8]
+    %s[16] = i32 call @printf(ptr %s[24], i32 deref %s[32], i32 %s[0])
+    %s[16] = ref i32 %s[0]
+    %s[24] = ptr %s[16]
+    %s[16] = i32 deref %s[24]
+    %s[24] = ref i8 %data[26]
+    %s[20] = i32 call @printf(ptr %s[24], i32 %s[16])
+    %s[24] = ref i32 %s[0]
+    %s[32] = ptr %s[24]
+    store [%s[32]], i32 123
+    %s[24] = ref i8 %data[51]
+    %s[20] = i32 call @printf(ptr %s[24], i32 %s[0])
+    %s[20] = i32 1
+    %s[24] = i32 2
+    %s[32] = ref i32 %s[20]
+    %s[32] = ptr %s[32]
+    %s[40] = ptr %s[32]
+    store [%s[40]], i32 10
+    %s[48] = ref i8 %data[77]
+    %s[40] = i32 call @printf(ptr %s[48], i32 %s[20], i32 %s[24])
+    %s[40] = ref i32 %s[24]
+    %s[32] = ptr %s[40]
+    %s[40] = ptr %s[32]
+    store [%s[40]], i32 20
+    %s[48] = ref i8 %data[93]
+    %s[40] = i32 call @printf(ptr %s[48], i32 %s[20], i32 %s[24])
+    %s[40] = i8 255
+    %s[48] = ref i8 %s[40]
+    %s[48] = ptr %s[48]
+    %s[64] = ref i8 %data[109]
+    %s[72] = ptr %s[48]
+    %s[56] = i32 call @printf(ptr %s[64], i8 deref %s[72])
+    %s[64] = i32 1
+    %s[60] = i32 2
+    %s[56] = i32 3
+    %s[72] = ref i32 %s[56]
+    %s[80] = add ptr %s[72], i64 0
+    %s[88] = ref i32 deref %s[80]
+    %s[72] = ptr %s[88]
+    %s[80] = ptr %s[72]
+    store [%s[80]], i32 100
+    %s[80] = add ptr %s[72], i64 4
+    %s[88] = ptr %s[80]
+    store [%s[88]], i32 200
+    %s[80] = add ptr %s[72], i64 8
+    %s[88] = ptr %s[80]
+    store [%s[88]], i32 300
+    %s[88] = ref i8 %data[120]
+    %s[96] = ref i32 %s[56]
+    %s[104] = add ptr %s[96], i64 0
+    %s[112] = ref i32 %s[56]
+    %s[120] = add ptr %s[112], i64 4
+    %s[128] = ref i32 %s[56]
+    %s[136] = add ptr %s[128], i64 8
+    %s[80] = i32 call @printf(ptr %s[88], i32 deref %s[104], i32 deref %s[120], i32 deref %s[136])
+    %s[80] = i32 5
+    %s[88] = ref i32 %s[80]
+    %s[88] = ptr %s[88]
+    %s[96] = ref ptr %s[88]
+    %s[96] = ptr %s[96]
+    %s[104] = ptr %s[96]
+    %s[112] = ptr deref %s[104]
+    store [%s[112]], i32 77
+    %s[112] = ref i8 %data[136]
+    %s[104] = i32 call @printf(ptr %s[112], i32 %s[80])
+    ret i32 0
+
+
+Data:
+  0: 78 20 3D 20 25 64  A  0 2A 70 78 20          x.=.%d..*px.
+  c: 3D 20 25 64 2C 20 78 20 3D 20 25 64          =.%d,.x.=.%d
+ 18:  A  0 79 20 3D 20 25 64 20 28 63 6F          ..y.=.%d.(co
+ 24: 70 69 65 64 20 66 72 6F 6D 20 26 78          pied.from.&x
+ 30: 29  A  0 78 20 3D 20 25 64 20 28 61          )..x.=.%d.(a
+ 3c: 66 74 65 72 20 2A 26 78 20 3D 20 31          fter.*&x.=.1
+ 48: 32 33 29  A  0 61 20 3D 20 25 64 2C          23)..a.=.%d,
+ 54: 20 62 20 3D 20 25 64  A  0 61 20 3D          .b.=.%d..a.=
+ 60: 20 25 64 2C 20 62 20 3D 20 25 64  A          .%d,.b.=.%d.
+ 6c:  0 62 79 74 65 20 3D 20 25 75  A  0          .byte.=.%u..
+ 78: 61 72 72 20 3D 20 25 64 20 25 64 20          arr.=.%d.%d.
+ 84: 25 64  A  0 7A 20 3D 20 25 64  A  0          

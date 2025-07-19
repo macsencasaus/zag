@@ -1,0 +1,289 @@
+extern: extern at 2:1 in tests/storeload.zag
+fn: fn at 2:8 in tests/storeload.zag
+identifier: printf at 2:11 in tests/storeload.zag
+'(': ( at 2:17 in tests/storeload.zag
+identifier: fmt at 2:18 in tests/storeload.zag
+':': : at 2:21 in tests/storeload.zag
+'*': * at 2:23 in tests/storeload.zag
+identifier: u8 at 2:24 in tests/storeload.zag
+',': , at 2:26 in tests/storeload.zag
+'...': ... at 2:28 in tests/storeload.zag
+')': ) at 2:31 in tests/storeload.zag
+identifier: i32 at 2:33 in tests/storeload.zag
+';': ; at 2:36 in tests/storeload.zag
+fn: fn at 4:1 in tests/storeload.zag
+identifier: main at 4:4 in tests/storeload.zag
+'(': ( at 4:8 in tests/storeload.zag
+')': ) at 4:9 in tests/storeload.zag
+identifier: i32 at 4:11 in tests/storeload.zag
+'{': { at 4:15 in tests/storeload.zag
+var: var at 6:5 in tests/storeload.zag
+identifier: x at 6:9 in tests/storeload.zag
+':': : at 6:10 in tests/storeload.zag
+identifier: i32 at 6:12 in tests/storeload.zag
+'=': = at 6:16 in tests/storeload.zag
+int literal: 42 at 6:18 in tests/storeload.zag
+';': ; at 6:20 in tests/storeload.zag
+var: var at 7:5 in tests/storeload.zag
+identifier: px at 7:9 in tests/storeload.zag
+':': : at 7:11 in tests/storeload.zag
+'*': * at 7:13 in tests/storeload.zag
+identifier: i32 at 7:14 in tests/storeload.zag
+'=': = at 7:18 in tests/storeload.zag
+'&': & at 7:20 in tests/storeload.zag
+identifier: x at 7:21 in tests/storeload.zag
+';': ; at 7:22 in tests/storeload.zag
+identifier: printf at 8:5 in tests/storeload.zag
+'(': ( at 8:11 in tests/storeload.zag
+'&': & at 8:12 in tests/storeload.zag
+string literal: "x = %d\n" at 8:13 in tests/storeload.zag
+',': , at 8:23 in tests/storeload.zag
+identifier: x at 8:25 in tests/storeload.zag
+')': ) at 8:26 in tests/storeload.zag
+';': ; at 8:27 in tests/storeload.zag
+'*': * at 9:5 in tests/storeload.zag
+identifier: px at 9:6 in tests/storeload.zag
+'=': = at 9:9 in tests/storeload.zag
+int literal: 99 at 9:11 in tests/storeload.zag
+';': ; at 9:13 in tests/storeload.zag
+identifier: printf at 10:5 in tests/storeload.zag
+'(': ( at 10:11 in tests/storeload.zag
+'&': & at 10:12 in tests/storeload.zag
+string literal: "*px = %d, x = %d\n" at 10:13 in tests/storeload.zag
+',': , at 10:33 in tests/storeload.zag
+'*': * at 10:35 in tests/storeload.zag
+identifier: px at 10:36 in tests/storeload.zag
+',': , at 10:38 in tests/storeload.zag
+identifier: x at 10:40 in tests/storeload.zag
+')': ) at 10:41 in tests/storeload.zag
+';': ; at 10:42 in tests/storeload.zag
+var: var at 13:5 in tests/storeload.zag
+identifier: y at 13:9 in tests/storeload.zag
+':': : at 13:10 in tests/storeload.zag
+identifier: i32 at 13:12 in tests/storeload.zag
+'=': = at 13:16 in tests/storeload.zag
+'*': * at 13:18 in tests/storeload.zag
+'&': & at 13:19 in tests/storeload.zag
+identifier: x at 13:20 in tests/storeload.zag
+';': ; at 13:21 in tests/storeload.zag
+identifier: printf at 14:5 in tests/storeload.zag
+'(': ( at 14:11 in tests/storeload.zag
+'&': & at 14:12 in tests/storeload.zag
+string literal: "y = %d (copied from &x)\n" at 14:13 in tests/storeload.zag
+',': , at 14:40 in tests/storeload.zag
+identifier: y at 14:42 in tests/storeload.zag
+')': ) at 14:43 in tests/storeload.zag
+';': ; at 14:44 in tests/storeload.zag
+'*': * at 17:5 in tests/storeload.zag
+'&': & at 17:6 in tests/storeload.zag
+identifier: x at 17:7 in tests/storeload.zag
+'=': = at 17:9 in tests/storeload.zag
+int literal: 123 at 17:11 in tests/storeload.zag
+';': ; at 17:14 in tests/storeload.zag
+identifier: printf at 18:5 in tests/storeload.zag
+'(': ( at 18:11 in tests/storeload.zag
+'&': & at 18:12 in tests/storeload.zag
+string literal: "x = %d (after *&x = 123)\n" at 18:13 in tests/storeload.zag
+',': , at 18:41 in tests/storeload.zag
+identifier: x at 18:43 in tests/storeload.zag
+')': ) at 18:44 in tests/storeload.zag
+';': ; at 18:45 in tests/storeload.zag
+var: var at 21:5 in tests/storeload.zag
+identifier: a at 21:9 in tests/storeload.zag
+':': : at 21:10 in tests/storeload.zag
+identifier: i32 at 21:12 in tests/storeload.zag
+'=': = at 21:16 in tests/storeload.zag
+int literal: 1 at 21:18 in tests/storeload.zag
+';': ; at 21:19 in tests/storeload.zag
+var: var at 22:5 in tests/storeload.zag
+identifier: b at 22:9 in tests/storeload.zag
+':': : at 22:10 in tests/storeload.zag
+identifier: i32 at 22:12 in tests/storeload.zag
+'=': = at 22:16 in tests/storeload.zag
+int literal: 2 at 22:18 in tests/storeload.zag
+';': ; at 22:19 in tests/storeload.zag
+var: var at 23:5 in tests/storeload.zag
+identifier: p at 23:9 in tests/storeload.zag
+':': : at 23:10 in tests/storeload.zag
+'*': * at 23:12 in tests/storeload.zag
+identifier: i32 at 23:13 in tests/storeload.zag
+'=': = at 23:17 in tests/storeload.zag
+'&': & at 23:19 in tests/storeload.zag
+identifier: a at 23:20 in tests/storeload.zag
+';': ; at 23:21 in tests/storeload.zag
+'*': * at 24:5 in tests/storeload.zag
+identifier: p at 24:6 in tests/storeload.zag
+'=': = at 24:8 in tests/storeload.zag
+int literal: 10 at 24:10 in tests/storeload.zag
+';': ; at 24:12 in tests/storeload.zag
+identifier: printf at 25:5 in tests/storeload.zag
+'(': ( at 25:11 in tests/storeload.zag
+'&': & at 25:12 in tests/storeload.zag
+string literal: "a = %d, b = %d\n" at 25:13 in tests/storeload.zag
+',': , at 25:31 in tests/storeload.zag
+identifier: a at 25:33 in tests/storeload.zag
+',': , at 25:34 in tests/storeload.zag
+identifier: b at 25:36 in tests/storeload.zag
+')': ) at 25:37 in tests/storeload.zag
+';': ; at 25:38 in tests/storeload.zag
+identifier: p at 26:5 in tests/storeload.zag
+'=': = at 26:7 in tests/storeload.zag
+'&': & at 26:9 in tests/storeload.zag
+identifier: b at 26:10 in tests/storeload.zag
+';': ; at 26:11 in tests/storeload.zag
+'*': * at 27:5 in tests/storeload.zag
+identifier: p at 27:6 in tests/storeload.zag
+'=': = at 27:8 in tests/storeload.zag
+int literal: 20 at 27:10 in tests/storeload.zag
+';': ; at 27:12 in tests/storeload.zag
+identifier: printf at 28:5 in tests/storeload.zag
+'(': ( at 28:11 in tests/storeload.zag
+'&': & at 28:12 in tests/storeload.zag
+string literal: "a = %d, b = %d\n" at 28:13 in tests/storeload.zag
+',': , at 28:31 in tests/storeload.zag
+identifier: a at 28:33 in tests/storeload.zag
+',': , at 28:34 in tests/storeload.zag
+identifier: b at 28:36 in tests/storeload.zag
+')': ) at 28:37 in tests/storeload.zag
+';': ; at 28:38 in tests/storeload.zag
+var: var at 31:5 in tests/storeload.zag
+identifier: byte at 31:9 in tests/storeload.zag
+':': : at 31:13 in tests/storeload.zag
+identifier: u8 at 31:15 in tests/storeload.zag
+'=': = at 31:18 in tests/storeload.zag
+int literal: 255 at 31:20 in tests/storeload.zag
+';': ; at 31:23 in tests/storeload.zag
+var: var at 32:5 in tests/storeload.zag
+identifier: pbyte at 32:9 in tests/storeload.zag
+':': : at 32:14 in tests/storeload.zag
+'*': * at 32:16 in tests/storeload.zag
+identifier: u8 at 32:17 in tests/storeload.zag
+'=': = at 32:20 in tests/storeload.zag
+'&': & at 32:22 in tests/storeload.zag
+identifier: byte at 32:23 in tests/storeload.zag
+';': ; at 32:27 in tests/storeload.zag
+identifier: printf at 33:5 in tests/storeload.zag
+'(': ( at 33:11 in tests/storeload.zag
+'&': & at 33:12 in tests/storeload.zag
+string literal: "byte = %u\n" at 33:13 in tests/storeload.zag
+',': , at 33:26 in tests/storeload.zag
+'*': * at 33:28 in tests/storeload.zag
+identifier: pbyte at 33:29 in tests/storeload.zag
+')': ) at 33:34 in tests/storeload.zag
+';': ; at 33:35 in tests/storeload.zag
+var: var at 36:5 in tests/storeload.zag
+identifier: arr at 36:9 in tests/storeload.zag
+'=': = at 36:13 in tests/storeload.zag
+'[': [ at 36:15 in tests/storeload.zag
+int literal: 3 at 36:16 in tests/storeload.zag
+']': ] at 36:17 in tests/storeload.zag
+identifier: i32 at 36:18 in tests/storeload.zag
+'{': { at 36:21 in tests/storeload.zag
+int literal: 1 at 36:22 in tests/storeload.zag
+',': , at 36:23 in tests/storeload.zag
+int literal: 2 at 36:25 in tests/storeload.zag
+',': , at 36:26 in tests/storeload.zag
+int literal: 3 at 36:28 in tests/storeload.zag
+'}': } at 36:29 in tests/storeload.zag
+';': ; at 36:30 in tests/storeload.zag
+var: var at 37:5 in tests/storeload.zag
+identifier: parr at 37:9 in tests/storeload.zag
+':': : at 37:13 in tests/storeload.zag
+'*': * at 37:15 in tests/storeload.zag
+identifier: i32 at 37:16 in tests/storeload.zag
+'=': = at 37:20 in tests/storeload.zag
+'&': & at 37:22 in tests/storeload.zag
+identifier: arr at 37:23 in tests/storeload.zag
+'[': [ at 37:26 in tests/storeload.zag
+int literal: 0 at 37:27 in tests/storeload.zag
+']': ] at 37:28 in tests/storeload.zag
+';': ; at 37:29 in tests/storeload.zag
+'*': * at 38:5 in tests/storeload.zag
+identifier: parr at 38:6 in tests/storeload.zag
+'=': = at 38:11 in tests/storeload.zag
+int literal: 100 at 38:13 in tests/storeload.zag
+';': ; at 38:16 in tests/storeload.zag
+'*': * at 39:5 in tests/storeload.zag
+'(': ( at 39:6 in tests/storeload.zag
+identifier: parr at 39:7 in tests/storeload.zag
+'+': + at 39:12 in tests/storeload.zag
+int literal: 1 at 39:14 in tests/storeload.zag
+')': ) at 39:15 in tests/storeload.zag
+'=': = at 39:17 in tests/storeload.zag
+int literal: 200 at 39:19 in tests/storeload.zag
+';': ; at 39:22 in tests/storeload.zag
+'*': * at 40:5 in tests/storeload.zag
+'(': ( at 40:6 in tests/storeload.zag
+identifier: parr at 40:7 in tests/storeload.zag
+'+': + at 40:12 in tests/storeload.zag
+int literal: 2 at 40:14 in tests/storeload.zag
+')': ) at 40:15 in tests/storeload.zag
+'=': = at 40:17 in tests/storeload.zag
+int literal: 300 at 40:19 in tests/storeload.zag
+';': ; at 40:22 in tests/storeload.zag
+identifier: printf at 41:5 in tests/storeload.zag
+'(': ( at 41:11 in tests/storeload.zag
+'&': & at 41:12 in tests/storeload.zag
+string literal: "arr = %d %d %d\n" at 41:13 in tests/storeload.zag
+',': , at 41:31 in tests/storeload.zag
+identifier: arr at 41:33 in tests/storeload.zag
+'[': [ at 41:36 in tests/storeload.zag
+int literal: 0 at 41:37 in tests/storeload.zag
+']': ] at 41:38 in tests/storeload.zag
+',': , at 41:39 in tests/storeload.zag
+identifier: arr at 41:41 in tests/storeload.zag
+'[': [ at 41:44 in tests/storeload.zag
+int literal: 1 at 41:45 in tests/storeload.zag
+']': ] at 41:46 in tests/storeload.zag
+',': , at 41:47 in tests/storeload.zag
+identifier: arr at 41:49 in tests/storeload.zag
+'[': [ at 41:52 in tests/storeload.zag
+int literal: 2 at 41:53 in tests/storeload.zag
+']': ] at 41:54 in tests/storeload.zag
+')': ) at 41:55 in tests/storeload.zag
+';': ; at 41:56 in tests/storeload.zag
+var: var at 44:5 in tests/storeload.zag
+identifier: z at 44:9 in tests/storeload.zag
+':': : at 44:10 in tests/storeload.zag
+identifier: i32 at 44:12 in tests/storeload.zag
+'=': = at 44:16 in tests/storeload.zag
+int literal: 5 at 44:18 in tests/storeload.zag
+';': ; at 44:19 in tests/storeload.zag
+var: var at 45:5 in tests/storeload.zag
+identifier: pz at 45:9 in tests/storeload.zag
+':': : at 45:11 in tests/storeload.zag
+'*': * at 45:13 in tests/storeload.zag
+identifier: i32 at 45:14 in tests/storeload.zag
+'=': = at 45:18 in tests/storeload.zag
+'&': & at 45:20 in tests/storeload.zag
+identifier: z at 45:21 in tests/storeload.zag
+';': ; at 45:22 in tests/storeload.zag
+var: var at 46:5 in tests/storeload.zag
+identifier: ppz at 46:9 in tests/storeload.zag
+':': : at 46:12 in tests/storeload.zag
+'*': * at 46:14 in tests/storeload.zag
+'*': * at 46:15 in tests/storeload.zag
+identifier: i32 at 46:16 in tests/storeload.zag
+'=': = at 46:20 in tests/storeload.zag
+'&': & at 46:22 in tests/storeload.zag
+identifier: pz at 46:23 in tests/storeload.zag
+';': ; at 46:25 in tests/storeload.zag
+'*': * at 47:5 in tests/storeload.zag
+'*': * at 47:6 in tests/storeload.zag
+identifier: ppz at 47:7 in tests/storeload.zag
+'=': = at 47:11 in tests/storeload.zag
+int literal: 77 at 47:13 in tests/storeload.zag
+';': ; at 47:15 in tests/storeload.zag
+identifier: printf at 48:5 in tests/storeload.zag
+'(': ( at 48:11 in tests/storeload.zag
+'&': & at 48:12 in tests/storeload.zag
+string literal: "z = %d\n" at 48:13 in tests/storeload.zag
+',': , at 48:23 in tests/storeload.zag
+identifier: z at 48:25 in tests/storeload.zag
+')': ) at 48:26 in tests/storeload.zag
+';': ; at 48:27 in tests/storeload.zag
+return: return at 50:5 in tests/storeload.zag
+int literal: 0 at 50:12 in tests/storeload.zag
+';': ; at 50:13 in tests/storeload.zag
+'}': } at 51:1 in tests/storeload.zag
+EOF:  at 52:1 in tests/storeload.zag
