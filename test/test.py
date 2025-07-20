@@ -2,11 +2,14 @@
 
 import argparse
 import os
+import platform
 import shutil
 import subprocess
 import sys
 from enum import Enum
 from os.path import basename, splitext
+
+arch = platform.machine()
 
 
 class Test_State(Enum):
@@ -73,20 +76,75 @@ parser.add_argument(
     action="store_true",
     help="skip valgrind checks",
 )
+parser.add_argument(
+    "--platform",
+    dest="platform",
+    choices=["x86_64", "aarch64"],
+    help=f"platform to run tests, defaults to {arch}",
+)
+parser.add_argument("--test", dest="test", type=str, help="specific test to run")
 
 args = parser.parse_args()
 
-tests = [
-    "lex",
-    "ir",
-    "x86_64-linux",
-]
 
-test_cmds = {
-    "lex": "%zag --lex %s",
-    "ir": "%zag --emit-zag-ir %s",
-    "x86_64-linux": "%zag -o /tmp/zag_tmp %s && /tmp/zag_tmp",
-}
+class Test_Category:
+    def __init__(
+        self,
+        name,
+        zag_flags,
+        test_suffix,
+        platform=None,
+        qbe_dependent=False,
+        additional_cmds=None,
+    ):
+        self.name = name
+        self.zag_flags = zag_flags
+
+        # suffix to case name for expected file
+        # if several tests share the same test_suffix,
+        # they compare against the same file
+        self.test_suffix = test_suffix
+
+        self.platform = platform
+        self.qbe_dependent = qbe_dependent
+
+        self.additional_cmds=additional_cmds
+
+    def __str__(self):
+        return self.name
+
+
+tests = [
+    Test_Category(name="lex", zag_flags="--lex", test_suffix="_lex"),
+    Test_Category(name="ir", zag_flags="--emit-zag-ir", test_suffix="_ir"),
+    Test_Category(
+        name="qbe-il",
+        zag_flags="--emit-qbe-il",
+        test_suffix="_qbe-il",
+        qbe_dependent=True,
+    ),
+    Test_Category(
+        name="x86_64-linux",
+        zag_flags="-t x86_64-linux -o /tmp/zag_tmp",
+        test_suffix="",
+        platform="x86_64",
+        additional_cmds="/tmp/zag_tmp",
+    ),
+    Test_Category(
+        name="qbe-amd64_sysv",
+        zag_flags="-t qbe-amd64_sysv -o /tmp/zag_tmp",
+        test_suffix="",
+        platform="x86_64",
+        additional_cmds="/tmp/zag_tmp",
+    ),
+    Test_Category(
+        name="qbe-arm64",
+        zag_flags="-t qbe-arm64 -o /tmp/zag_tmp",
+        test_suffix="",
+        platform="aarch64",
+        additional_cmds="/tmp/zag_tmp",
+    ),
+]
 
 if args.monochrome:
     state_symbols = {
@@ -121,7 +179,7 @@ if args.zag_binary is not None:
         print(f"\nERROR: zag binary not found at {args.zag_binary}", file=sys.stderr)
         exit(1)
 else:
-    print("Looking for zag binary... ", end="")
+    print("Looking for zag binary... ", end="", flush=True)
     if os.path.exists(default_debug_zag_build):
         zag_binary = default_debug_zag_build
         print(f"found {default_debug_zag_build}")
@@ -132,15 +190,28 @@ else:
         print("\nERROR: zag binary not found", file=sys.stderr)
         exit(1)
 
-if args.skip_valgrind:
-    valgrind_path = None
-else:
+
+zag_help = subprocess.run(
+    f"{zag_binary} -h",
+    shell=True,
+    capture_output=True,
+    text=True,
+)
+
+qbe_build = False
+if "--emit-qbe-il" in zag_help.stdout:
+    qbe_build = True
+
+valgrind_path = None
+if not args.update and not args.skip_valgrind:
     valgrind_path = args.valgrind_path
     if valgrind_path is None:
         valgrind_path = shutil.which("valgrind")
         if valgrind_path is None:
             print("valgrind not found, skipping valgrind tests", file=sys.stderr)
 
+if args.platform is not None:
+    arch = args.platform
 
 test_files = []
 
@@ -150,9 +221,6 @@ while args.tests:
         test_files.append(test)
     elif os.path.isdir(test):
         args.tests.extend([os.path.join(test, p) for p in os.listdir(test)])
-
-COMMENT_PREFIX = "//"
-TEST_CMD = "TEST:"
 
 passed = 0
 incorrect = 0
@@ -186,45 +254,45 @@ if not args.update:
         print(box_horizontal * (len(tests) - i - 1) * 3, end="")
         print(f"{box_horizontal} {test}")
 
+
+def skip():
+    if not args.update:
+        print(
+            f"{state_symbols[Test_State.Skipped]}{state_symbols[Test_State.Skipped]} ",
+            end="",
+        )
+
+
+diffs = []
+
+
 for test_file in test_files:
-    with open(test_file, "r") as file:
-        cmd = file.readline().strip()
-
-    err_str = f"ERROR: expected TEST command comment first line of test {test_file}"
-
-    if not cmd.startswith(COMMENT_PREFIX):
-        print(err_str, file=sys.stderr)
-        continue
-    cmd = cmd[len(COMMENT_PREFIX) :].strip()
-
-    if not cmd.startswith(TEST_CMD):
-        print(err_str, file=sys.stderr)
-        continue
-
-    cmd = cmd[len(TEST_CMD) :].strip()
-    requested_tests = set(map(lambda c: c.strip(), cmd.split(",")))
-
     case_name, _ = splitext(basename(test_file))
 
     if not args.update:
         print(f"  {case_name:>{width}}: ", end="")
 
     for test in tests:
-        if test not in requested_tests:
-            if not args.update:
-                print(f"{state_symbols[Test_State.Skipped]}{state_symbols[Test_State.Skipped]} ", end="")
+        if (
+            (test.platform is not None and arch != test.platform)
+            or (test.qbe_dependent and not qbe_build)
+            or (args.test is not None and args.test != test.name)
+        ):
+            skip()
             skipped += 1
             continue
 
-        cmd = test_cmds[test]
+        expected = os.path.join(
+            args.expected_path, f"{case_name}{test.test_suffix}.out"
+        )
 
-        cmd = cmd.replace("%zag", os.path.relpath(zag_binary))
-        cmd = cmd.replace("%s", os.path.relpath(test_file))
+        cmd = f"{zag_binary} {test.zag_flags} {os.path.relpath(test_file)}"
 
-        out = os.path.join(args.expected_path, f"{case_name}_{test}.out")
+        if test.additional_cmds is not None:
+            cmd += f" && {test.additional_cmds}"
 
         if args.update:
-            with open(out, "w") as out_file:
+            with open(expected, "w") as out_file:
                 subprocess.run(
                     cmd,
                     shell=True,
@@ -232,6 +300,11 @@ for test_file in test_files:
                     stderr=out_file,
                     text=True,
                 )
+            continue
+
+        if not os.path.exists(expected):
+            skip()
+            skipped += 1
             continue
 
         proc = subprocess.run(
@@ -242,21 +315,17 @@ for test_file in test_files:
         )
 
         if proc.returncode != 0:
-            print(f"{state_symbols[Test_State.Crashed]}{state_symbols[Test_State.Skipped]} ", end="")
+            print(
+                f"{state_symbols[Test_State.Crashed]}{state_symbols[Test_State.Skipped]} ",
+                end="",
+            )
             crashed += 1
             continue
 
-        actual = proc.stdout
-
-        if not os.path.exists(out):
-            print(f"{state_symbols[Test_State.Skipped]}{state_symbols[Test_State.Skipped]} ", end="")
-            skipped += 1
-            continue
-
         diff = subprocess.run(
-            f"diff -u --suppress-common-lines {out} -",
+            f"diff -u --suppress-common-lines {expected} -",
             shell=True,
-            input=actual,
+            input=proc.stdout,
             capture_output=True,
             text=True,
         )
@@ -269,7 +338,7 @@ for test_file in test_files:
             incorrect += 1
 
             if args.verbose:
-                print(diff.stdout)
+                diffs.append((expected, diff.stdout))
 
         if valgrind_path is not None:
             valgrind_cmd = f"{valgrind_path} \
@@ -280,7 +349,6 @@ for test_file in test_files:
             valgrind = subprocess.run(
                 valgrind_cmd,
                 shell=True,
-                input=actual,
                 capture_output=True,
                 text=True,
             )
@@ -303,3 +371,9 @@ print("Passed:    ", passed)
 print("Incorrect: ", incorrect)
 print("Crashed:   ", crashed)
 print("Skipped:   ", skipped)
+
+if args.verbose:
+    for expected, diff_stdout in diffs:
+        print()
+        print(expected)
+        print(diff_stdout)

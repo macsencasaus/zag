@@ -1,0 +1,23 @@
+export function w $main() {
+@start
+	%S =l alloc16 16
+	%S0 =l add %S, 8
+	%v0 =l add $data, 0
+	storel %v0, %S0
+	%S1 =l add %S, 8
+	%v1 =l loadl %S1
+	%v2 =w call $puts(l %v1)
+	%S2 =l add %S, 0
+	storew %v2, %S2
+	%S3 =l add %S, 8
+	%v3 =l add $data, 14
+	storel %v3, %S3
+	%S4 =l add %S, 8
+	%v4 =l loadl %S4
+	%v5 =w call $printf(l %v4)
+	%S5 =l add %S, 0
+	storew %v5, %S5
+	ret 0
+}
+
+data $data = { b 72 101 108 108 111 44 32 119 111 114 108 100 33 0 72 101 108 108 111 44 32 119 111 114 108 100 33 10 0 }

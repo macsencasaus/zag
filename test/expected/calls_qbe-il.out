@@ -1,0 +1,378 @@
+export function w $id(w %v0) {
+@start
+	%S =l alloc16 4
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsw %S1
+	ret %v1
+}
+
+export function w $call_id(w %v0) {
+@start
+	%S =l alloc16 8
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsw %S1
+	%v2 =w call $id(w %v1)
+	%S2 =l add %S, 4
+	storew %v2, %S2
+	%S3 =l add %S, 4
+	%v3 =w loadsw %S3
+	ret %v3
+}
+
+export function w $factorial(w %v0) {
+@start
+	%S =l alloc16 16
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loaduw %S1
+	%v2 =w ceqw %v1, 0
+	%S2 =l add %S, 4
+	storew %v2, %S2
+	%S3 =l add %S, 4
+	%v3 =w loaduw %S3
+	jnz %v3, @T0, @L0
+@T0
+	ret 1
+@L0
+	%S4 =l add %S, 0
+	%v4 =w loaduw %S4
+	%v5 =w sub %v4, 1
+	%S5 =l add %S, 8
+	storew %v5, %S5
+	%S6 =l add %S, 8
+	%v6 =w loaduw %S6
+	%v7 =w call $factorial(w %v6)
+	%S7 =l add %S, 4
+	storew %v7, %S7
+	%S8 =l add %S, 0
+	%v8 =w loaduw %S8
+	%S9 =l add %S, 4
+	%v9 =w loaduw %S9
+	%v10 =w mul %v8, %v9
+	%S10 =l add %S, 12
+	storew %v10, %S10
+	%S11 =l add %S, 12
+	%v11 =w loaduw %S11
+	ret %v11
+}
+
+export function w $factorial_tail(w %v0, w %v1) {
+@start
+	%S =l alloc16 20
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 4
+	storew %v1, %S1
+	%S2 =l add %S, 0
+	%v2 =w loaduw %S2
+	%v3 =w ceqw %v2, 0
+	%S3 =l add %S, 8
+	storew %v3, %S3
+	%S4 =l add %S, 8
+	%v4 =w loaduw %S4
+	jnz %v4, @T1, @L1
+@T1
+	%S5 =l add %S, 4
+	%v5 =w loaduw %S5
+	ret %v5
+@L1
+	%S6 =l add %S, 0
+	%v6 =w loaduw %S6
+	%v7 =w sub %v6, 1
+	%S7 =l add %S, 12
+	storew %v7, %S7
+	%S8 =l add %S, 0
+	%v8 =w loaduw %S8
+	%S9 =l add %S, 4
+	%v9 =w loaduw %S9
+	%v10 =w mul %v8, %v9
+	%S10 =l add %S, 16
+	storew %v10, %S10
+	%S11 =l add %S, 12
+	%v11 =w loaduw %S11
+	%S12 =l add %S, 16
+	%v12 =w loaduw %S12
+	%v13 =w call $factorial_tail(w %v11, w %v12)
+	%S13 =l add %S, 8
+	storew %v13, %S13
+	%S14 =l add %S, 8
+	%v14 =w loaduw %S14
+	ret %v14
+}
+
+export function w $func_ptrs(l %v0) {
+@start
+	%S =l alloc16 12
+	%S0 =l add %S, 0
+	storel %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =l loadl %S1
+	%v2 =w call %v1(w 2)
+	%S2 =l add %S, 8
+	storew %v2, %S2
+	%S3 =l add %S, 8
+	%v3 =w loadsw %S3
+	ret %v3
+}
+
+export function w $id_u8(w %v0) {
+@start
+	%S =l alloc16 1
+	%S0 =l add %S, 0
+	storeb %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadub %S1
+	ret %v1
+}
+
+export function w $id_i8(w %v0) {
+@start
+	%S =l alloc16 1
+	%S0 =l add %S, 0
+	storeb %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsb %S1
+	ret %v1
+}
+
+export function w $id_u16(w %v0) {
+@start
+	%S =l alloc16 2
+	%S0 =l add %S, 0
+	storeh %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loaduh %S1
+	ret %v1
+}
+
+export function w $id_i16(w %v0) {
+@start
+	%S =l alloc16 2
+	%S0 =l add %S, 0
+	storeh %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsh %S1
+	ret %v1
+}
+
+export function w $id_u32(w %v0) {
+@start
+	%S =l alloc16 4
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loaduw %S1
+	ret %v1
+}
+
+export function w $id_i32(w %v0) {
+@start
+	%S =l alloc16 4
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsw %S1
+	ret %v1
+}
+
+export function l $id_u64(l %v0) {
+@start
+	%S =l alloc16 8
+	%S0 =l add %S, 0
+	storel %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =l loadl %S1
+	ret %v1
+}
+
+export function l $id_i64(l %v0) {
+@start
+	%S =l alloc16 8
+	%S0 =l add %S, 0
+	storel %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =l loadl %S1
+	ret %v1
+}
+
+export function w $main() {
+@start
+	%S =l alloc16 24
+	%S0 =l add %S, 8
+	%v0 =l add $data, 0
+	storel %v0, %S0
+	%v1 =w call $id(w 42)
+	%S1 =l add %S, 16
+	storew %v1, %S1
+	%S2 =l add %S, 8
+	%v2 =l loadl %S2
+	%S3 =l add %S, 16
+	%v3 =w loadsw %S3
+	%v4 =w call $printf(l %v2, w %v3)
+	%S4 =l add %S, 0
+	storew %v4, %S4
+	%S5 =l add %S, 8
+	%v5 =l add $data, 13
+	storel %v5, %S5
+	%v6 =w call $call_id(w 13)
+	%S6 =l add %S, 16
+	storew %v6, %S6
+	%S7 =l add %S, 8
+	%v7 =l loadl %S7
+	%S8 =l add %S, 16
+	%v8 =w loadsw %S8
+	%v9 =w call $printf(l %v7, w %v8)
+	%S9 =l add %S, 0
+	storew %v9, %S9
+	%S10 =l add %S, 8
+	%v10 =l add $data, 31
+	storel %v10, %S10
+	%v11 =w call $factorial(w 5)
+	%S11 =l add %S, 16
+	storew %v11, %S11
+	%S12 =l add %S, 8
+	%v12 =l loadl %S12
+	%S13 =l add %S, 16
+	%v13 =w loaduw %S13
+	%v14 =w call $printf(l %v12, w %v13)
+	%S14 =l add %S, 0
+	storew %v14, %S14
+	%S15 =l add %S, 8
+	%v15 =l add $data, 50
+	storel %v15, %S15
+	%v16 =w call $factorial_tail(w 5, w 1)
+	%S16 =l add %S, 16
+	storew %v16, %S16
+	%S17 =l add %S, 8
+	%v17 =l loadl %S17
+	%S18 =l add %S, 16
+	%v18 =w loaduw %S18
+	%v19 =w call $printf(l %v17, w %v18)
+	%S19 =l add %S, 0
+	storew %v19, %S19
+	%S20 =l add %S, 8
+	%v20 =l add $data, 77
+	storel %v20, %S20
+	%v21 =w call $func_ptrs(l $id)
+	%S21 =l add %S, 16
+	storew %v21, %S21
+	%S22 =l add %S, 8
+	%v22 =l loadl %S22
+	%S23 =l add %S, 16
+	%v23 =w loadsw %S23
+	%v24 =w call $printf(l %v22, w %v23)
+	%S24 =l add %S, 0
+	storew %v24, %S24
+	%S25 =l add %S, 8
+	%v25 =l add $data, 97
+	storel %v25, %S25
+	%v26 =ub call $id_u8(ub 255)
+	%S26 =l add %S, 16
+	storeb %v26, %S26
+	%S27 =l add %S, 8
+	%v27 =l loadl %S27
+	%S28 =l add %S, 16
+	%v28 =w loadub %S28
+	%v29 =w call $printf(l %v27, ub %v28)
+	%S29 =l add %S, 0
+	storew %v29, %S29
+	%S30 =l add %S, 8
+	%v30 =l add $data, 114
+	storel %v30, %S30
+	%v31 =sb call $id_i8(sb 18446744073709551488)
+	%S31 =l add %S, 16
+	storeb %v31, %S31
+	%S32 =l add %S, 8
+	%v32 =l loadl %S32
+	%S33 =l add %S, 16
+	%v33 =w loadsb %S33
+	%v34 =w call $printf(l %v32, sb %v33)
+	%S34 =l add %S, 0
+	storew %v34, %S34
+	%S35 =l add %S, 8
+	%v35 =l add $data, 132
+	storel %v35, %S35
+	%v36 =uh call $id_u16(uh 65535)
+	%S36 =l add %S, 16
+	storeh %v36, %S36
+	%S37 =l add %S, 8
+	%v37 =l loadl %S37
+	%S38 =l add %S, 16
+	%v38 =w loaduh %S38
+	%v39 =w call $printf(l %v37, uh %v38)
+	%S39 =l add %S, 0
+	storew %v39, %S39
+	%S40 =l add %S, 8
+	%v40 =l add $data, 152
+	storel %v40, %S40
+	%v41 =sh call $id_i16(sh 18446744073709518848)
+	%S41 =l add %S, 16
+	storeh %v41, %S41
+	%S42 =l add %S, 8
+	%v42 =l loadl %S42
+	%S43 =l add %S, 16
+	%v43 =w loadsh %S43
+	%v44 =w call $printf(l %v42, sh %v43)
+	%S44 =l add %S, 0
+	storew %v44, %S44
+	%S45 =l add %S, 8
+	%v45 =l add $data, 173
+	storel %v45, %S45
+	%v46 =w call $id_u32(w 123456789)
+	%S46 =l add %S, 16
+	storew %v46, %S46
+	%S47 =l add %S, 8
+	%v47 =l loadl %S47
+	%S48 =l add %S, 16
+	%v48 =w loaduw %S48
+	%v49 =w call $printf(l %v47, w %v48)
+	%S49 =l add %S, 0
+	storew %v49, %S49
+	%S50 =l add %S, 8
+	%v50 =l add $data, 197
+	storel %v50, %S50
+	%v51 =w call $id_i32(w 18446744073586094827)
+	%S51 =l add %S, 16
+	storew %v51, %S51
+	%S52 =l add %S, 8
+	%v52 =l loadl %S52
+	%S53 =l add %S, 16
+	%v53 =w loadsw %S53
+	%v54 =w call $printf(l %v52, w %v53)
+	%S54 =l add %S, 0
+	storew %v54, %S54
+	%S55 =l add %S, 8
+	%v55 =l add $data, 222
+	storel %v55, %S55
+	%v56 =l call $id_u64(l 1234567890123456789)
+	%S56 =l add %S, 16
+	storel %v56, %S56
+	%S57 =l add %S, 8
+	%v57 =l loadl %S57
+	%S58 =l add %S, 16
+	%v58 =l loadl %S58
+	%v59 =w call $printf(l %v57, l %v58)
+	%S59 =l add %S, 0
+	storew %v59, %S59
+	%S60 =l add %S, 8
+	%v60 =l add $data, 257
+	storel %v60, %S60
+	%v61 =l call $id_i64(l 17212176183586094827)
+	%S61 =l add %S, 16
+	storel %v61, %S61
+	%S62 =l add %S, 8
+	%v62 =l loadl %S62
+	%S63 =l add %S, 16
+	%v63 =l loadl %S63
+	%v64 =w call $printf(l %v62, l %v63)
+	%S64 =l add %S, 0
+	storew %v64, %S64
+	ret 0
+}
+
+data $data = { b 105 100 40 52 50 41 32 61 32 37 100 10 0 99 97 108 108 95 105 100 40 49 51 41 32 61 32 37 100 10 0 102 97 99 116 111 114 105 97 108 40 53 41 32 61 32 37 117 10 0 102 97 99 116 111 114 105 97 108 95 116 97 105 108 40 53 44 32 49 41 32 61 32 37 117 10 0 102 117 110 99 95 112 116 114 115 40 105 100 41 32 61 32 37 100 10 0 105 100 95 117 56 40 50 53 53 41 32 61 32 37 117 10 0 105 100 95 105 56 40 45 49 50 56 41 32 61 32 37 100 10 0 105 100 95 117 49 54 40 54 53 53 51 53 41 32 61 32 37 117 10 0 105 100 95 105 49 54 40 45 51 50 55 54 56 41 32 61 32 37 100 10 0 105 100 95 117 51 50 40 49 50 51 52 53 54 55 56 57 41 32 61 32 37 117 10 0 105 100 95 105 51 50 40 45 49 50 51 52 53 54 55 56 57 41 32 61 32 37 100 10 0 105 100 95 117 54 52 40 49 50 51 52 53 54 55 56 57 48 49 50 51 52 53 54 55 56 57 41 32 61 32 37 108 117 10 0 105 100 95 105 54 52 40 45 49 50 51 52 53 54 55 56 57 48 49 50 51 52 53 54 55 56 57 41 32 61 32 37 108 100 10 0 }

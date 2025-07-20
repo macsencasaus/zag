@@ -50,8 +50,7 @@ extern @printf(ptr) i32
     %s[56] = i32 3
     %s[72] = ref i32 %s[56]
     %s[80] = add ptr %s[72], i64 0
-    %s[88] = ref i32 deref %s[80]
-    %s[72] = ptr %s[88]
+    %s[72] = ptr %s[80]
     %s[80] = ptr %s[72]
     store [%s[80]], i32 100
     %s[80] = add ptr %s[72], i64 4

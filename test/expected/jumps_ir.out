@@ -16,10 +16,8 @@ extern @printf(ptr) i32
 @more_ifs[4](i32) i32:
     jmpz .L2, i32 %s[0]
     ret i32 %s[0]
-    jmp .L3
 .L2:
     ret i32 0
-.L3:
 
 @nested_ifs[12](i32, i32) i32:
     %s[8] = sgt i32 %s[0], i32 0
@@ -27,14 +25,10 @@ extern @printf(ptr) i32
     %s[8] = sgt i32 %s[4], i32 0
     jmpz .L5, i32 %s[8]
     ret i32 1
-    jmp .L6
 .L5:
     ret i32 2
-.L6:
-    jmp .L7
 .L4:
     ret i32 3
-.L7:
 
 @early_return[8](i32) i32:
     %s[4] = eq i32 %s[0], i32 0

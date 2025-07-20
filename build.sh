@@ -11,6 +11,8 @@ CFLAGS="-Isrc/thirdparty -Isrc/codegen \
         -Wno-implicit-fallthrough \
         -std=c11"
 
+CFLAGS+=" $ZAG_CFLAGS"
+
 if [[ "$MODE" == "debug" ]]; then
     CFLAGS="$CFLAGS -ggdb"
     OUTDIR="build/debug"

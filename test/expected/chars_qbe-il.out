@@ -1,0 +1,79 @@
+export function w $main() {
+@start
+	%S =l alloc16 40
+	%S0 =l add %S, 0
+	storew 97, %S0
+	%S1 =l add %S, 4
+	storew 10, %S1
+	%S2 =l add %S, 8
+	storew 171, %S2
+	%S3 =l add %S, 12
+	storew 255, %S3
+	%S4 =l add %S, 16
+	storew 255, %S4
+	%S5 =l add %S, 20
+	storew 10, %S5
+	%S6 =l add %S, 32
+	%v0 =l add $data, 0
+	storel %v0, %S6
+	%S7 =l add %S, 32
+	%v1 =l loadl %S7
+	%S8 =l add %S, 0
+	%v2 =w loadsw %S8
+	%v3 =w call $printf(l %v1, w %v2)
+	%S9 =l add %S, 24
+	storew %v3, %S9
+	%S10 =l add %S, 32
+	%v4 =l add $data, 8
+	storel %v4, %S10
+	%S11 =l add %S, 32
+	%v5 =l loadl %S11
+	%S12 =l add %S, 4
+	%v6 =w loadsw %S12
+	%v7 =w call $printf(l %v5, w %v6)
+	%S13 =l add %S, 24
+	storew %v7, %S13
+	%S14 =l add %S, 32
+	%v8 =l add $data, 16
+	storel %v8, %S14
+	%S15 =l add %S, 32
+	%v9 =l loadl %S15
+	%S16 =l add %S, 8
+	%v10 =w loadsw %S16
+	%v11 =w call $printf(l %v9, w %v10)
+	%S17 =l add %S, 24
+	storew %v11, %S17
+	%S18 =l add %S, 32
+	%v12 =l add $data, 25
+	storel %v12, %S18
+	%S19 =l add %S, 32
+	%v13 =l loadl %S19
+	%S20 =l add %S, 12
+	%v14 =w loadsw %S20
+	%v15 =w call $printf(l %v13, w %v14)
+	%S21 =l add %S, 24
+	storew %v15, %S21
+	%S22 =l add %S, 32
+	%v16 =l add $data, 35
+	storel %v16, %S22
+	%S23 =l add %S, 32
+	%v17 =l loadl %S23
+	%S24 =l add %S, 16
+	%v18 =w loadsw %S24
+	%v19 =w call $printf(l %v17, w %v18)
+	%S25 =l add %S, 24
+	storew %v19, %S25
+	%S26 =l add %S, 32
+	%v20 =l add $data, 43
+	storel %v20, %S26
+	%S27 =l add %S, 32
+	%v21 =l loadl %S27
+	%S28 =l add %S, 20
+	%v22 =w loadsw %S28
+	%v23 =w call $printf(l %v21, w %v22)
+	%S29 =l add %S, 24
+	storew %v23, %S29
+	ret 0
+}
+
+data $data = { b 97 32 61 32 37 99 10 0 98 32 61 32 37 88 10 0 98 98 32 61 32 37 88 10 0 98 98 98 32 61 32 37 88 10 0 99 32 61 32 37 100 10 0 110 101 119 108 105 110 101 32 61 32 37 100 10 0 }

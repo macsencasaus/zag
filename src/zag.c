@@ -1,5 +1,6 @@
 #define ZAG_C
 
+#define _POSIX_C_SOURCE 200809L
 #include <libgen.h>
 #include <stdio.h>
 #include <string.h>
@@ -273,7 +274,7 @@ Token_Type lookup_keyword(sv lit) {
 }
 
 INLINE void read_comment(Lexer *l) {
-    for (; l->ch != '\n' && l->ch != 0 && l->ch != EOF; read_char(l));
+    for (; l->ch != '\n' && l->ch != 0 && l->ch != (char)EOF; read_char(l));
     eat_whitespace(l);
 }
 
@@ -708,7 +709,7 @@ struct Op {
     union {
         // jmpz
         struct {
-            // assign, store, prefix expr, return, ref, deref
+            // assign, store, prefix expr, return, ref
             const Value *val;
 
             // label, jmp
@@ -765,7 +766,6 @@ static Prec prec_lookup[TOKEN_TYPE_COUNT] = {
 };
 
 typedef struct {
-    // TODO: replace with bump alloc
     Bump_Alloc type_alloc;
     Dynamic_Array(Type *) types;
     String_Hash_Table named_types;
@@ -1346,7 +1346,7 @@ INLINE Prec peek_prec(const Compiler *c) {
 Value *find_scoped_var(const Compiler *c, usize scope, sv name) {
     const String_Hash_Table *scope_vars = c->vars.store + scope;
     Value **val = sht_try_get(scope_vars, name.store, name.len);
-    if (!val)  return NULL;
+    if (!val) return NULL;
     return *val;
 }
 
@@ -1462,6 +1462,10 @@ INLINE bool coerce_constant_type(Value *arg, const Type *t) {
     if (!t) return true;
     arg->type = t;
     return true;
+}
+
+INLINE bool last_op_ret(const Compiler *c) {
+    return (*da_last(&c->func->ops))->type == OP_TYPE_RET;
 }
 
 INLINE void push_scope(Compiler *c) {
@@ -1790,6 +1794,13 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
         const Type *ptr_type = get_ptr_type(&c->ty_ctx, internal);
 
         usize result = alloc_scoped_var(c, ptr_type);
+
+        if (arg->value_type == VALUE_TYPE_DEREF) {
+            val = new_var(c, ptr_type, arg->stack_index);
+            lval = false;
+            break;
+        }
+
         push_op(c, new_prefix_op(c, OP_TYPE_REF, result, arg));
 
         val = new_var(c, ptr_type, result);
@@ -2332,14 +2343,17 @@ bool compile_if_stmt(Compiler *c) {
 
     next_token(c);
     CHECK(compile_stmt(c));
+    bool last_ret = last_op_ret(c);
 
     if (try_peek_tok(c, TOKEN_TYPE_ELSE)) {
         Op *success_label = new_label(c);
-        push_op(c, new_jmp(c, success_label->label_id));
+        if (!last_ret)
+            push_op(c, new_jmp(c, success_label->label_id));
         push_op(c, else_label);
         next_token(c);
         CHECK(compile_stmt(c));
-        push_op(c, success_label);
+        if (!last_ret)
+            push_op(c, success_label);
     } else {
         push_op(c, else_label);
     }
@@ -2686,13 +2700,40 @@ static char *read_stdin(usize *n) {
 #define STDIN_FILE_NAME "stdin"
 
 typedef enum {
+    TARGET_LIST,
+
     TARGET_NATIVE_X86_64_LINUX,
+
+#ifdef QBE_BUILD
+    TARGET_QBE_AMD64,
+    TARGET_QBE_ARM64,
+#endif
+
     TARGET_COUNT,
 } Target;
 
+#if defined(__x86_64__) && defined(QBE_BUILD)
+#define DEFAULT_TARGET TARGET_QBE_AMD64
+#elif defined(__aarch64__) && defined(QBE_BUILD)
+#define DEFAULT_TARGET TARGET_QBE_ARM64
+#else
+#define DEFAULT_TARGET TARGET_NATIVE_X86_64_LINUX
+#endif
+
 const char *target_options[TARGET_COUNT] = {
+    [TARGET_LIST] = "list",
+
     [TARGET_NATIVE_X86_64_LINUX] = "x86_64-linux",
+
+#ifdef QBE_BUILD
+    [TARGET_QBE_AMD64] = "qbe-amd64_sysv",
+    [TARGET_QBE_ARM64] = "qbe-arm64",
+#endif
 };
+
+#ifndef QBE_C
+#include "qbe.c"
+#endif
 
 int main(int argc, char *argv[]) {
     int err = 0;
@@ -2701,20 +2742,54 @@ int main(int argc, char *argv[]) {
     argp_init(argc, argv, "Zag compiler", /* default_help */ true);
 
     Target *target = (Target *)argp_flag_enum("t", "target", target_options,
-                                              TARGET_COUNT, TARGET_NATIVE_X86_64_LINUX,
+                                              TARGET_COUNT, DEFAULT_TARGET,
                                               "target platform");
     char **output_file = argp_flag_str("o", "output", "OUTPUT_FILE", NULL, "output file path");
     bool *compile_assemble_only = argp_flag_bool("c", NULL, "compile and assemble but do not link");
+#ifdef QBE_BUILD
+    bool *emit_asm = argp_flag_bool("S", NULL, "compile to assembly, only availble for qbe targets");
+#endif
+
     char **cc_binary_arg = argp_flag_str(NULL, "cc-binary", "CC_BINARY", NULL,
                                          "path to C compiler binary, defaults to `CC` environment variable then to cc");
     bool *lex = argp_flag_bool(NULL, "lex", "print lexer output then exit");
     bool *emit_ir = argp_flag_bool(NULL, "emit-zag-ir", "print zag intermediate representation then exit");
 
-    char **file = argp_pos_str("file", NULL, false, "input file, use '-' for stdin");
+#ifdef QBE_BUILD
+    char **qbe_binary_arg = argp_flag_str(NULL, "qbe-binary", "QBE_BINARY", NULL,
+                                          "path to qbe binary, defaults to `ZAG_QBE` environment variable then to qbe");
+    bool *emit_qbe_il = argp_flag_bool(NULL, "emit-qbe-il", "print qbe intermediate language then exit");
+
+    char **as_binary_arg = argp_flag_str(NULL, "as-binary", "AS_BINARY", NULL,
+                                         "path to as binary, defaults to as");
+#endif
+
+    char **file = argp_pos_str("file", NULL, true, "input file, use '-' for stdin");
 
     if (!argp_parse_args()) {
         argp_print_usage(stderr);
         argp_print_error(stderr);
+        return 1;
+    }
+
+    if (*target == TARGET_LIST) {
+        for (usize i = 0; i < ARRAY_SIZE(target_options); ++i) {
+            if (i == TARGET_LIST || !target_options[i])
+                continue;
+
+            printf("%-15s", target_options[i]);
+
+            if (i == DEFAULT_TARGET)
+                printf(" <- Default\n");
+            else
+                printf("\n");
+        }
+        return 0;
+    }
+
+    if (*file == NULL) {
+        argp_print_usage(stderr);
+        fprintf(stderr, "No input file\n");
         return 1;
     }
 
@@ -2775,6 +2850,29 @@ int main(int argc, char *argv[]) {
         goto cleanup;
     }
 
+#ifdef QBE_BUILD
+    if (*emit_qbe_il) {
+        qbe_generate_il(&c, stdout);
+        goto cleanup;
+    }
+
+    char *qbe_binary = "qbe";
+    if (*qbe_binary_arg) {
+        qbe_binary = *qbe_binary_arg;
+    } else {
+        char *qbe_env = getenv("ZAG_QBE");
+        if (qbe_env)
+            qbe_binary = qbe_env;
+    }
+
+    if (*emit_asm)
+        return qbe_generate_asm(&c, qbe_binary, *target, stdout);
+
+    char *as_binary = "as";
+    if (*as_binary_arg)
+        as_binary = *as_binary_arg;
+#endif
+
     if (*output_file) {
         sb_append_cstr(&obj_filename, *output_file);
         if (!*compile_assemble_only) {
@@ -2790,18 +2888,35 @@ int main(int argc, char *argv[]) {
     }
     sb_append_null(&obj_filename);
 
-    obj_file = fopen(obj_filename.store, "w");
-    if (!obj_file) {
-        fprintf(stderr, "Error opening %s\n", obj_filename.store);
-        err = 1;
-        goto cleanup;
-    }
+    switch (*target) {
+    case TARGET_COUNT:
+    case TARGET_LIST: UNREACHABLE();
 
-    if (*target == TARGET_NATIVE_X86_64_LINUX)
+    case TARGET_NATIVE_X86_64_LINUX: {
+        obj_file = fopen(obj_filename.store, "w");
+        if (!obj_file) {
+            fprintf(stderr, "Error opening %s\n", obj_filename.store);
+            err = 1;
+            goto cleanup;
+        }
         x86_64_generate_program(&c, obj_file);
 
-    fclose(obj_file);
-    obj_file = NULL;
+        fclose(obj_file);
+        obj_file = NULL;
+    } break;
+
+#ifdef QBE_BUILD
+
+    case TARGET_QBE_AMD64:
+    case TARGET_QBE_ARM64: {
+        if (qbe_generate(&c, qbe_binary, as_binary, *target, obj_filename.store)) {
+            err = 1;
+            goto cleanup;
+        }
+    } break;
+
+#endif
+    }
 
     if (*compile_assemble_only)
         goto cleanup;

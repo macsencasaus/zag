@@ -12,6 +12,19 @@ will compile the release build into `build/release/zag`.
 Use the `debug` command with the build script for a debug build.
 Set the `CC` environment for your C compiler of choice, defaults to `cc`.
 
+### QBE
+
+**Zag** also supports [QBE](https://c9x.me/compile/) as a lightweight backend.
+To build with QBE support, one can modify the `ZAG_CFLAGS` environment variable when building with
+```bash
+ZAG_CFLAGS="-DQBE_BUILD" ./build.sh
+```
+By default, the compiler will default to the `qbe` executable unless otherwise specified
+by the `ZAG_QBE` environment variable or `--qbe-binary` flag.
+
+The compiler will default to a qbe target specific to the host platform.
+To view available targets and the default target for your platform, use the `-t list` flag.
+
 ## Usage
 
 Once built, you can compile a Zag source file with

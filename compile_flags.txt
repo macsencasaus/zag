@@ -5,3 +5,4 @@
 -Wall
 -Wextra
 -std=c11
+-DQBE_BUILD

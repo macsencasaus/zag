@@ -1,0 +1,320 @@
+export function w $ifs(w %v0) {
+@start
+	%S =l alloc16 8
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsw %S1
+	jnz %v1, @T0, @L0
+@T0
+	%S2 =l add %S, 4
+	storew 1, %S2
+	jmp @L1
+@L0
+	%S3 =l add %S, 4
+	storew 2, %S3
+@L1
+	%S4 =l add %S, 4
+	%v2 =w loadsw %S4
+	ret %v2
+}
+
+export function w $more_ifs(w %v0) {
+@start
+	%S =l alloc16 4
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsw %S1
+	jnz %v1, @T1, @L2
+@T1
+	%S2 =l add %S, 0
+	%v2 =w loadsw %S2
+	ret %v2
+@L2
+	ret 0
+}
+
+export function w $nested_ifs(w %v0, w %v1) {
+@start
+	%S =l alloc16 12
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 4
+	storew %v1, %S1
+	%S2 =l add %S, 0
+	%v2 =w loadsw %S2
+	%v3 =w csgtw %v2, 0
+	%S3 =l add %S, 8
+	storew %v3, %S3
+	%S4 =l add %S, 8
+	%v4 =w loadsw %S4
+	jnz %v4, @T2, @L4
+@T2
+	%S5 =l add %S, 4
+	%v5 =w loadsw %S5
+	%v6 =w csgtw %v5, 0
+	%S6 =l add %S, 8
+	storew %v6, %S6
+	%S7 =l add %S, 8
+	%v7 =w loadsw %S7
+	jnz %v7, @T3, @L5
+@T3
+	ret 1
+@L5
+	ret 2
+@L4
+	ret 3
+}
+
+export function w $early_return(w %v0) {
+@start
+	%S =l alloc16 8
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 0
+	%v1 =w loadsw %S1
+	%v2 =w ceqw %v1, 0
+	%S2 =l add %S, 4
+	storew %v2, %S2
+	%S3 =l add %S, 4
+	%v3 =w loadsw %S3
+	jnz %v3, @T4, @L8
+@T4
+	ret 18446744073709551615
+@L8
+	%S4 =l add %S, 0
+	%v4 =w loadsw %S4
+	%v5 =w csltw %v4, 0
+	%S5 =l add %S, 4
+	storew %v5, %S5
+	%S6 =l add %S, 4
+	%v6 =w loadsw %S6
+	jnz %v6, @T5, @L9
+@T5
+	ret 18446744073709551614
+@L9
+	%S7 =l add %S, 0
+	%v7 =w loadsw %S7
+	ret %v7
+}
+
+export function w $fallthrough(w %v0) {
+@start
+	%S =l alloc16 12
+	%S0 =l add %S, 0
+	storew %v0, %S0
+	%S1 =l add %S, 4
+	storew 0, %S1
+	%S2 =l add %S, 0
+	%v1 =w loadsw %S2
+	%v2 =w csgtw %v1, 10
+	%S3 =l add %S, 8
+	storew %v2, %S3
+	%S4 =l add %S, 8
+	%v3 =w loadsw %S4
+	jnz %v3, @T6, @L10
+@T6
+	%S5 =l add %S, 4
+	storew 100, %S5
+@L10
+	%S6 =l add %S, 0
+	%v4 =w loadsw %S6
+	%v5 =w csgtw %v4, 5
+	%S7 =l add %S, 8
+	storew %v5, %S7
+	%S8 =l add %S, 8
+	%v6 =w loadsw %S8
+	jnz %v6, @T7, @L11
+@T7
+	%S9 =l add %S, 4
+	%v7 =w loadsw %S9
+	%v8 =w add %v7, 10
+	%S10 =l add %S, 8
+	storew %v8, %S10
+	%S11 =l add %S, 4
+	%S12 =l add %S, 8
+	%v9 =w loadsw %S12
+	storew %v9, %S11
+@L11
+	%S13 =l add %S, 4
+	%v10 =w loadsw %S13
+	ret %v10
+}
+
+export function w $main() {
+@start
+	%S =l alloc16 20
+	%S0 =l add %S, 8
+	%v0 =l add $data, 0
+	storel %v0, %S0
+	%v1 =w call $ifs(w 0)
+	%S1 =l add %S, 16
+	storew %v1, %S1
+	%S2 =l add %S, 8
+	%v2 =l loadl %S2
+	%S3 =l add %S, 16
+	%v3 =w loadsw %S3
+	%v4 =w call $printf(l %v2, w %v3)
+	%S4 =l add %S, 0
+	storew %v4, %S4
+	%S5 =l add %S, 8
+	%v5 =l add $data, 13
+	storel %v5, %S5
+	%v6 =w call $ifs(w 1)
+	%S6 =l add %S, 16
+	storew %v6, %S6
+	%S7 =l add %S, 8
+	%v7 =l loadl %S7
+	%S8 =l add %S, 16
+	%v8 =w loadsw %S8
+	%v9 =w call $printf(l %v7, w %v8)
+	%S9 =l add %S, 0
+	storew %v9, %S9
+	%S10 =l add %S, 8
+	%v10 =l add $data, 26
+	storel %v10, %S10
+	%v11 =w call $more_ifs(w 0)
+	%S11 =l add %S, 16
+	storew %v11, %S11
+	%S12 =l add %S, 8
+	%v12 =l loadl %S12
+	%S13 =l add %S, 16
+	%v13 =w loadsw %S13
+	%v14 =w call $printf(l %v12, w %v13)
+	%S14 =l add %S, 0
+	storew %v14, %S14
+	%S15 =l add %S, 8
+	%v15 =l add $data, 44
+	storel %v15, %S15
+	%v16 =w call $more_ifs(w 42)
+	%S16 =l add %S, 16
+	storew %v16, %S16
+	%S17 =l add %S, 8
+	%v17 =l loadl %S17
+	%S18 =l add %S, 16
+	%v18 =w loadsw %S18
+	%v19 =w call $printf(l %v17, w %v18)
+	%S19 =l add %S, 0
+	storew %v19, %S19
+	%S20 =l add %S, 8
+	%v20 =l add $data, 63
+	storel %v20, %S20
+	%v21 =w call $nested_ifs(w 1, w 1)
+	%S21 =l add %S, 16
+	storew %v21, %S21
+	%S22 =l add %S, 8
+	%v22 =l loadl %S22
+	%S23 =l add %S, 16
+	%v23 =w loadsw %S23
+	%v24 =w call $printf(l %v22, w %v23)
+	%S24 =l add %S, 0
+	storew %v24, %S24
+	%S25 =l add %S, 8
+	%v25 =l add $data, 86
+	storel %v25, %S25
+	%v26 =w call $nested_ifs(w 1, w 0)
+	%S26 =l add %S, 16
+	storew %v26, %S26
+	%S27 =l add %S, 8
+	%v27 =l loadl %S27
+	%S28 =l add %S, 16
+	%v28 =w loadsw %S28
+	%v29 =w call $printf(l %v27, w %v28)
+	%S29 =l add %S, 0
+	storew %v29, %S29
+	%S30 =l add %S, 8
+	%v30 =l add $data, 109
+	storel %v30, %S30
+	%v31 =w call $nested_ifs(w 0, w 0)
+	%S31 =l add %S, 16
+	storew %v31, %S31
+	%S32 =l add %S, 8
+	%v32 =l loadl %S32
+	%S33 =l add %S, 16
+	%v33 =w loadsw %S33
+	%v34 =w call $printf(l %v32, w %v33)
+	%S34 =l add %S, 0
+	storew %v34, %S34
+	%S35 =l add %S, 8
+	%v35 =l add $data, 132
+	storel %v35, %S35
+	%v36 =w call $early_return(w 0)
+	%S36 =l add %S, 16
+	storew %v36, %S36
+	%S37 =l add %S, 8
+	%v37 =l loadl %S37
+	%S38 =l add %S, 16
+	%v38 =w loadsw %S38
+	%v39 =w call $printf(l %v37, w %v38)
+	%S39 =l add %S, 0
+	storew %v39, %S39
+	%S40 =l add %S, 8
+	%v40 =l add $data, 154
+	storel %v40, %S40
+	%v41 =w call $early_return(w 18446744073709551611)
+	%S41 =l add %S, 16
+	storew %v41, %S41
+	%S42 =l add %S, 8
+	%v42 =l loadl %S42
+	%S43 =l add %S, 16
+	%v43 =w loadsw %S43
+	%v44 =w call $printf(l %v42, w %v43)
+	%S44 =l add %S, 0
+	storew %v44, %S44
+	%S45 =l add %S, 8
+	%v45 =l add $data, 177
+	storel %v45, %S45
+	%v46 =w call $early_return(w 7)
+	%S46 =l add %S, 16
+	storew %v46, %S46
+	%S47 =l add %S, 8
+	%v47 =l loadl %S47
+	%S48 =l add %S, 16
+	%v48 =w loadsw %S48
+	%v49 =w call $printf(l %v47, w %v48)
+	%S49 =l add %S, 0
+	storew %v49, %S49
+	%S50 =l add %S, 8
+	%v50 =l add $data, 199
+	storel %v50, %S50
+	%v51 =w call $fallthrough(w 11)
+	%S51 =l add %S, 16
+	storew %v51, %S51
+	%S52 =l add %S, 8
+	%v52 =l loadl %S52
+	%S53 =l add %S, 16
+	%v53 =w loadsw %S53
+	%v54 =w call $printf(l %v52, w %v53)
+	%S54 =l add %S, 0
+	storew %v54, %S54
+	%S55 =l add %S, 8
+	%v55 =l add $data, 221
+	storel %v55, %S55
+	%v56 =w call $fallthrough(w 6)
+	%S56 =l add %S, 16
+	storew %v56, %S56
+	%S57 =l add %S, 8
+	%v57 =l loadl %S57
+	%S58 =l add %S, 16
+	%v58 =w loadsw %S58
+	%v59 =w call $printf(l %v57, w %v58)
+	%S59 =l add %S, 0
+	storew %v59, %S59
+	%S60 =l add %S, 8
+	%v60 =l add $data, 242
+	storel %v60, %S60
+	%v61 =w call $fallthrough(w 3)
+	%S61 =l add %S, 16
+	storew %v61, %S61
+	%S62 =l add %S, 8
+	%v62 =l loadl %S62
+	%S63 =l add %S, 16
+	%v63 =w loadsw %S63
+	%v64 =w call $printf(l %v62, w %v63)
+	%S64 =l add %S, 0
+	storew %v64, %S64
+	ret 0
+}
+
+data $data = { b 105 102 115 40 48 41 32 61 32 37 100 10 0 105 102 115 40 49 41 32 61 32 37 100 10 0 109 111 114 101 95 105 102 115 40 48 41 32 61 32 37 100 10 0 109 111 114 101 95 105 102 115 40 52 50 41 32 61 32 37 100 10 0 110 101 115 116 101 100 95 105 102 115 40 49 44 32 49 41 32 61 32 37 100 10 0 110 101 115 116 101 100 95 105 102 115 40 49 44 32 48 41 32 61 32 37 100 10 0 110 101 115 116 101 100 95 105 102 115 40 48 44 32 48 41 32 61 32 37 100 10 0 101 97 114 108 121 95 114 101 116 117 114 110 40 48 41 32 61 32 37 100 10 0 101 97 114 108 121 95 114 101 116 117 114 110 40 45 53 41 32 61 32 37 100 10 0 101 97 114 108 121 95 114 101 116 117 114 110 40 55 41 32 61 32 37 100 10 0 102 97 108 108 116 104 114 111 117 103 104 40 49 49 41 32 61 32 37 100 10 0 102 97 108 108 116 104 114 111 117 103 104 40 54 41 32 61 32 37 100 10 0 102 97 108 108 116 104 114 111 117 103 104 40 51 41 32 61 32 37 100 10 0 }

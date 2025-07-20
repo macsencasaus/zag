@@ -1,9 +1,9 @@
 square(3) = 9
 sum(1, 2, 3) = 6
-prec(): 2
+prec(): 1
 prec2(): 13
 prec3(): 30
-prefix result: x = -1, y = 0
+prefix result: x = 1, y = 2
 bx = 4
 by = 2
 bx < 5: 1
