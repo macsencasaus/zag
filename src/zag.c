@@ -2764,7 +2764,7 @@ int main(int argc, char *argv[]) {
                                          "path to as binary, defaults to as");
 #endif
 
-    char **file = argp_pos_str("file", NULL, true, "input file, use '-' for stdin");
+    char **file = argp_pos_str("file", NULL, ARGP_OPT_APPEAR_NONOPT, "input file, use '-' for stdin");
 
     if (!argp_parse_args()) {
         argp_print_usage(stderr);

@@ -16,6 +16,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+typedef enum {
+    ARGP_OPT_NONOPT = false,
+    ARGP_OPT_OPT = true,
+    ARGP_OPT_APPEAR_NONOPT,
+} Argp_Opt_Option;
+
 void argp_init(int argc, char **argv, const char *program_desc, bool default_help);
 
 // returns name of flag given its return value
@@ -33,12 +39,12 @@ char **argp_flag_str(const char *short_name, const char *long_name, const char *
 size_t *argp_flag_enum(const char *short_name, const char *long_name, const char *options[],
                        size_t option_count, size_t def, const char *desc);
 
-uint64_t *argp_pos_uint(const char *name, uint64_t def, bool opt, const char *desc);
+uint64_t *argp_pos_uint(const char *name, uint64_t def, Argp_Opt_Option opt, const char *desc);
 
-char **argp_pos_str(const char *name, char *def, bool opt, const char *desc);
+char **argp_pos_str(const char *name, char *def, Argp_Opt_Option opt, const char *desc);
 
 size_t *argp_pos_enum(const char *name, const char *option[], size_t option_count,
-                      size_t def, bool opt, const char *desc);
+                      size_t def, Argp_Opt_Option opt, const char *desc);
 
 bool argp_parse_args(void);
 
@@ -95,7 +101,7 @@ typedef struct {
     Argp_Type type;
     const char *name;
     const char *desc;
-    bool opt;
+    Argp_Opt_Option opt;
     Argp_Value val;
     Argp_Value def;
 
@@ -131,6 +137,8 @@ typedef struct {
     Argp_Flag *err_flag;
     Argp_Pos *err_pos;
 
+    const char *unknown_option;
+
     int rest_argc;
     char **rest_argv;
 } Argp_Ctx;
@@ -146,8 +154,8 @@ static char *shift_args(void) {
     return res;
 }
 
-static Argp_Flag *argp_new_flag(Argp_Type type, const char *short_name,
-                                const char *long_name, const char *meta_var, const char *desc) {
+static Argp_Flag *argp_new_flag(Argp_Type type, const char *short_name, const char *long_name,
+                                const char *meta_var, const char *desc) {
     assert(short_name != NULL || long_name != NULL);
     assert(argp_global_ctx.flag_count < ARGP_FLAG_CAP);
     Argp_Ctx *c = &argp_global_ctx;
@@ -163,7 +171,7 @@ static Argp_Flag *argp_new_flag(Argp_Type type, const char *short_name,
 }
 
 static Argp_Pos *argp_new_pos(Argp_Type type, const char *name,
-                              const char *desc, bool opt) {
+                              const char *desc, Argp_Opt_Option opt) {
     assert(argp_global_ctx.pos_count < ARGP_POS_CAP);
     Argp_Pos *pos = argp_global_ctx.poss + (argp_global_ctx.pos_count++);
     *pos = (Argp_Pos){
@@ -223,14 +231,14 @@ size_t *argp_flag_enum(const char *short_name, const char *long_name, const char
 }
 
 uint64_t *argp_pos_uint(const char *name, uint64_t def,
-                        bool opt, const char *desc) {
+                        Argp_Opt_Option opt, const char *desc) {
     Argp_Pos *pos = argp_new_pos(ARGP_UINT, name, desc, opt);
     pos->val.as_uint = def;
     pos->def.as_uint = def;
     return &pos->val.as_uint;
 }
 
-char **argp_pos_str(const char *name, char *def, bool opt, const char *desc) {
+char **argp_pos_str(const char *name, char *def, Argp_Opt_Option opt, const char *desc) {
     Argp_Pos *pos = argp_new_pos(ARGP_STR, name, desc, opt);
     pos->val.as_str = def;
     pos->def.as_str = def;
@@ -238,7 +246,7 @@ char **argp_pos_str(const char *name, char *def, bool opt, const char *desc) {
 }
 
 size_t *argp_pos_enum(const char *name, const char *options[], size_t option_count,
-                      size_t def, bool opt, const char *desc) {
+                      size_t def, Argp_Opt_Option opt, const char *desc) {
     Argp_Pos *pos = argp_new_pos(ARGP_ENUM, name, desc, opt);
     pos->val.as_enum = def;
     pos->def.as_enum = def;
@@ -256,7 +264,7 @@ void argp_print_usage(FILE *stream) {
     }
     for (size_t i = 0; i < c->pos_count; ++i) {
         const Argp_Pos *pos = c->poss + i;
-        if (pos->opt)
+        if (pos->opt == ARGP_OPT_OPT)
             fprintf(stream, " [%s]", pos->name);
         else
             fprintf(stream, " %s", pos->name);
@@ -345,45 +353,73 @@ void argp_print_usage(FILE *stream) {
 void argp_print_error(FILE *stream) {
     Argp_Ctx *c = &argp_global_ctx;
     switch (c->err) {
-    case ARGP_NO_ERROR: {
-        fprintf(stream, "No errors parsing arguments\n");
-        return;
-    } break;
-    case ARGP_ERROR_UNKNOWN: {
-        fprintf(stream, "Error: Unknown option\n");
-        return;
-    } break;
-    case ARGP_ERROR_UNKNOWN_ENUM: {
-        fprintf(stream, "Error: Unknown enum option");
-    } break;
-    case ARGP_ERROR_NO_VALUE: {
-        fprintf(stream, "Error: No value provided");
-    } break;
-    case ARGP_ERROR_INVALID_NUMBER: {
-        fprintf(stream, "Error: Invalid number");
-    } break;
-    case ARGP_ERROR_INTEGER_OVERFLOW: {
-        fprintf(stream, "Error: Integer overflow");
-    } break;
-    default:
-        assert(false && "Unreachable");
+        case ARGP_NO_ERROR: {
+            fprintf(stream, "No errors parsing arguments\n");
+            return;
+        } break;
+        case ARGP_ERROR_UNKNOWN: {
+            fprintf(stream, "Error: Unknown option %s\n", c->unknown_option);
+            return;
+        } break;
+        case ARGP_ERROR_UNKNOWN_ENUM: {
+            fprintf(stream, "Error: Unknown enum option");
+        } break;
+        case ARGP_ERROR_NO_VALUE: {
+            fprintf(stream, "Error: No value provided");
+        } break;
+        case ARGP_ERROR_INVALID_NUMBER: {
+            fprintf(stream, "Error: Invalid number");
+        } break;
+        case ARGP_ERROR_INTEGER_OVERFLOW: {
+            fprintf(stream, "Error: Integer overflow");
+        } break;
+        default:
+            assert(false && "Unreachable");
     }
+
+    Argp_Type type;
+    const char **enum_option;
+    size_t option_count;
     if (c->err_flag) {
         const Argp_Flag *flag = c->err_flag;
         if (flag->long_name)
-            fprintf(stream, " for flag '--%s'\n", flag->long_name);
+            fprintf(stream, " for flag --%s", flag->long_name);
         else
-            fprintf(stream, " for flag '-%s'\n", flag->short_name);
+            fprintf(stream, " for flag -%s", flag->short_name);
+
+        type = c->err_flag->type;
+        enum_option = c->err_flag->enum_options;
+        option_count = c->err_flag->option_count;
     } else {
-        fprintf(stream, " for positional argument '%s'\n", c->err_pos->name);
+        fprintf(stream, " for positional argument %s", c->err_pos->name);
+
+        type = c->err_pos->type;
+        enum_option = c->err_pos->enum_options;
+        option_count = c->err_pos->option_count;
     }
+
+    if (c->unknown_option)
+        fprintf(stream, " got '%s'", c->unknown_option);
+
+    if (type == ARGP_ENUM) {
+        fprintf(stream, " expected {");
+        for (size_t i = 0; i < option_count; ++i) {
+            const char *option = enum_option[i];
+            fprintf(stream, "%s", option);
+
+            if (i < option_count - 1)
+                fprintf(stream, ",");
+        }
+        fprintf(stream, "}");
+    }
+
+    fprintf(stream, "\n");
 }
 
 static Argp_Flag *try_short_name(const char *arg, size_t n) {
     Argp_Ctx *c = &argp_global_ctx;
     if (n < 1) return NULL;
-    if (arg[0] != '-')
-        return NULL;
+    if (arg[0] != '-') return NULL;
     const char *short_name = arg + 1;
 
     for (size_t i = 0; i < c->flag_count; ++i) {
@@ -425,10 +461,12 @@ static bool argp_parse_uint(char *arg, uint64_t *v) {
 
     if (*endptr != 0) {
         c->err = ARGP_ERROR_INVALID_NUMBER;
+        c->unknown_option = arg;
         return false;
     }
     if (result == ULLONG_MAX && errno == ERANGE) {
         c->err = ARGP_ERROR_INTEGER_OVERFLOW;
+        c->unknown_option = arg;
         return false;
     }
     *v = result;
@@ -464,38 +502,39 @@ static bool argp_parse_enum(char *arg, size_t *v, const char **enum_options, siz
     }
 
     c->err = ARGP_ERROR_UNKNOWN_ENUM;
+    c->unknown_option = arg;
     return false;
 }
 
 static bool argp_parse_flag(Argp_Flag *flag) {
     Argp_Ctx *c = &argp_global_ctx;
     switch (flag->type) {
-    case ARGP_BOOL: {
-        flag->val.as_bool = true;
-    } break;
-    case ARGP_UINT: {
-        char *arg = shift_args();
-        if (!argp_parse_uint(arg, &flag->val.as_uint)) {
-            c->err_flag = flag;
-            return false;
-        }
-    } break;
-    case ARGP_STR: {
-        char *arg = shift_args();
-        if (!argp_parse_str(arg, &flag->val.as_str)) {
-            c->err_flag = flag;
-            return flag;
-        }
-    } break;
-    case ARGP_ENUM: {
-        char *arg = shift_args();
-        if (!argp_parse_enum(arg, &flag->val.as_enum, flag->enum_options, flag->option_count)) {
-            c->err_flag = flag;
-            return flag;
-        }
-    } break;
-    default:
-        assert(false && "Unreachable");
+        case ARGP_BOOL: {
+            flag->val.as_bool = true;
+        } break;
+        case ARGP_UINT: {
+            char *arg = shift_args();
+            if (!argp_parse_uint(arg, &flag->val.as_uint)) {
+                c->err_flag = flag;
+                return false;
+            }
+        } break;
+        case ARGP_STR: {
+            char *arg = shift_args();
+            if (!argp_parse_str(arg, &flag->val.as_str)) {
+                c->err_flag = flag;
+                return false;
+            }
+        } break;
+        case ARGP_ENUM: {
+            char *arg = shift_args();
+            if (!argp_parse_enum(arg, &flag->val.as_enum, flag->enum_options, flag->option_count)) {
+                c->err_flag = flag;
+                return false;
+            }
+        } break;
+        default:
+            assert(false && "Unreachable");
     }
     return true;
 }
@@ -503,26 +542,26 @@ static bool argp_parse_flag(Argp_Flag *flag) {
 static bool argp_parse_pos(char *arg, Argp_Pos *pos) {
     Argp_Ctx *c = &argp_global_ctx;
     switch (pos->type) {
-    case ARGP_UINT: {
-        if (!argp_parse_uint(arg, &pos->val.as_uint)) {
-            c->err_pos = pos;
-            return false;
-        }
-    } break;
-    case ARGP_STR: {
-        if (!argp_parse_str(arg, &pos->val.as_str)) {
-            c->err_pos = pos;
-            return false;
-        }
-    } break;
-    case ARGP_ENUM: {
-        if (!argp_parse_enum(arg, &pos->val.as_enum, pos->enum_options, pos->option_count)) {
-            c->err_pos = pos;
-            return pos;
-        }
-    } break;
-    default:
-        assert(false && "Unreachable");
+        case ARGP_UINT: {
+            if (!argp_parse_uint(arg, &pos->val.as_uint)) {
+                c->err_pos = pos;
+                return false;
+            }
+        } break;
+        case ARGP_STR: {
+            if (!argp_parse_str(arg, &pos->val.as_str)) {
+                c->err_pos = pos;
+                return false;
+            }
+        } break;
+        case ARGP_ENUM: {
+            if (!argp_parse_enum(arg, &pos->val.as_enum, pos->enum_options, pos->option_count)) {
+                c->err_pos = pos;
+                return false;
+            }
+        } break;
+        default:
+            assert(false && "Unreachable");
     }
     return true;
 }
@@ -549,17 +588,23 @@ bool argp_parse_args(void) {
             continue;
         }
 
+        if (cur_pos == c->pos_count) {
+            c->err = ARGP_ERROR_UNKNOWN;
+            c->unknown_option = arg;
+            return false;
+        }
+
         Argp_Pos *pos = c->poss + (cur_pos++);
 
         if (!argp_parse_pos(arg, pos))
             return false;
 
-        pos->opt = true;
+        pos->opt = ARGP_OPT_OPT;
     }
 
     for (size_t i = 0; i < c->pos_count; ++i) {
         Argp_Pos *pos = c->poss + i;
-        if (!pos->opt) {
+        if (pos->opt == ARGP_OPT_NONOPT) {
             c->err = ARGP_ERROR_NO_VALUE;
             c->err_pos = pos;
             return false;
@@ -590,7 +635,7 @@ const char *argp_name(void *val) {
 
 #endif  // ARGPARSE_IMPLEMENTATION
 
-// Copyright 2024 Macsen Casaus <macsencasaus@gmail.com>
+// Copyright 2025 Macsen Casaus <macsencasaus@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
