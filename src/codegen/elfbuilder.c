@@ -1,6 +1,3 @@
-#ifndef ELF_C
-#define ELF_C
-
 #ifndef ZAG_C
 #define X86_64_LINUX_C
 #include "../zag.c"
@@ -160,7 +157,7 @@ void Elf_Builder_compile(Elf_Builder *ctx) {
     usize data_text_name_off = st_append(&ctx->shstrtab, ".data");
     ZAG_ASSERT(DATA_SECTION_IDX == ctx->section_headers.size);
     Elf64_Shdr *data_section_header = new_section_header(ctx);
-    *data_section_header = (Elf64_Shdr) {
+    *data_section_header = (Elf64_Shdr){
         .sh_name = data_text_name_off,
         .sh_type = SHT_PROGBITS,
         .sh_flags = SHF_WRITE | SHF_ALLOC,
@@ -340,5 +337,3 @@ usize Elf_add_external_func(Elf_Builder *ctx, sv name) {
 
     return ctx->symbols.size - 1;
 }
-
-#endif  // ELF_C

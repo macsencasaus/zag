@@ -166,11 +166,11 @@ export function w $main() {
 	%v49 =w call $printf(l %v46, ub %v48)
 	%S74 =l add %S, 56
 	storew %v49, %S74
-	%S75 =l add %S, 64
+	%S75 =l add %S, 56
 	storew 1, %S75
 	%S76 =l add %S, 60
 	storew 2, %S76
-	%S77 =l add %S, 56
+	%S77 =l add %S, 64
 	storew 3, %S77
 	%S78 =l add %S, 72
 	%S79 =l add %S, 56

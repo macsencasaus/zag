@@ -22,9 +22,9 @@ extern @printf(ptr) i32
     %s[56] = ref i32 %s[0]
     %s[64] = add ptr %s[56], i64 8
     %s[12] = i32 call @printf(ptr %s[16], i32 deref %s[32], i32 deref %s[48], i32 deref %s[64])
-    %s[20] = i32 4
+    %s[12] = i32 4
     %s[16] = i32 5
-    %s[12] = i32 6
+    %s[20] = i32 6
     %s[32] = ref i8 %data[18]
     %s[40] = ref i32 %s[12]
     %s[48] = add ptr %s[40], i64 0
@@ -57,10 +57,10 @@ extern @printf(ptr) i32
     %s[24] = i64 %s[32]
     jmp .L0
 .L1:
-    %s[35] = i8 1
-    %s[34] = i8 0
-    %s[33] = i8 1
-    %s[32] = i8 0
+    %s[32] = i8 1
+    %s[33] = i8 0
+    %s[34] = i8 1
+    %s[35] = i8 0
     %s[40] = ref i8 %data[84]
     %s[48] = ref i8 %s[32]
     %s[56] = add ptr %s[48], i64 0

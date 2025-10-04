@@ -475,8 +475,6 @@ Token lexer_next_token(Lexer *l) {
 
 #define MAX_PARAM_COUNT 16
 
-typedef usize Type_Id;
-
 typedef enum {
     TYPE_I8,
     TYPE_U8,
@@ -512,7 +510,7 @@ typedef struct Type Type;
 Array_Template(const Type *, MAX_PARAM_COUNT, Param_Type_Array);
 
 struct Type {
-    Type_Id id;
+    uint64_t hash;
 
     usize size;
     u8 alignment;
@@ -547,7 +545,7 @@ typedef struct {
 
 #define BUILTIN_TYPE(__name, __id, __size, __alignment, __kind) \
     {                                                           \
-        .name = (__name), .type = {.id = (__id),                \
+        .name = (__name), .type = {.hash = (__id),              \
                                    .size = (__size),            \
                                    .alignment = (__alignment),  \
                                    .kind = (__kind) }           \
@@ -887,7 +885,7 @@ void compiler_init(Compiler *c, Lexer *l) {
         da_append(&ty_ctx->types, type);
 
         *type = builtin->type;
-        if (type->id == DEFAULT_INT_LITERAL_TYPE_ID)
+        if (type->hash == DEFAULT_INT_LITERAL_TYPE_ID)
             default_int_literal_type = type;
         type->name = builtin->name;
 
@@ -1108,10 +1106,14 @@ INLINE const Type *lookup_named_type(const Types_Ctx *ty_ctx, sv name) {
     return *(const Type **)sht_try_get(&ty_ctx->named_types, SV_SPREAD(name));
 }
 
-bool type_cmp(const Type *t1, const Type *t2) {
-    if (t1->kind != t2->kind ||
-        t1->size != t2->size ||
-        t1->alignment != t2->alignment)
+static bool type_cmp_attrs(const Type *t1, const Type *t2) {
+    return t1->kind == t2->kind &&
+           t1->size == t2->size &&
+           t1->alignment == t2->alignment;
+}
+
+static bool type_cmp(const Type *t1, const Type *t2) {
+    if (!type_cmp_attrs(t1, t2))
         return false;
 
     switch (t1->kind) {
@@ -1147,11 +1149,25 @@ bool type_cmp(const Type *t1, const Type *t2) {
     return true;
 }
 
+static bool assign_type_cmp(const Type *left, const Type *right) {
+    if (left->kind != right->kind)
+        return false;
+
+    switch (left->kind) {
+    case TYPE_KIND_PTR:
+        return true;
+    case TYPE_KIND_ARRAY:
+        return left->len >= right->len && type_cmp(left->internal, right->internal);
+    default:
+        return type_cmp(left, right);
+    }
+}
+
 INLINE bool is_signed(const Type *t) {
     return t->kind == TYPE_KIND_INT_SIGNED || t->kind == TYPE_KIND_FLOAT;
 }
 
-const Type *lookup_interned_type(const Types_Ctx *ty_ctx, const Type *local_ty) {
+static const Type *lookup_interned_type(const Types_Ctx *ty_ctx, const Type *local_ty) {
     usize n = ty_ctx->types.size;
     for (usize i = 0; i < n; ++i) {
         const Type *type = *da_at(&ty_ctx->types, i);
@@ -1168,7 +1184,7 @@ INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
 
     Type *t = (Type *)ba_alloc_aligned(&ty_ctx->type_alloc, sizeof(Type), _Alignof(Type));
     *t = *local_ty;
-    t->id = ty_ctx->next_id++;
+    /* t->id = ty_ctx->next_id++; */
     da_append(&ty_ctx->types, t);
     return t;
 }
@@ -1193,7 +1209,9 @@ INLINE const Type *make_array_type_with(Types_Ctx *ty_ctx, const Type *internal,
 char *get_type_name(const Type *t) {
     String_Builder type_name = {0};
 
-    if (t->kind != TYPE_KIND_PTR && t->kind != TYPE_KIND_FN) {
+    if (t->kind != TYPE_KIND_PTR &&
+        t->kind != TYPE_KIND_FN &&
+        t->kind != TYPE_KIND_ARRAY) {
         sb_append_cstr(&type_name, t->name);
     }
 
@@ -1230,8 +1248,95 @@ char *get_type_name(const Type *t) {
         free(ret_type_name);
     }
 
+    else if (t->kind == TYPE_KIND_ARRAY) {
+        sb_appendf(&type_name, "[%zu]", t->len);
+        char *internal_type_name = get_type_name(t->internal);
+        sb_append_cstr(&type_name, internal_type_name);
+        free(internal_type_name);
+    }
+
     sb_append_null(&type_name);
     return type_name.store;
+}
+
+#define INVALID_HASH 0
+
+static inline u64 hash_combine(u64 a, u64 b) {
+    if (a == INVALID_HASH || b == INVALID_HASH) return INVALID_HASH;
+    return (a ^ ((b + 0x9e3779b97f4a7c15ULL) + (a << 6) + (a >> 2)));
+}
+
+static u64 hash_type(Compiler *c) {
+    Types_Ctx *ty_ctx = &c->ty_ctx;
+
+    switch (c->cur_token.type) {
+    case TOKEN_TYPE_IDENT: {
+        const Type *t;
+        if (!(t = lookup_named_type(ty_ctx, c->cur_token.lit))) {
+            return INVALID_HASH;
+        }
+        return t->hash;
+    } break;
+
+    case TOKEN_TYPE_FN: {
+        if (!expect_peek(c, TOKEN_TYPE_LPAREN))
+            return INVALID_HASH;
+
+        next_token(c);
+
+        u64 fn_hash = TYPE_KIND_FN;
+        while (!cur_tok_is(c, TOKEN_TYPE_RPAREN)) {
+            u64 param_hash = hash_type(c);
+            if (param_hash == INVALID_HASH) {
+                if (!expect_peek(c, TOKEN_TYPE_COLON))
+                    return INVALID_HASH;
+
+                next_token(c);
+                if ((param_hash = hash_type(c)) == INVALID_HASH)
+                    return INVALID_HASH;
+            }
+
+            fn_hash = hash_combine(fn_hash, param_hash);
+
+            if (peek_tok_is(c, TOKEN_TYPE_COMMA)) {
+                next_token(c);
+                next_token(c);
+            } else if (!expect_peek(c, TOKEN_TYPE_RPAREN)) {
+                return INVALID_HASH;
+            }
+        }
+
+        next_token(c);
+
+        u64 ret_hash = hash_type(c);
+        if (ret_hash == INVALID_HASH)
+            return INVALID_HASH;
+
+        fn_hash = hash_combine(fn_hash, ret_hash);
+        return fn_hash;
+    } break;
+
+    case TOKEN_TYPE_ASTERISK: {
+        next_token(c);
+        u64 internal_hash = hash_type(c);
+        return hash_combine(TYPE_KIND_PTR, internal_hash);
+    } break;
+
+    case TOKEN_TYPE_LBRACKET: {
+        CHECK(expect_peek(c, TOKEN_TYPE_INT_LITERAL));
+        usize len = atoll(c->cur_token.lit.store);
+        CHECK(expect_peek(c, TOKEN_TYPE_RBRACKET));
+        next_token(c);
+        u64 internal_hash = hash_type(c);
+        return hash_combine(TYPE_KIND_ARRAY,
+                            hash_combine(internal_hash, len));
+    } break;
+
+    default: {
+    }
+    }
+
+    return INVALID_HASH;
 }
 
 const Type *parse_type(Compiler *c) {
@@ -1535,7 +1640,6 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
 
             if ((value = one_char_esc_lookup[(usize)esc])) {
                 if (len != 4) {
-                    printf("len: %zu\n", len);
                     compiler_error(c, &tok->loc, "Multi-character character constant");
                     return NULL;
                 }
@@ -1626,7 +1730,7 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                 if (value) {
                     sb_append(&c->data, value);
                 } else {
-                    compiler_error(c, cur_loc(c), "Unkown escape character");
+                    compiler_error(c, cur_loc(c), "Unknown escape character");
                     return NULL;
                 }
             } else {
@@ -2066,7 +2170,7 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
         // - 1 on precedence to make assign right associative
         CHECK(val = compile_expr(c, PREC_ASSIGN - 1, left->type, NULL));
 
-        if (!type_cmp(left->type, val->type)) {
+        if (!assign_type_cmp(left->type, val->type)) {
             char *left_type_name = get_type_name(left->type),
                  *right_type_name = get_type_name(val->type);
 
@@ -2078,10 +2182,22 @@ Value *compile_binary_expr(Compiler *c, const Value *left, bool left_is_lval) {
             return NULL;
         }
 
-        if (left->value_type == VALUE_TYPE_DEREF) {
-            push_op(c, new_store_op(c, left->stack_index, val));
-        } else {
+        switch (left->value_type) {
+        case VALUE_TYPE_VAR: {
             push_op(c, new_assign_op(c, left->stack_index, val));
+        } break;
+
+        case VALUE_TYPE_DEREF: {
+            push_op(c, new_store_op(c, left->stack_index, val));
+        } break;
+
+        case VALUE_TYPE_DATA_OFFSET: {
+            usize data_ptr_offset = alloc_scoped_var(c, get_ptr_type(&c->ty_ctx, left->type));
+            push_op(c, new_prefix_op(c, OP_TYPE_REF, data_ptr_offset, left));
+            push_op(c, new_store_op(c, data_ptr_offset, val));
+        } break;
+
+        default: UNREACHABLE();
         }
     } break;
     case TOKEN_TYPE_PLUS:
@@ -2232,7 +2348,7 @@ bool compile_var_stmt(Compiler *c, bool top_level) {
                 return false;
             }
 
-            if (decl_type && !type_cmp(decl_type, arg->type)) {
+            if (decl_type && !assign_type_cmp(decl_type, arg->type)) {
                 char *arg_type_name = get_type_name(arg->type),
                      *decl_type_name = get_type_name(decl_type);
 
@@ -2256,14 +2372,19 @@ bool compile_var_stmt(Compiler *c, bool top_level) {
                 // TODO: make recursive
                 if (is_integer_type(arg->type)) {
                     memcpy(da_at(&c->data, offset), &arg->int_value, arg->type->size);
-                } else {
-                    ZAG_ASSERT(arg->value_type == VALUE_TYPE_INIT_LIST);
+                } else if (arg->value_type == VALUE_TYPE_INIT_LIST) {
                     for (usize i = 0; i < arg->elems.size; ++i) {
                         const Value *elem = *da_at(&arg->elems, i);
-                        ZAG_ASSERT(elem->value_type == VALUE_TYPE_INT_LITERAL);
+                        if (!is_constant(elem)) {
+                            compiler_error(c, cur_loc(c), "Top level declarations must be a constant");
+                            return false;
+                        }
                         usize size = elem->type->size;
                         memcpy(da_at(&c->data, offset + (i * size)), &elem->int_value, size);
                     }
+                } else {
+                    compiler_error(c, cur_loc(c), "Top level declarations must be a constant int or list initializer");
+                    return false;
                 }
             } else {
                 offset = alloc_scoped_var(c, decl_type);
@@ -2272,7 +2393,7 @@ bool compile_var_stmt(Compiler *c, bool top_level) {
                 } else {
                     const Type *internal = decl_type->internal;
                     for (usize i = 0; i < decl_type->len; ++i) {
-                        usize s = offset + (decl_type->len - i - 1) * internal->size;
+                        usize s = offset + i * internal->size;
                         push_op(c, new_assign_op(c, s, *da_at(&arg->elems, i)));
                     }
                 }
@@ -2282,7 +2403,11 @@ bool compile_var_stmt(Compiler *c, bool top_level) {
                 compiler_error(c, &c->cur_token.loc, "Variable declaration must have type");
                 return false;
             }
-            offset = alloc_scoped_var(c, decl_type);
+
+            if (top_level)
+                offset = alloc_data_var(c, decl_type);
+            else
+                offset = alloc_scoped_var(c, decl_type);
         }
 
         if (declare_var(c, name.lit, offset, decl_type, top_level) == NULL) {
@@ -2313,7 +2438,7 @@ bool compile_return_stmt(Compiler *c) {
     }
 
     const Type *expr_type = val->type;
-    if (!type_cmp(ret_type, expr_type)) {
+    if (!assign_type_cmp(ret_type, expr_type)) {
         char *expr_type_name = get_type_name(expr_type),
              *ret_type_name = get_type_name(ret_type);
 
@@ -2632,14 +2757,6 @@ bool compile_program(Compiler *c) {
     return true;
 }
 
-#ifndef IR_C
-#include "ir.c"
-#endif
-
-#ifndef X86_64_LINUX_C
-#include "x86_64_linux.c"
-#endif
-
 static char *program_name;
 
 static char *read_file(const char *file_name, usize *n) {
@@ -2735,6 +2852,16 @@ const char *target_options[TARGET_COUNT] = {
 #include "qbe.c"
 #endif
 
+#ifndef IR_C
+#include "ir.c"
+#endif
+
+#ifndef X86_64_LINUX_C
+#include "x86_64_linux.c"
+#endif
+
+#if !defined(IR_C) && !defined(QBE_C) && !defined(X86_64_LINUX_C)
+
 int main(int argc, char *argv[]) {
     int err = 0;
     program_name = argv[0];
@@ -2746,6 +2873,7 @@ int main(int argc, char *argv[]) {
                                               "target platform");
     char **output_file = argp_flag_str("o", "output", "OUTPUT_FILE", NULL, "output file path");
     bool *compile_assemble_only = argp_flag_bool("c", NULL, "compile and assemble but do not link");
+
 #ifdef QBE_BUILD
     bool *emit_asm = argp_flag_bool("S", NULL, "compile to assembly, only availble for qbe targets");
 #endif
@@ -2970,5 +3098,9 @@ cleanup:
     compiler_destroy(&c);
     free(input);
 
+    (void)&hash_type;
+
     return err;
 }
+
+#endif

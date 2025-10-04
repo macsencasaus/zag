@@ -23,7 +23,7 @@
 #ifndef HT_LOAD_FACTOR
 #define HT_LOAD_FACTOR 0.7
 #endif
-static_assert(HT_LOAD_FACTOR >= 0 && HT_LOAD_FACTOR <= 1, "Expected Load Factor between 0 and 1");
+// static_assert(HT_LOAD_FACTOR >= 0 && HT_LOAD_FACTOR <= 1, "Expected Load Factor between 0 and 1");
 
 #ifndef HT_INIT_CAP
 #define HT_INIT_CAP 256

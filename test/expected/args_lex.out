@@ -1,0 +1,46 @@
+extern: extern at 3:1 in tests/args.zag
+fn: fn at 3:8 in tests/args.zag
+identifier: printf at 3:11 in tests/args.zag
+'(': ( at 3:17 in tests/args.zag
+identifier: fmt at 3:18 in tests/args.zag
+':': : at 3:21 in tests/args.zag
+'*': * at 3:23 in tests/args.zag
+identifier: u8 at 3:24 in tests/args.zag
+',': , at 3:26 in tests/args.zag
+'...': ... at 3:28 in tests/args.zag
+')': ) at 3:31 in tests/args.zag
+identifier: i32 at 3:33 in tests/args.zag
+';': ; at 3:36 in tests/args.zag
+fn: fn at 5:1 in tests/args.zag
+identifier: main at 5:4 in tests/args.zag
+'(': ( at 5:8 in tests/args.zag
+identifier: argc at 5:9 in tests/args.zag
+':': : at 5:13 in tests/args.zag
+identifier: i32 at 5:15 in tests/args.zag
+',': , at 5:18 in tests/args.zag
+identifier: argv at 5:20 in tests/args.zag
+':': : at 5:24 in tests/args.zag
+'*': * at 5:26 in tests/args.zag
+'*': * at 5:27 in tests/args.zag
+identifier: u8 at 5:28 in tests/args.zag
+')': ) at 5:30 in tests/args.zag
+identifier: i32 at 5:32 in tests/args.zag
+'{': { at 5:36 in tests/args.zag
+identifier: printf at 6:5 in tests/args.zag
+'(': ( at 6:11 in tests/args.zag
+'&': & at 6:12 in tests/args.zag
+string literal: "argc: %d, argv[0]: %s\n" at 6:13 in tests/args.zag
+',': , at 6:38 in tests/args.zag
+identifier: argc at 6:40 in tests/args.zag
+',': , at 6:44 in tests/args.zag
+identifier: argv at 6:46 in tests/args.zag
+'[': [ at 6:50 in tests/args.zag
+int literal: 0 at 6:51 in tests/args.zag
+']': ] at 6:52 in tests/args.zag
+')': ) at 6:53 in tests/args.zag
+';': ; at 6:54 in tests/args.zag
+return: return at 7:5 in tests/args.zag
+int literal: 0 at 7:12 in tests/args.zag
+';': ; at 7:13 in tests/args.zag
+'}': } at 8:1 in tests/args.zag
+EOF:  at 9:1 in tests/args.zag

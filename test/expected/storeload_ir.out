@@ -45,9 +45,9 @@ extern @printf(ptr) i32
     %s[64] = ref i8 %data[109]
     %s[72] = ptr %s[48]
     %s[56] = i32 call @printf(ptr %s[64], i8 deref %s[72])
-    %s[64] = i32 1
+    %s[56] = i32 1
     %s[60] = i32 2
-    %s[56] = i32 3
+    %s[64] = i32 3
     %s[72] = ref i32 %s[56]
     %s[80] = add ptr %s[72], i64 0
     %s[72] = ptr %s[80]

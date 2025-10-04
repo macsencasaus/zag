@@ -3,7 +3,9 @@
 #include "../zag.c"
 #endif
 
+#ifndef ELFBUILDER_C
 #include "elfbuilder.c"
+#endif
 
 typedef struct {
     usize label_id;
@@ -745,6 +747,8 @@ void x86_64_generate_func(const Value *func) {
     }
 }
 
+#ifndef ELFBUILDER_C
+
 void x86_64_generate_program(const Compiler *c, FILE *out) {
     X86_64_Ctx *ctx = &x86_64_global_ctx;
     *ctx = (X86_64_Ctx){0};
@@ -800,3 +804,5 @@ void x86_64_generate_program(const Compiler *c, FILE *out) {
     da_delete(&ctx->rela_patches);
     da_delete(&ctx->data_patches);
 }
+
+#endif

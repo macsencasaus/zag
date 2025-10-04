@@ -1,0 +1,16 @@
+; Zag Readable Intermediate Representation
+; Function header formatted as:
+; @func[<max-stack-size>](<param-type>,...)
+
+extern @printf(ptr) i32
+
+@main[40](i32, ptr) i32:
+    %s[24] = ref i8 %data[0]
+    %s[32] = add ptr %s[8], i64 0
+    %s[16] = i32 call @printf(ptr %s[24], i32 %s[0], ptr deref %s[32])
+    ret i32 0
+
+
+Data:
+  0: 61 72 67 63 3A 20 25 64 2C 20 61 72          argc:.%d,.ar
+  c: 67 76 5B 30 5D 3A 20 25 73  A  0             gv[0]:.%s..

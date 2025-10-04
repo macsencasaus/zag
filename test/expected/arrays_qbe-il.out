@@ -75,11 +75,11 @@ export function w $main() {
 	%v23 =w call $printf(l %v16, w %v18, w %v20, w %v22)
 	%S32 =l add %S, 12
 	storew %v23, %S32
-	%S33 =l add %S, 20
+	%S33 =l add %S, 12
 	storew 4, %S33
 	%S34 =l add %S, 16
 	storew 5, %S34
-	%S35 =l add %S, 12
+	%S35 =l add %S, 20
 	storew 6, %S35
 	%S36 =l add %S, 32
 	%v24 =l add $data, 18
@@ -225,13 +225,13 @@ export function w $main() {
 	storel %v73, %S95
 	jmp @L0
 @L1
-	%S97 =l add %S, 35
+	%S97 =l add %S, 32
 	storeb 1, %S97
-	%S98 =l add %S, 34
+	%S98 =l add %S, 33
 	storeb 0, %S98
-	%S99 =l add %S, 33
+	%S99 =l add %S, 34
 	storeb 1, %S99
-	%S100 =l add %S, 32
+	%S100 =l add %S, 35
 	storeb 0, %S100
 	%S101 =l add %S, 40
 	%v74 =l add $data, 84
