@@ -28,11 +28,12 @@ class Memory_Test_State(Enum):
 default_debug_zag_build = "../build/debug/zag"
 default_release_zag_build = "../build/release/zag"
 
-parser = argparse.ArgumentParser(description="Regression tester")
+parser = argparse.ArgumentParser(description="Regression tester", color=False)
 parser.add_argument(
     "tests",
-    nargs="+",
-    help="Path to test",
+    nargs="*",
+    help="Path to test, default: './tests'",
+    default=["./tests"]
 )
 parser.add_argument(
     "--zag-binary",
