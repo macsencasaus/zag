@@ -6,22 +6,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#ifndef BUMPALLOC_MAX_ALIGN
-#include <stdalign.h>
-#define BUMPALLOC_MAX_ALIGN sizeof(max_align_t)
-#endif
-
-#ifndef BUMPALLOC_THRESH
-#define BUMPALLOC_THRESH 64
-#endif
-
-#ifndef BUMPALLOC_ASSERT
-#include <assert.h>
-#define BUMPALLOC_ASSERT assert
-#endif
-
-#define MIN_CHUNK_CAPACITY sysconf(_SC_PAGESIZE)
-
 typedef struct Bump_Alloc_Chunk Bump_Alloc_Chunk;
 
 struct Bump_Alloc_Chunk {
@@ -43,6 +27,22 @@ void ba_free(Bump_Alloc *);
 #endif  // BUMPALLOC_H
 
 #ifdef BUMPALLOC_IMPLEMENTATION
+
+#ifndef BUMPALLOC_MAX_ALIGN
+#include <stdalign.h>
+#define BUMPALLOC_MAX_ALIGN sizeof(max_align_t)
+#endif
+
+#ifndef BUMPALLOC_THRESH
+#define BUMPALLOC_THRESH 64
+#endif
+
+#ifndef BUMPALLOC_ASSERT
+#include <assert.h>
+#define BUMPALLOC_ASSERT assert
+#endif
+
+#define MIN_CHUNK_CAPACITY sysconf(_SC_PAGESIZE)
 
 static Bump_Alloc_Chunk *bump_alloc_new_chunk(size_t initial_size) {
     size_t page_size = MIN_CHUNK_CAPACITY;
@@ -100,5 +100,10 @@ void ba_free(Bump_Alloc *ba) {
         BUMPALLOC_ASSERT(munmap(chunk, sizeof(Bump_Alloc_Chunk) + chunk->capacity) == 0);
     }
 }
+
+#undef BUMPALLOC_MAX_ALIGN
+#undef BUMPALLOC_THRESH
+#undef BUMPALLOC_ASSERT
+#undef MIN_CHUNK_CAPACITY
 
 #endif  // BUMPALLOC_IMPLEMENTATION
