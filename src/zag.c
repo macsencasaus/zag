@@ -32,6 +32,12 @@
         abort();                                                                                    \
     } while (0)
 
+#define ALLOC_FAILED()                                                                       \
+    do {                                                                                     \
+        fprintf(stderr, "ALLOCATION FAILED: %s:%d in %s()\n", __FILE__, __LINE__, __func__); \
+        abort();                                                                             \
+    } while (0)
+
 #define INLINE static inline
 
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
@@ -882,6 +888,8 @@ void compiler_init(Compiler *c, Lexer *l) {
         const Builtin_Type *builtin = builtin_types + i;
 
         Type *type = ba_alloc_aligned(&ty_ctx->type_alloc, sizeof(Type), _Alignof(Type));
+        if (!type)
+            ALLOC_FAILED();
         da_append(&ty_ctx->types, type);
 
         *type = builtin->type;
@@ -929,8 +937,25 @@ INLINE void push_op(Compiler *c, const Op *op) {
     da_append(&c->func->ops, op);
 }
 
+INLINE Value *new_value(Compiler *c) {
+    Value *result = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    if (!result)
+        ALLOC_FAILED();
+    return result;
+}
+
+INLINE Op *new_op(Compiler *c) {
+    Op *result = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    if (!result)
+        ALLOC_FAILED();
+    return result;
+    ;
+}
+
 INLINE Type init_fn_type(Compiler *c) {
     Param_Type_Array *params = ba_alloc_aligned(&c->arrays, sizeof(Param_Type_Array), _Alignof(Param_Type_Array));
+    if (!params)
+        ALLOC_FAILED();
     return (Type){
         .size = 8,
         .alignment = 8,
@@ -948,7 +973,7 @@ INLINE Type init_ptr_type(void) {
 }
 
 INLINE Value *new_int_literal(Compiler *c, const Type *type, u64 value) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_INT_LITERAL,
         .type = type,
@@ -958,7 +983,7 @@ INLINE Value *new_int_literal(Compiler *c, const Type *type, u64 value) {
 }
 
 INLINE Value *new_var(Compiler *c, const Type *type, usize stack_index) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_VAR,
         .type = type,
@@ -968,16 +993,18 @@ INLINE Value *new_var(Compiler *c, const Type *type, usize stack_index) {
 }
 
 INLINE Value *new_func(Compiler *c) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_FUNC,
         .params = ba_alloc_aligned(&c->arrays, sizeof(Param_Array), _Alignof(Param_Array)),
     };
+    if (!v->params)
+        ALLOC_FAILED();
     return v;
 }
 
 INLINE Value *new_extern_func(Compiler *c) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_EXTERN_FUNC,
     };
@@ -985,7 +1012,7 @@ INLINE Value *new_extern_func(Compiler *c) {
 }
 
 INLINE Value *new_deref(Compiler *c, const Type *type, usize stack_index) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_DEREF,
         .type = type,
@@ -995,7 +1022,7 @@ INLINE Value *new_deref(Compiler *c, const Type *type, usize stack_index) {
 }
 
 INLINE Value *new_init_list(Compiler *c) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_INIT_LIST,
     };
@@ -1003,7 +1030,7 @@ INLINE Value *new_init_list(Compiler *c) {
 }
 
 INLINE Value *new_data_offset(Compiler *c, const Type *type, usize offset) {
-    Value *v = ba_alloc_aligned(&c->value_alloc, sizeof(Value), _Alignof(Value));
+    Value *v = new_value(c);
     *v = (Value){
         .value_type = VALUE_TYPE_DATA_OFFSET,
         .type = type,
@@ -1013,7 +1040,7 @@ INLINE Value *new_data_offset(Compiler *c, const Type *type, usize offset) {
 }
 
 INLINE Op *new_assign_op(Compiler *c, usize result, const Value *val) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_ASSIGN,
         .result = result,
@@ -1023,7 +1050,7 @@ INLINE Op *new_assign_op(Compiler *c, usize result, const Value *val) {
 }
 
 INLINE Op *new_store_op(Compiler *c, usize result_addr, const Value *val) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_STORE,
         .result = result_addr,
@@ -1033,7 +1060,7 @@ INLINE Op *new_store_op(Compiler *c, usize result_addr, const Value *val) {
 }
 
 INLINE Op *new_prefix_op(Compiler *c, Op_Type type, usize result, const Value *arg) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = type,
         .result = result,
@@ -1044,7 +1071,7 @@ INLINE Op *new_prefix_op(Compiler *c, Op_Type type, usize result, const Value *a
 
 INLINE Op *new_binop(Compiler *c, Binop op, usize result,
                      const Value *lhs, const Value *rhs) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_BINOP,
         .result = result,
@@ -1056,7 +1083,7 @@ INLINE Op *new_binop(Compiler *c, Binop op, usize result,
 }
 
 INLINE Op *new_ret_op(Compiler *c, const Value *val) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_RET,
         .val = val,
@@ -1065,7 +1092,7 @@ INLINE Op *new_ret_op(Compiler *c, const Value *val) {
 }
 
 INLINE Op *new_label(Compiler *c) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_LABEL,
         .label_id = c->next_label_id++,
@@ -1074,7 +1101,7 @@ INLINE Op *new_label(Compiler *c) {
 }
 
 INLINE Op *new_jmp(Compiler *c, usize label_id) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_JMP,
         .label_id = label_id,
@@ -1083,7 +1110,7 @@ INLINE Op *new_jmp(Compiler *c, usize label_id) {
 }
 
 INLINE Op *new_jmpz(Compiler *c, usize label_id, const Value *val) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_JMPZ,
         .val = val,
@@ -1093,12 +1120,14 @@ INLINE Op *new_jmpz(Compiler *c, usize label_id, const Value *val) {
 }
 
 INLINE Op *new_call(Compiler *c, usize result) {
-    Op *o = ba_alloc_aligned(&c->op_alloc, sizeof(Op), _Alignof(Op));
+    Op *o = new_op(c);
     *o = (Op){
         .type = OP_TYPE_CALL,
         .result = result,
         .params = ba_alloc_aligned(&c->arrays, sizeof(Param_Value_Array), _Alignof(Param_Value_Array)),
     };
+    if (!o->params)
+        ALLOC_FAILED();
     return o;
 }
 
@@ -1183,6 +1212,8 @@ INLINE const Type *new_type(Types_Ctx *ty_ctx, const Type *local_ty) {
     if (existing) return existing;
 
     Type *t = (Type *)ba_alloc_aligned(&ty_ctx->type_alloc, sizeof(Type), _Alignof(Type));
+    if (!t)
+        ALLOC_FAILED();
     *t = *local_ty;
     /* t->id = ty_ctx->next_id++; */
     da_append(&ty_ctx->types, t);
@@ -1810,6 +1841,8 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
 
         usize n = val->elems.size * sizeof(const Value *);
         void *arr_mem = ba_alloc_aligned(&c->arrays, n, _Alignof(const Value *));
+        if (!arr_mem)
+            ALLOC_FAILED();
         memcpy(arr_mem, val->elems.store, n);
 
         da_delete(&val->elems);
@@ -2795,6 +2828,8 @@ static char *read_file(const char *file_name, usize *n) {
     rewind(file);
 
     char *buffer = (char *)malloc(file_size + 1);
+    if (!buffer)
+        ALLOC_FAILED();
 
     usize bytes_read = fread(buffer, 1, file_size, file);
     if ((long)bytes_read != file_size) {
@@ -2814,6 +2849,9 @@ static char *read_stdin(usize *n) {
     usize cap = 1024;
     usize len = 0;
     char *buffer = (char *)malloc(cap);
+    if (!buffer)
+        ALLOC_FAILED();
+
     if (buffer == NULL) {
         return NULL;
     }
@@ -2826,9 +2864,9 @@ static char *read_stdin(usize *n) {
 
             char *temp = buffer;
             buffer = realloc(buffer, cap);
-            if (buffer == NULL) {
+            if (!buffer) {
                 free(temp);
-                return NULL;
+                ALLOC_FAILED();
             }
         }
     }
