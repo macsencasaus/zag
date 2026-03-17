@@ -5,30 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef HT_REALLOC
-#include <stdlib.h>
-#define HT_REALLOC realloc
-#endif
-//
-#ifndef HT_FREE
-#include <stdlib.h>
-#define HT_FREE free
-#endif
-
-#ifndef HT_ASSERT
-#include <assert.h>
-#define HT_ASSERT assert
-#endif
-
-#ifndef HT_LOAD_FACTOR
-#define HT_LOAD_FACTOR 0.7
-#endif
-// static_assert(HT_LOAD_FACTOR >= 0 && HT_LOAD_FACTOR <= 1, "Expected Load Factor between 0 and 1");
-
-#ifndef HT_INIT_CAP
-#define HT_INIT_CAP 256
-#endif
-
 typedef uint64_t ht_hash_fn_t(const void *key);
 
 typedef int ht_eq_fn_t(const void *key1, const void *key2);
@@ -61,6 +37,29 @@ void ht_free(Hash_Table *);
 #endif  // HT_H
 
 #ifdef HT_IMPLEMENTATION
+
+#ifndef HT_REALLOC
+#include <stdlib.h>
+#define HT_REALLOC realloc
+#endif
+//
+#ifndef HT_FREE
+#include <stdlib.h>
+#define HT_FREE free
+#endif
+
+#ifndef HT_ASSERT
+#include <assert.h>
+#define HT_ASSERT assert
+#endif
+
+#ifndef HT_LOAD_FACTOR
+#define HT_LOAD_FACTOR 0.7
+#endif
+
+#ifndef HT_INIT_CAP
+#define HT_INIT_CAP 256
+#endif
 
 #define VOID_OFFSET(__a, __offset) (void *)((char *)(__a) + (__offset))
 #define VOID_DIF(__a, __b) ((char *)__a - (char *)__b)
@@ -179,5 +178,13 @@ void ht_free(Hash_Table *ht) {
     HT_FREE(ht->bins);
     HT_FREE(ht->arena);
 }
+
+#undef HT_REALLOC
+#undef HT_FREE
+#undef HT_ASSERT
+#undef HT_LOAD_FACTOR
+#undef HT_INIT_CAP
+#undef VOID_OFFSET
+#undef VOID_DIF
 
 #endif
