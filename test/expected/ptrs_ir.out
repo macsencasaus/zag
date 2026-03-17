@@ -1,0 +1,70 @@
+; Zag Readable Intermediate Representation
+; Function header formatted as:
+; @func[<max-stack-size>](<param-type>,...)
+
+extern @printf(ptr) i32
+
+@main[96]() i32:
+    %s[0] = i64 1
+    %s[8] = i64 2
+    %s[16] = i64 3
+    %s[24] = i64 4
+    %s[32] = ref i64 %s[0]
+    %s[32] = ptr %s[32]
+    %s[40] = ptr %s[32]
+    %s[56] = ref i8 %data[0]
+    %s[64] = eq ptr %s[32], ptr %s[40]
+    %s[48] = i32 call @printf(ptr %s[56], ptr %s[64])
+    %s[56] = ref i8 %data[18]
+    %s[64] = ptr %s[32]
+    %s[72] = ptr %s[40]
+    %s[80] = eq i64 deref %s[64], i64 deref %s[72]
+    %s[48] = i32 call @printf(ptr %s[56], i64 %s[80])
+    %s[56] = ref i8 %data[38]
+    %s[48] = i32 call @printf(ptr %s[56])
+    %s[56] = ref i8 %data[40]
+    %s[32] = add ptr %s[32], ptr 8
+    %s[64] = add ptr %s[40], i64 8
+    %s[72] = eq ptr %s[32], ptr %s[64]
+    %s[48] = i32 call @printf(ptr %s[56], ptr %s[72])
+    %s[56] = ref i8 %data[66]
+    %s[64] = ptr %s[32]
+    %s[72] = add ptr %s[40], i64 8
+    %s[80] = ptr %s[72]
+    %s[88] = eq i64 deref %s[64], i64 deref %s[80]
+    %s[48] = i32 call @printf(ptr %s[56], i64 %s[88])
+    %s[56] = ref i8 %data[92]
+    %s[64] = ptr %s[32]
+    %s[32] = add ptr %s[32], ptr 8
+    %s[40] = add ptr %s[40], ptr 8
+    %s[72] = eq ptr %s[64], ptr %s[40]
+    %s[48] = i32 call @printf(ptr %s[56], ptr %s[72])
+    %s[56] = ref i8 %data[114]
+    %s[64] = eq ptr %s[32], ptr %s[40]
+    %s[48] = i32 call @printf(ptr %s[56], ptr %s[64])
+    %s[56] = ref i8 %data[132]
+    %s[48] = i32 call @printf(ptr %s[56])
+    %s[56] = ref i8 %data[134]
+    %s[64] = ptr %s[32]
+    %s[48] = i32 call @printf(ptr %s[56], i64 deref %s[64])
+    %s[56] = ref i8 %data[146]
+    %s[64] = ptr %s[40]
+    %s[48] = i32 call @printf(ptr %s[56], i64 deref %s[64])
+    ret i32 0
+
+
+Data:
+  0: 70 74 72 31 20 3D 3D 20 70 74 72 32          ptr1.==.ptr2
+  c: 3A 20 25 64  A  0 2A 70 74 72 31 20          :.%d..*ptr1.
+ 18: 3D 3D 20 2A 70 74 72 32 3A 20 25 64          ==.*ptr2:.%d
+ 24:  A  0  A  0 2B 2B 70 74 72 31 20 3D          ....++ptr1.=
+ 30: 3D 20 28 70 74 72 32 20 2B 20 31 29          =.(ptr2.+.1)
+ 3c: 3A 20 25 64  A  0 2A 70 74 72 31 20          :.%d..*ptr1.
+ 48: 3D 3D 20 2A 28 70 74 72 32 20 2B 20          ==.*(ptr2.+.
+ 54: 31 29 3A 20 25 64  A  0 70 74 72 31          1):.%d..ptr1
+ 60: 2B 2B 20 3D 3D 20 2B 2B 70 74 72 32          ++.==.++ptr2
+ 6c: 3A 20 25 64  A  0 70 74 72 31 20 3D          :.%d..ptr1.=
+ 78: 3D 20 70 74 72 32 3A 20 25 64  A  0          =.ptr2:.%d..
+ 84:  A  0 2A 70 74 72 31 3A 20 25 6C 64          ..*ptr1:.%ld
+ 90:  A  0 2A 70 74 72 32 3A 20 25 6C 64          ..*ptr2:.%ld
+ 9c:  A  0                                        ..

@@ -1,0 +1,10 @@
+ptr1 == ptr2: 1
+*ptr1 == *ptr2: 1
+
+++ptr1 == (ptr2 + 1): 1
+*ptr1 == *(ptr2 + 1): 1
+ptr1++ == ++ptr2: 1
+ptr1 == ptr2: 0
+
+*ptr1: 3
+*ptr2: 2

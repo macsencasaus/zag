@@ -1852,8 +1852,14 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
             return NULL;
         }
 
+        Value *one;
+        if (val->type->kind == TYPE_KIND_PTR) {
+            one = new_int_literal(c, val->type, val->type->size);
+        } else {
+            one = new_int_literal(c, val->type, 1);
+        }
+
         // TODO: intern constants mayhaps
-        Value *one = new_int_literal(c, val->type, 1);
 
         push_op(c, new_binop(c, BINOP_ADD, val->stack_index, val, one));
 
@@ -1871,7 +1877,12 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
             return NULL;
         }
 
-        Value *one = new_int_literal(c, val->type, 1);
+        Value *one;
+        if (val->type->kind == TYPE_KIND_PTR) {
+            one = new_int_literal(c, val->type, val->type->size);
+        } else {
+            one = new_int_literal(c, val->type, 1);
+        }
 
         push_op(c, new_binop(c, BINOP_SUB, val->stack_index, val, one));
 
@@ -1982,10 +1993,15 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                 return NULL;
             }
 
+            Value *one;
+            if (val->type->kind == TYPE_KIND_PTR) {
+                one = new_int_literal(c, val->type, val->type->size);
+            } else {
+                one = new_int_literal(c, val->type, 1);
+            }
+
             usize pre = alloc_scoped_var(c, val->type);
             push_op(c, new_assign_op(c, pre, val));
-
-            Value *one = new_int_literal(c, val->type, 1);
 
             push_op(c, new_binop(c, BINOP_ADD, val->stack_index, val, one));
 
@@ -2000,7 +2016,12 @@ Value *compile_primary_expr(Compiler *c, const Type *hint, bool *is_lvalue) {
                 return NULL;
             }
 
-            Value *one = new_int_literal(c, val->type, 1);
+            Value *one;
+            if (val->type->kind == TYPE_KIND_PTR) {
+                one = new_int_literal(c, val->type, val->type->size);
+            } else {
+                one = new_int_literal(c, val->type, 1);
+            }
 
             usize pre = alloc_scoped_var(c, val->type);
             push_op(c, new_assign_op(c, pre, val));

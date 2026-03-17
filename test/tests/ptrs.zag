@@ -1,0 +1,28 @@
+// TEST: lex, ir, x86_64-linux
+
+extern fn printf(fmt: *u8, ...) i32;
+
+fn main() i32 {
+    var array = []u64{1,2,3,4};
+
+    var ptr1 = &array;
+    var ptr2 = ptr1;
+
+    printf(&"ptr1 == ptr2: %d\n", ptr1 == ptr2);
+    printf(&"*ptr1 == *ptr2: %d\n", *ptr1 == *ptr2);
+
+    printf(&"\n");
+
+    printf(&"++ptr1 == (ptr2 + 1): %d\n", ++ptr1 == (ptr2 + 1));
+    printf(&"*ptr1 == *(ptr2 + 1): %d\n", *ptr1 == *(ptr2 + 1));
+
+    printf(&"ptr1++ == ++ptr2: %d\n", ptr1++ == ++ptr2);
+    printf(&"ptr1 == ptr2: %d\n", ptr1 == ptr2);
+
+    printf(&"\n");
+
+    printf(&"*ptr1: %ld\n", *ptr1);
+    printf(&"*ptr2: %ld\n", *ptr2);
+
+    return 0;
+}

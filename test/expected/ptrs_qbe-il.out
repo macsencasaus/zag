@@ -1,0 +1,223 @@
+export function w $main() {
+@start
+	%S =l alloc16 96
+	%S0 =l add %S, 0
+	storel 1, %S0
+	%S1 =l add %S, 8
+	storel 2, %S1
+	%S2 =l add %S, 16
+	storel 3, %S2
+	%S3 =l add %S, 24
+	storel 4, %S3
+	%S4 =l add %S, 32
+	%S5 =l add %S, 0
+	storel %S5, %S4
+	%S6 =l add %S, 32
+	%S7 =l add %S, 32
+	%v0 =l loadl %S7
+	storel %v0, %S6
+	%S8 =l add %S, 40
+	%S9 =l add %S, 32
+	%v1 =l loadl %S9
+	storel %v1, %S8
+	%S10 =l add %S, 56
+	%v2 =l add $data, 0
+	storel %v2, %S10
+	%S11 =l add %S, 32
+	%v3 =l loadl %S11
+	%S12 =l add %S, 40
+	%v4 =l loadl %S12
+	%v5 =l ceql %v3, %v4
+	%S13 =l add %S, 64
+	storel %v5, %S13
+	%S14 =l add %S, 56
+	%v6 =l loadl %S14
+	%S15 =l add %S, 64
+	%v7 =l loadl %S15
+	%v8 =w call $printf(l %v6, l %v7)
+	%S16 =l add %S, 48
+	storew %v8, %S16
+	%S17 =l add %S, 56
+	%v9 =l add $data, 18
+	storel %v9, %S17
+	%S18 =l add %S, 64
+	%S19 =l add %S, 32
+	%v10 =l loadl %S19
+	storel %v10, %S18
+	%S20 =l add %S, 72
+	%S21 =l add %S, 40
+	%v11 =l loadl %S21
+	storel %v11, %S20
+	%S22 =l add %S, 64
+	%v12 =l loadl %S22
+	%v13 =l loadl %v12
+	%S23 =l add %S, 72
+	%v14 =l loadl %S23
+	%v15 =l loadl %v14
+	%v16 =l ceql %v13, %v15
+	%S24 =l add %S, 80
+	storel %v16, %S24
+	%S25 =l add %S, 56
+	%v17 =l loadl %S25
+	%S26 =l add %S, 80
+	%v18 =l loadl %S26
+	%v19 =w call $printf(l %v17, l %v18)
+	%S27 =l add %S, 48
+	storew %v19, %S27
+	%S28 =l add %S, 56
+	%v20 =l add $data, 38
+	storel %v20, %S28
+	%S29 =l add %S, 56
+	%v21 =l loadl %S29
+	%v22 =w call $printf(l %v21)
+	%S30 =l add %S, 48
+	storew %v22, %S30
+	%S31 =l add %S, 56
+	%v23 =l add $data, 40
+	storel %v23, %S31
+	%S32 =l add %S, 32
+	%v24 =l loadl %S32
+	%v25 =l add %v24, 8
+	%S33 =l add %S, 32
+	storel %v25, %S33
+	%S34 =l add %S, 40
+	%v26 =l loadl %S34
+	%v27 =l add %v26, 8
+	%S35 =l add %S, 64
+	storel %v27, %S35
+	%S36 =l add %S, 32
+	%v28 =l loadl %S36
+	%S37 =l add %S, 64
+	%v29 =l loadl %S37
+	%v30 =l ceql %v28, %v29
+	%S38 =l add %S, 72
+	storel %v30, %S38
+	%S39 =l add %S, 56
+	%v31 =l loadl %S39
+	%S40 =l add %S, 72
+	%v32 =l loadl %S40
+	%v33 =w call $printf(l %v31, l %v32)
+	%S41 =l add %S, 48
+	storew %v33, %S41
+	%S42 =l add %S, 56
+	%v34 =l add $data, 66
+	storel %v34, %S42
+	%S43 =l add %S, 64
+	%S44 =l add %S, 32
+	%v35 =l loadl %S44
+	storel %v35, %S43
+	%S45 =l add %S, 40
+	%v36 =l loadl %S45
+	%v37 =l add %v36, 8
+	%S46 =l add %S, 72
+	storel %v37, %S46
+	%S47 =l add %S, 80
+	%S48 =l add %S, 72
+	%v38 =l loadl %S48
+	storel %v38, %S47
+	%S49 =l add %S, 64
+	%v39 =l loadl %S49
+	%v40 =l loadl %v39
+	%S50 =l add %S, 80
+	%v41 =l loadl %S50
+	%v42 =l loadl %v41
+	%v43 =l ceql %v40, %v42
+	%S51 =l add %S, 88
+	storel %v43, %S51
+	%S52 =l add %S, 56
+	%v44 =l loadl %S52
+	%S53 =l add %S, 88
+	%v45 =l loadl %S53
+	%v46 =w call $printf(l %v44, l %v45)
+	%S54 =l add %S, 48
+	storew %v46, %S54
+	%S55 =l add %S, 56
+	%v47 =l add $data, 92
+	storel %v47, %S55
+	%S56 =l add %S, 64
+	%S57 =l add %S, 32
+	%v48 =l loadl %S57
+	storel %v48, %S56
+	%S58 =l add %S, 32
+	%v49 =l loadl %S58
+	%v50 =l add %v49, 8
+	%S59 =l add %S, 32
+	storel %v50, %S59
+	%S60 =l add %S, 40
+	%v51 =l loadl %S60
+	%v52 =l add %v51, 8
+	%S61 =l add %S, 40
+	storel %v52, %S61
+	%S62 =l add %S, 64
+	%v53 =l loadl %S62
+	%S63 =l add %S, 40
+	%v54 =l loadl %S63
+	%v55 =l ceql %v53, %v54
+	%S64 =l add %S, 72
+	storel %v55, %S64
+	%S65 =l add %S, 56
+	%v56 =l loadl %S65
+	%S66 =l add %S, 72
+	%v57 =l loadl %S66
+	%v58 =w call $printf(l %v56, l %v57)
+	%S67 =l add %S, 48
+	storew %v58, %S67
+	%S68 =l add %S, 56
+	%v59 =l add $data, 114
+	storel %v59, %S68
+	%S69 =l add %S, 32
+	%v60 =l loadl %S69
+	%S70 =l add %S, 40
+	%v61 =l loadl %S70
+	%v62 =l ceql %v60, %v61
+	%S71 =l add %S, 64
+	storel %v62, %S71
+	%S72 =l add %S, 56
+	%v63 =l loadl %S72
+	%S73 =l add %S, 64
+	%v64 =l loadl %S73
+	%v65 =w call $printf(l %v63, l %v64)
+	%S74 =l add %S, 48
+	storew %v65, %S74
+	%S75 =l add %S, 56
+	%v66 =l add $data, 132
+	storel %v66, %S75
+	%S76 =l add %S, 56
+	%v67 =l loadl %S76
+	%v68 =w call $printf(l %v67)
+	%S77 =l add %S, 48
+	storew %v68, %S77
+	%S78 =l add %S, 56
+	%v69 =l add $data, 134
+	storel %v69, %S78
+	%S79 =l add %S, 64
+	%S80 =l add %S, 32
+	%v70 =l loadl %S80
+	storel %v70, %S79
+	%S81 =l add %S, 56
+	%v71 =l loadl %S81
+	%S82 =l add %S, 64
+	%v72 =l loadl %S82
+	%v73 =l loadl %v72
+	%v74 =w call $printf(l %v71, l %v73)
+	%S83 =l add %S, 48
+	storew %v74, %S83
+	%S84 =l add %S, 56
+	%v75 =l add $data, 146
+	storel %v75, %S84
+	%S85 =l add %S, 64
+	%S86 =l add %S, 40
+	%v76 =l loadl %S86
+	storel %v76, %S85
+	%S87 =l add %S, 56
+	%v77 =l loadl %S87
+	%S88 =l add %S, 64
+	%v78 =l loadl %S88
+	%v79 =l loadl %v78
+	%v80 =w call $printf(l %v77, l %v79)
+	%S89 =l add %S, 48
+	storew %v80, %S89
+	ret 0
+}
+
+data $data = { b 112 116 114 49 32 61 61 32 112 116 114 50 58 32 37 100 10 0 42 112 116 114 49 32 61 61 32 42 112 116 114 50 58 32 37 100 10 0 10 0 43 43 112 116 114 49 32 61 61 32 40 112 116 114 50 32 43 32 49 41 58 32 37 100 10 0 42 112 116 114 49 32 61 61 32 42 40 112 116 114 50 32 43 32 49 41 58 32 37 100 10 0 112 116 114 49 43 43 32 61 61 32 43 43 112 116 114 50 58 32 37 100 10 0 112 116 114 49 32 61 61 32 112 116 114 50 58 32 37 100 10 0 10 0 42 112 116 114 49 58 32 37 108 100 10 0 42 112 116 114 50 58 32 37 108 100 10 0 }
