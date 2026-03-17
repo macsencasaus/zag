@@ -856,11 +856,11 @@ INLINE bool expect_cur(Compiler *c, Token_Type tt) {
     }
     return true;
 }
-INLINE void unexpected_token(Compiler *p) {
-    compiler_error(p, &p->cur_token.loc, "Unexpected token %s", tt_str[p->cur_token.type]);
+INLINE void unexpected_token(Compiler *c) {
+    compiler_error(c, cur_loc(c), "Unexpected token %s", tt_str[c->cur_token.type]);
 }
 INLINE void unknown_type(Compiler *c) {
-    compiler_error(c, &c->cur_token.loc, "Unknown type %.*s", SV_SPREAD(c->cur_token.lit));
+    compiler_error(c, cur_loc(c), "Unknown type %.*s", SV_FMT(c->cur_token.lit));
 }
 INLINE void max_param_count_exceeded(Compiler *c) {
     compiler_error(c, cur_loc(c),
@@ -2683,7 +2683,11 @@ bool compile_program(Compiler *c) {
 
             func_type.ret = parse_type(c);
             if (!func_type.ret) {
-                unknown_type(c);
+                if (c->cur_token.type == TOKEN_TYPE_LBRACE) {
+                    unexpected_token(c);
+                } else {
+                    unknown_type(c);
+                }
                 return false;
             }
 
